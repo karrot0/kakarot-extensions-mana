@@ -5,7 +5,7 @@
     "": {
       "name": "kakarot_extensions_mana",
       "devDependencies": {
-        "@mana-app/dev": "^0.1.8",
+        "@mana-app/dev": "^0.1.9",
         "@mana-app/types": "^0.0.20",
         "oxfmt": "^0.50.0",
         "oxlint": "^1.65.0",
@@ -13,17 +13,17 @@
     },
   },
   "packages": {
-    "@mana-app/dev": ["@mana-app/dev@0.1.8", "", { "optionalDependencies": { "@mana-app/dev-darwin-arm64": "0.1.8", "@mana-app/dev-darwin-x64": "0.1.8", "@mana-app/dev-linux-arm64": "0.1.8", "@mana-app/dev-linux-x64": "0.1.8", "@mana-app/dev-win32-x64": "0.1.8" }, "bin": { "mana-dev": "bin/mana-dev.js" } }, "sha512-isgYILo/QWZD7TZFBSc/YkHn+mUX2OwJjrODewfZmEuhsYRov5brYWnrdESIdsuk3Kv/4cHj1Y/cwCppdQqO+A=="],
+    "@mana-app/dev": ["@mana-app/dev@0.1.9", "", { "optionalDependencies": { "@mana-app/dev-darwin-arm64": "0.1.9", "@mana-app/dev-darwin-x64": "0.1.9", "@mana-app/dev-linux-arm64": "0.1.9", "@mana-app/dev-linux-x64": "0.1.9", "@mana-app/dev-win32-x64": "0.1.9" }, "bin": { "mana-dev": "bin/mana-dev.js" } }, "sha512-Fu3aIM3RAwj7INcKLrFQBTcmbqyXN8UUQxxZb6rDW2GBuo8cADCNLqiKyqyDlt2+FoVyZaZpjqAwbkSqFGKoTQ=="],
 
-    "@mana-app/dev-darwin-arm64": ["@mana-app/dev-darwin-arm64@0.1.8", "", { "os": "darwin", "cpu": "arm64" }, "sha512-LcvJwgtZjyk9qnQVkPyv+RsmmW9n5nQr+Au60IkCuHps/T4Iq2UZe4nbIqGgjuEW9DNHtbGP+Hlb1TpqWQtZcQ=="],
+    "@mana-app/dev-darwin-arm64": ["@mana-app/dev-darwin-arm64@0.1.9", "", { "os": "darwin", "cpu": "arm64" }, "sha512-Z8f7+Gg2Qs8OT/mBJ6DU8cEcznq0LDYBWRXCjzIDg3R3H3g2xdtUgtvfjMRxAJkGmsZ4fDo8gF5BOWcTYnvIIw=="],
 
-    "@mana-app/dev-darwin-x64": ["@mana-app/dev-darwin-x64@0.1.8", "", { "os": "darwin", "cpu": "x64" }, "sha512-Ky2TjfD2LEtktGoXeddirsNmuruIHNzQD8LJLzrimDYgHDc/+vVuQ4i979P/3b7gGvuAAwJa+ANi0gAjknqThg=="],
+    "@mana-app/dev-darwin-x64": ["@mana-app/dev-darwin-x64@0.1.9", "", { "os": "darwin", "cpu": "x64" }, "sha512-+uRrdO8/GDYZIe2ZHSwSLL8PlnH/FH8ziWtNxsF0SbTz2rqvqQXlkyKijSPSlhlbPlvyA0TWVno/Eyi3Ikxd/w=="],
 
-    "@mana-app/dev-linux-arm64": ["@mana-app/dev-linux-arm64@0.1.8", "", { "os": "linux", "cpu": "arm64" }, "sha512-TydcHJ47EmRtbPw9bdJF6x3ll/Q3OfbEKbJSxL45+UCXjRK4IJLKxmnZnpgZt3Y9smQBT9MaOr2NURv+Lwxixg=="],
+    "@mana-app/dev-linux-arm64": ["@mana-app/dev-linux-arm64@0.1.9", "", { "os": "linux", "cpu": "arm64" }, "sha512-x7STzhYcasoKaAYsAa3K/+hlw0viEH2GMu7zrc7Je1y7o438A/66cjvl+QtdnGjbulpCr1ko5xBzHNiOhU+WAg=="],
 
-    "@mana-app/dev-linux-x64": ["@mana-app/dev-linux-x64@0.1.8", "", { "os": "linux", "cpu": "x64" }, "sha512-Nw+MdRo6N3iQVxvWjPcuTuFti87mkMtGDo3EGNJ96R7Hf1CrDh6yAWtMoKo5a1MvbHXQKFI+X8ntB6bJizDWZA=="],
+    "@mana-app/dev-linux-x64": ["@mana-app/dev-linux-x64@0.1.9", "", { "os": "linux", "cpu": "x64" }, "sha512-/NR1sQzL5Ts/17V/WViMOTAZQWRtI+31TJ2PDTlz5UzHUNBGvNP7VbnFc+W9ue3J/n2FRANMy1/aaTt9YYYHgg=="],
 
-    "@mana-app/dev-win32-x64": ["@mana-app/dev-win32-x64@0.1.8", "", { "os": "win32", "cpu": "x64" }, "sha512-Yy9ibdngKr7uL+HpfElOo2eICACnzh1JxeJBe935NVNJHAC9qb3m0jAyQw/sNsYVAbjIQm8HCt5W4O3VrZk8Vw=="],
+    "@mana-app/dev-win32-x64": ["@mana-app/dev-win32-x64@0.1.9", "", { "os": "win32", "cpu": "x64" }, "sha512-OZ7DsieakJH4DaCp1+ZCrFJCr6Lqxqp8lPgz9YV+3WeF+qcCaKH342VMaGTrvBqs2ervHtzfy+sGHIXRJnwJfA=="],
 
     "@mana-app/types": ["@mana-app/types@0.0.20", "", {}, "sha512-EmQLfBCsot/kBoNDsoiqGXoJqr1h6jCCnjEhnI81mzFJEoXwB9ZGI2MHbvCM/qeewSYajIx19jxAmHHR3Efm5A=="],
 
