@@ -29,8 +29,8 @@ try { pkg = JSON.parse(fs.readFileSync(path.join(cwd, "package.json"), "utf-8"))
 const repoDisplayName = data.repositoryName ?? pkg.name ?? "Extensions";
 const homepage = pkg.homepage ?? "";
 const sourcesUrl = homepage
-  ? homepage.replace(/\/?$/, "/sources.json")
-  : "https://your-pages-url/sources.json";
+  ? homepage.replace(/\/?$/, "/main")
+  : "https://your-pages-url/main";
 
 const sources = data.sources ?? [];
 
@@ -196,9 +196,11 @@ const html = `<!DOCTYPE html>
             <p class="text-xs text-zinc-500 mt-0.5 flex items-center gap-1 flex-wrap">Copy the URL below and paste it in
               <span class="inline-flex items-center gap-0.5 text-zinc-400 font-medium">Mana
                 <svg class="w-3 h-3 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
-                Settings
+                Discover
                 <svg class="w-3 h-3 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
-                Extensions
+                Repositories
+                <svg class="w-3 h-3 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+                Add Repo
               </span>
             </p>
           </div>
