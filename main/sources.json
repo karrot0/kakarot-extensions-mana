@@ -1,0 +1,42 @@
+{
+  "repositoryName": "kakarot_extensions_mana",
+  "sources": [
+    {
+      "id": "mangaball",
+      "name": "Mangaball",
+      "version": "1.0.0",
+      "description": "Pulls content from mangaball.net",
+      "website": "https://mangaball.net",
+      "rating": 1,
+      "supportedLanguages": [
+        "en_US"
+      ],
+      "thumbnail": "icon.png",
+      "developers": [
+        {
+          "name": "Karrot"
+        }
+      ],
+      "path": "Mangaball",
+      "environment": "source",
+      "intents": 536870912,
+      "hash": "3a53a9133a53a9133a53a9133a53a9133a53a9133a53a9133a53a9133a53a913"
+    },
+    {
+      "id": "template",
+      "name": "Template",
+      "version": "1.0.0",
+      "description": "template source for mana",
+      "website": "",
+      "rating": 0,
+      "supportedLanguages": [
+        "en_US"
+      ],
+      "thumbnail": "icon.png",
+      "path": "Template",
+      "environment": "source",
+      "intents": 536870912,
+      "hash": "6f4263656f4263656f4263656f4263656f4263656f4263656f4263656f426365"
+    }
+  ]
+}
