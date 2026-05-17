@@ -1,0 +1,464 @@
+import {
+  type ContentSource,
+  type SourceConfig,
+  type Content,
+  ContentType,
+  type Chapter,
+  type ChapterData,
+  type ChapterPage,
+  type SearchRequest,
+  type PagedSearchResult,
+  type SourceInfo,
+  type SearchFilter,
+  CatalogRating,
+  DefinedLanguages,
+  PublicationStatus,
+  type Highlight,
+  SearchProvider,
+  SortOption,
+  type Tag,
+} from "@mana-app/types";
+
+import {
+  FILTERS,
+  FilterID,
+  SORT_OPTIONS,
+  type APIItem,
+  type SearchAPIResponse,
+  type ChapterApiResponse,
+} from "./model.ts";
+import { BASE_URL, buildClient, getCookie, setCookie } from "./network.ts";
+
+const CSRF_STORE_KEY = "mangaball.csrf";
+
+const info: SourceInfo = {
+  id: "mangaball",
+  name: "Mangaball",
+  version: "1.0.0",
+  description: "Pulls content from mangaball.net",
+  website: BASE_URL,
+  rating: CatalogRating.MIXED,
+  supportedLanguages: [DefinedLanguages.ENGLISH],
+  thumbnail: "icon.png",
+  developers: [{ name: "Karrot" }],
+};
+
+const config: SourceConfig = {
+  disableTagNavigation: false,
+  disableUpdateChecks: false,
+  allowsMultipleInstances: false,
+  cloudflareResolutionURL: BASE_URL,
+  owningLinks: ["mangaball.net"],
+  requiresAuthenticationToAccessContent: false,
+};
+
+class MangaballSource implements ContentSource, SearchProvider {
+  readonly info = info;
+  readonly config = config;
+
+  private client!: NetworkClient;
+  private csrfToken: string = "";
+
+  async onEnvironmentLoaded(): Promise<void> {
+    this.client = buildClient();
+    const cached = await ObjectStore.string(CSRF_STORE_KEY);
+    if (cached) this.csrfToken = cached;
+    await this.refreshCsrf();
+  }
+
+  async getSearchFilters(): Promise<SearchFilter[]> {
+    return FILTERS;
+  }
+
+  async getSortOptions(): Promise<SortOption[]> {
+    return SORT_OPTIONS.map((s, i) => ({
+      id: s.id,
+      title: s.label,
+      isDefault: i === 0,
+      isOrderable: false,
+    }));
+  }
+
+  async search(request: SearchRequest): Promise<PagedSearchResult> {
+    const page = request.page > 0 ? request.page : 1;
+    const filters = (request.filters ?? {}) as Record<string, unknown>;
+
+    const tagFilter = filters[FilterID.Tags] as
+      | { included?: string[]; excluded?: string[] }
+      | undefined;
+    const tagIncluded = tagFilter?.included ?? [];
+    const tagExcluded = tagFilter?.excluded ?? [];
+    const demographic = (filters[FilterID.Demographic] as string) || "any";
+    const status = (filters[FilterID.Status] as string) || "any";
+    const originalLanguages = (filters[FilterID.OriginalLanguage] as string[]) ?? [];
+    const nsfw = (filters[FilterID.AdultContent] as boolean) ?? false;
+
+    const sort = request.sort?.id ?? "updated_chapters_desc";
+    const searchInput = request.query?.trim() ?? "";
+
+    if (nsfw) await setCookie("show18PlusContent", "true");
+
+    await this.refreshCsrf();
+
+    const formFilters: Record<string, string | number> = {
+      sort,
+      tag_included_mode: "and",
+      tag_excluded_mode: "and",
+      contentRating: "any",
+      demographic,
+      publicationStatus: status,
+      userSettingsEnabled: "false",
+      page,
+    };
+    if (originalLanguages.length > 0) {
+      formFilters.originalLanguages = originalLanguages.join(",");
+    }
+
+    const bodyParts: string[] = [`search_input=${encodeURIComponent(searchInput)}`];
+    for (const [k, v] of Object.entries(formFilters)) {
+      bodyParts.push(`${encodeURIComponent(`filters[${k}]`)}=${encodeURIComponent(String(v))}`);
+    }
+    for (const id of tagIncluded) {
+      bodyParts.push(
+        `${encodeURIComponent("filters[tag_included_ids][]")}=${encodeURIComponent(id)}`,
+      );
+    }
+    for (const id of tagExcluded) {
+      bodyParts.push(
+        `${encodeURIComponent("filters[tag_excluded_ids][]")}=${encodeURIComponent(id)}`,
+      );
+    }
+
+    const url = `${BASE_URL}/api/v1/title/search-advanced`;
+    const response = await this.client.request({
+      url,
+      method: "POST",
+      headers: this.apiHeaders(),
+      body: bodyParts.join("&"),
+    });
+
+    const json = JSON.parse(response.data) as SearchAPIResponse;
+    const results: Highlight[] = (json.data ?? []).map((raw) => toHighlight(raw));
+
+    const isLastPage = json.pagination
+      ? json.pagination.current_page >= json.pagination.last_page
+      : results.length === 0;
+
+    return {
+      results,
+      isLastPage,
+      totalResultCount: json.pagination?.total,
+    };
+  }
+
+  async getContent(contentId: string): Promise<Content> {
+    const url = `${BASE_URL}/title-detail/${contentId}`;
+    const response = await this.client.get(url);
+    const html = response.data;
+
+    const title =
+      pickTagText(html, /<h6[^>]*>([\s\S]*?)<\/h6>/i)?.trim() ||
+      pickAttr(html, /<meta[^>]+property="og:title"[^>]+content="([^"]+)"/i) ||
+      "";
+
+    const cover =
+      pickAttr(html, /<img[^>]+class="[^"]*featured-cover[^"]*"[^>]+(?:data-src|src)="([^"]+)"/i) ||
+      pickAttr(html, /<meta[^>]+property="og:image"[^>]+content="([^"]+)"/i) ||
+      "";
+
+    const summary =
+      pickTagText(
+        html,
+        /<div[^>]+class="[^"]*description-text[^"]*"[^>]*>([\s\S]*?)<\/div>/i,
+      )?.trim() || "";
+
+    const additionalTitles = extractAll(
+      html,
+      /<div[^>]+class="[^"]*alternate-name-container[^"]*"[^>]*>([\s\S]*?)<\/div>/i,
+      /<span[^>]*>([\s\S]*?)<\/span>/gi,
+    ).map(stripTags);
+
+    const tagMatches = matchAll(
+      html,
+      /<span[^>]+class="[^"]*badge[^"]*"[^>]+data-tag-id="([^"]+)"[^>]*>([\s\S]*?)<\/span>/gi,
+    );
+    const tags: Tag[] = tagMatches.map((m) => ({
+      id: m[1],
+      title: stripTags(m[2]).trim(),
+    }));
+
+    const statusText =
+      pickTagText(
+        html,
+        /<span[^>]+class="[^"]*badge[^"]*bg-(?:success|danger)[^"]*"[^>]*>([\s\S]*?)<\/span>/i,
+      )?.trim() ?? "";
+    const status = mapStatus(statusText);
+
+    const isNSFW = /show18PlusContent|18\+|adult/i.test(html);
+
+    return {
+      title,
+      cover: absoluteUrl(cover),
+      summary: stripTags(summary).replace(/\s+/g, " ").trim(),
+      additionalTitles,
+      tags,
+      contentType: ContentType.MANGA,
+      status,
+      isNSFW,
+      webUrl: url,
+    };
+  }
+
+  async getChapters(contentId: string): Promise<Chapter[]> {
+    const match = contentId.match(/([a-f0-9]{24})$/);
+    const titleId = match ? match[1] : contentId;
+
+    await this.refreshCsrf();
+
+    const url = `${BASE_URL}/api/v1/chapter/chapter-listing-by-title-id`;
+    const response = await this.client.request({
+      url,
+      method: "POST",
+      headers: this.apiHeaders({
+        referer: `${BASE_URL}/title-detail/${contentId}/`,
+      }),
+      body: `title_id=${encodeURIComponent(titleId)}`,
+    });
+
+    const json = JSON.parse(response.data) as ChapterApiResponse;
+    const chapters: Chapter[] = [];
+    const seen = new Set<string>();
+    const all = json.ALL_CHAPTERS ?? [];
+
+    let index = 0;
+    for (const ch of all) {
+      for (const t of ch.translations ?? []) {
+        const language = (t.language || t.languageName || "").trim();
+        const key = `${t.id}:${language.toLowerCase()}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+
+        chapters.push({
+          chapterId: t.id,
+          number: ch.number_float || Number(ch.number) || 0,
+          index: index++,
+          date: t.date ? new Date(t.date) : new Date(0),
+          volume: t.volume,
+          language: language || DefinedLanguages.UNIVERSAL,
+          title: t.name || ch.title || `Chapter ${ch.number}`,
+          webUrl: `${BASE_URL}/chapter-detail/${t.id}`,
+        });
+      }
+    }
+
+    return chapters;
+  }
+
+  async getChapterData(_contentId: string, chapterId: string): Promise<ChapterData> {
+    const url = `${BASE_URL}/chapter-detail/${chapterId}`;
+    const response = await this.client.get(url);
+    const html = response.data;
+
+    const pages: ChapterPage[] = [];
+    const scriptMatch = html.match(/const\s+chapterImages\s*=\s*JSON\.parse\(`([\s\S]+?)`\)/);
+    if (scriptMatch) {
+      try {
+        const images = JSON.parse(scriptMatch[1]);
+        if (Array.isArray(images)) {
+          for (const src of images) {
+            if (typeof src === "string" && src.length > 0) {
+              pages.push({ url: absoluteUrl(src) });
+            }
+          }
+        }
+      } catch {
+        throw new Error("Failed to parse chapter images");
+      }
+    }
+
+    return { pages };
+  }
+
+  private apiHeaders(extra?: Record<string, string>): Record<string, string> {
+    const headers: Record<string, string> = {
+      accept: "*/*",
+      "accept-language": "en-US,en;q=0.9",
+      "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
+      "x-requested-with": "XMLHttpRequest",
+      referer: `${BASE_URL}/search-advanced/`,
+    };
+    if (this.csrfToken) {
+      headers["x-csrf-token"] = this.csrfToken;
+      headers["x-xsrf-token"] = this.csrfToken;
+    }
+    if (extra) Object.assign(headers, extra);
+    return headers;
+  }
+
+  private async refreshCsrf(): Promise<void> {
+    try {
+      const response = await this.client.get(BASE_URL);
+      const html = response.data;
+      const meta = html.match(/<meta[^>]+name="csrf-token"[^>]+content="([^"]+)"/i);
+      if (meta) {
+        this.csrfToken = meta[1].trim();
+        await ObjectStore.set(CSRF_STORE_KEY, this.csrfToken);
+        return;
+      }
+      const script = html.match(/csrfToken\s*[:=]\s*["']([^"']+)["']/i);
+      if (script) {
+        this.csrfToken = script[1].trim();
+        await ObjectStore.set(CSRF_STORE_KEY, this.csrfToken);
+        return;
+      }
+      const cookieToken = (await getCookie("XSRF-TOKEN")) ?? (await getCookie("xsrf-token"));
+      if (cookieToken) {
+        try {
+          this.csrfToken = decodeURIComponent(cookieToken);
+        } catch {
+          this.csrfToken = cookieToken;
+        }
+        await ObjectStore.set(CSRF_STORE_KEY, this.csrfToken);
+      }
+    } catch (err) {
+      console.log("[Mangaball] Failed to refresh CSRF:", err);
+    }
+  }
+}
+
+function toHighlight(raw: APIItem): Highlight {
+  const id = deriveMangaId(raw.url);
+  const title = String(raw.name ?? "").trim();
+  const cover = absoluteUrl(String(raw.cover || raw.background || ""));
+
+  const altText = stripTags(String(raw.alternateName ?? "")).trim();
+  const tagBadges = matchAll(String(raw.tags ?? ""), /<[^>]+data-tag-id="[^"]+"[^>]*>([\s\S]*?)</gi)
+    .map((m) => stripTags(m[1]).trim())
+    .filter(Boolean);
+  const chapterText = stripTags(String(raw.last_chapter ?? "")).trim();
+  const updated = toRelativeTime(String(raw.updated_at ?? ""));
+  const subtitle = chapterText ? `${chapterText} | ${updated}` : updated || undefined;
+
+  const info: Record<string, string> = {};
+  if (altText) info.alt = altText;
+  if (tagBadges.length) info.tags = tagBadges.join(", ");
+
+  return {
+    id,
+    title,
+    cover,
+    subtitle,
+    info: Object.keys(info).length ? info : undefined,
+    webUrl: absoluteUrl(raw.url),
+  };
+}
+
+function deriveMangaId(url: string): string {
+  if (!url) return "";
+  const m = url.match(/\/title-detail\/([^/?#]+)/);
+  if (m) return m[1];
+  const segments = url.split("/").filter(Boolean);
+  return segments.pop()?.split(/[?#]/)[0] ?? url;
+}
+
+function absoluteUrl(url: string): string {
+  if (!url) return "";
+  if (url.startsWith("http://") || url.startsWith("https://")) return url;
+  return url.startsWith("/") ? `${BASE_URL}${url}` : `${BASE_URL}/${url}`;
+}
+
+function stripTags(html: string): string {
+  return html.replace(/<[^>]*>/g, "");
+}
+
+function pickTagText(html: string, regex: RegExp): string | undefined {
+  const m = html.match(regex);
+  return m ? stripTags(m[1]) : undefined;
+}
+
+function pickAttr(html: string, regex: RegExp): string | undefined {
+  const m = html.match(regex);
+  return m ? m[1] : undefined;
+}
+
+function extractAll(html: string, outer: RegExp, inner: RegExp): string[] {
+  const block = html.match(outer);
+  if (!block) return [];
+  const results: string[] = [];
+  let m: RegExpExecArray | null;
+  const re = new RegExp(inner.source, inner.flags);
+  while ((m = re.exec(block[1])) !== null) {
+    results.push(m[1]);
+  }
+  return results;
+}
+
+function matchAll(html: string, regex: RegExp): RegExpExecArray[] {
+  const results: RegExpExecArray[] = [];
+  let m: RegExpExecArray | null;
+  const re = new RegExp(regex.source, regex.flags);
+  while ((m = re.exec(html)) !== null) {
+    results.push(m);
+  }
+  return results;
+}
+
+function mapStatus(text: string): PublicationStatus | undefined {
+  const t = text.toLowerCase();
+  if (!t) return undefined;
+  if (t.includes("ongoing")) return PublicationStatus.ONGOING;
+  if (t.includes("complete")) return PublicationStatus.COMPLETED;
+  if (t.includes("hiatus")) return PublicationStatus.HIATUS;
+  if (t.includes("cancel")) return PublicationStatus.CANCELLED;
+  return undefined;
+}
+
+function toRelativeTime(dateText: string): string {
+  if (!dateText || !dateText.trim()) return "";
+  const trimmed = dateText.trim();
+  let date: Date | undefined;
+
+  if (/^\d{10,13}$/.test(trimmed)) {
+    const n = Number(trimmed);
+    date = trimmed.length === 13 ? new Date(n) : new Date(n * 1000);
+  } else if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(trimmed)) {
+    const m = trimmed.match(/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/);
+    if (m) {
+      date = new Date(
+        Number(m[1]),
+        Number(m[2]) - 1,
+        Number(m[3]),
+        Number(m[4]),
+        Number(m[5]),
+        Number(m[6]),
+      );
+    }
+  } else if (!isNaN(Date.parse(trimmed))) {
+    date = new Date(trimmed);
+  }
+
+  if (!date || isNaN(date.getTime())) return trimmed;
+
+  const diff = Math.floor((Date.now() - date.getTime()) / 1000);
+  if (diff < 60) return "just now";
+  if (diff < 3600) {
+    const v = Math.floor(diff / 60);
+    return `${v} minute${v === 1 ? "" : "s"} ago`;
+  }
+  if (diff < 86400) {
+    const v = Math.floor(diff / 3600);
+    return `${v} hour${v === 1 ? "" : "s"} ago`;
+  }
+  if (diff < 2592000) {
+    const v = Math.floor(diff / 86400);
+    return `${v} day${v === 1 ? "" : "s"} ago`;
+  }
+  if (diff < 31536000) {
+    const v = Math.floor(diff / 2592000);
+    return `${v} month${v === 1 ? "" : "s"} ago`;
+  }
+  const v = Math.floor(diff / 31536000);
+  return `${v} year${v === 1 ? "" : "s"} ago`;
+}
+
+export default MangaballSource;
