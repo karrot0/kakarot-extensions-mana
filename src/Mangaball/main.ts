@@ -18,6 +18,11 @@ import {
   SearchProvider,
   SortOption,
   type Tag,
+  type PageLinkResolver,
+  type PageLink,
+  type PageSection,
+  type ResolvedPageSection,
+  SectionStyle,
 } from "@mana-app/types";
 
 import {
@@ -53,7 +58,7 @@ const config: SourceConfig = {
   requiresAuthenticationToAccessContent: false,
 };
 
-class MangaballSource implements ContentSource, SearchProvider {
+class MangaballSource implements ContentSource, SearchProvider, PageLinkResolver {
   readonly info = info;
   readonly config = config;
 
@@ -81,6 +86,10 @@ class MangaballSource implements ContentSource, SearchProvider {
   }
 
   async search(request: SearchRequest): Promise<PagedSearchResult> {
+    if (request.listId) {
+      return this.getViewMoreItems(request);
+    }
+
     const page = request.page > 0 ? request.page : 1;
     const filters = (request.filters ?? {}) as Record<string, unknown>;
 
@@ -278,6 +287,99 @@ class MangaballSource implements ContentSource, SearchProvider {
     }
 
     return { pages };
+  }
+
+  async getSectionsForPage(_link: PageLink): Promise<PageSection[]> {
+    const sectionDefs = [
+      { id: "latest", title: "Latest Updates", sort: "updated_chapters_desc" },
+      { id: "popular", title: "Most Popular",   sort: "views_desc" },
+      { id: "new",    title: "New Titles",      sort: "created_at_desc" },
+    ];
+
+    const promises = sectionDefs.map(async (def): Promise<PageSection> => {
+      const response = await this.client.request({
+        url: `${BASE_URL}/api/v1/title/search-advanced`,
+        method: "POST",
+        headers: this.apiHeaders(),
+        body: this.buildSectionBody(def.sort, 1),
+      });
+      const json = JSON.parse(response.data) as SearchAPIResponse;
+      const items: Highlight[] = (json.data ?? []).map((raw) => toHighlight(raw));
+      return {
+        id: def.id,
+        title: def.title,
+        style: SectionStyle.SimpleSingleRow,
+        items,
+        viewMoreLink: { request: { page: 1, listId: def.id } },
+      };
+    });
+
+    const settled = await Promise.allSettled(promises);
+    return settled
+      .filter((r): r is PromiseFulfilledResult<PageSection> => r.status === "fulfilled")
+      .map((r) => r.value);
+  }
+
+  async resolvePageSection(_link: PageLink, sectionID: string): Promise<ResolvedPageSection> {
+    const sortMap: Record<string, string> = {
+      latest: "updated_chapters_desc",
+      popular: "views_desc",
+      new: "created_at_desc",
+    };
+    const sort = sortMap[sectionID] ?? "updated_chapters_desc";
+
+    const response = await this.client.request({
+      url: `${BASE_URL}/api/v1/title/search-advanced`,
+      method: "POST",
+      headers: this.apiHeaders(),
+      body: this.buildSectionBody(sort, 1),
+    });
+
+    const json = JSON.parse(response.data) as SearchAPIResponse;
+    const items: Highlight[] = (json.data ?? []).map((raw) => toHighlight(raw));
+
+    return { items };
+  }
+
+  private async getViewMoreItems(request: SearchRequest): Promise<PagedSearchResult> {
+    const sortMap: Record<string, string> = {
+      latest: "updated_chapters_desc",
+      popular: "views_desc",
+      new: "created_at_desc",
+    };
+    const sort = sortMap[request.listId ?? ""] ?? "updated_chapters_desc";
+    const page = request.page > 0 ? request.page : 1;
+
+    await this.refreshCsrf();
+
+    const response = await this.client.request({
+      url: `${BASE_URL}/api/v1/title/search-advanced`,
+      method: "POST",
+      headers: this.apiHeaders(),
+      body: this.buildSectionBody(sort, page),
+    });
+
+    const json = JSON.parse(response.data) as SearchAPIResponse;
+    const results: Highlight[] = (json.data ?? []).map((raw) => toHighlight(raw));
+    const isLastPage = json.pagination
+      ? json.pagination.current_page >= json.pagination.last_page
+      : results.length === 0;
+
+    return { results, isLastPage, totalResultCount: json.pagination?.total };
+  }
+
+  private buildSectionBody(sort: string, page: number): string {
+    return [
+      `search_input=`,
+      `${encodeURIComponent("filters[sort]")}=${encodeURIComponent(sort)}`,
+      `${encodeURIComponent("filters[page]")}=${encodeURIComponent(String(page))}`,
+      `${encodeURIComponent("filters[contentRating]")}=any`,
+      `${encodeURIComponent("filters[demographic]")}=any`,
+      `${encodeURIComponent("filters[publicationStatus]")}=any`,
+      `${encodeURIComponent("filters[userSettingsEnabled]")}=false`,
+      `${encodeURIComponent("filters[tag_included_mode]")}=and`,
+      `${encodeURIComponent("filters[tag_excluded_mode]")}=and`,
+    ].join("&");
   }
 
   private apiHeaders(extra?: Record<string, string>): Record<string, string> {
