@@ -23,5 +23,8 @@
     "@mana-app/types": "^0.0.20",
     "oxfmt": "^0.50.0",
     "oxlint": "^1.65.0"
+  },
+  "dependencies": {
+    "cheerio": "^1.2.0"
   }
 }
