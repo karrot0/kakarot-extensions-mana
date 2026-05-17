@@ -2,8 +2,10 @@
   <h1>Kakarot Extensions</h1>
   <p>A collection of content sources for the <a href="https://github.com/Mana-iOS/mana-dev">Mana</a> app, built with <code>@mana-app/dev</code>.</p>
 
-  <img src="https://img.shields.io/github/actions/workflow/status/Karrot/kakarot-extensions-mana/test.yaml?label=tests" alt="Tests">
-  <img src="https://img.shields.io/github/actions/workflow/status/Karrot/kakarot-extensions-mana/bundle-deploy.yaml?label=deploy" alt="Deploy">
+  <img src="https://img.shields.io/github/actions/workflow/status/karrot0/kakarot-extensions-mana/test.yaml
+  " alt="Tests">
+  <img src="https://img.shields.io/github/actions/workflow/status/karrot0/kakarot-extensions-mana/bundle-deploy.yaml
+  " alt="Deploy">
 </div>
 
 ---
