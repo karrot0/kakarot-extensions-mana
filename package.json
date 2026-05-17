@@ -4,7 +4,7 @@
   "description": "Kakarot Extensions for Mana app",
   "author": "Karrot",
   "scripts": {
-    "dev": "mana-dev server --watch",
+    "dev": "mana-dev serve --watch",
     "build": "mana-dev build",
     "lint": "oxlint src/",
     "lint:fix": "oxlint --fix src/",
@@ -19,7 +19,7 @@
     "platform": "web"
   },
   "devDependencies": {
-    "@mana-app/dev": "^0.1.9",
+    "@mana-app/dev": "^0.1.10",
     "@mana-app/types": "^0.0.20",
     "oxfmt": "^0.50.0",
     "oxlint": "^1.65.0"

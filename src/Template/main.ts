@@ -15,7 +15,7 @@ import {
   PublicationStatus,
   type Highlight,
   SearchProvider,
-  SortOption
+  SortOption,
 } from "@mana-app/types";
 
 import { FILTERS } from "./model.ts";
@@ -31,7 +31,6 @@ const info: SourceInfo = {
   supportedLanguages: [DefinedLanguages.ENGLISH],
   thumbnail: "icon.png",
 };
-
 
 const config: SourceConfig = {
   disableTagNavigation: false,
@@ -76,8 +75,6 @@ class TemplateSource implements ContentSource, SearchProvider {
   }
 
   async getContent(_contentId: string): Promise<Content> {
-
-
     return {
       title: "", // required
       cover: "", // required
@@ -86,12 +83,12 @@ class TemplateSource implements ContentSource, SearchProvider {
       status: PublicationStatus.ONGOING,
       isNSFW: false,
       webUrl: "",
-    }
+    };
   }
 
   async getChapters(_contentId: string): Promise<Chapter[]> {
     // Function to get chapters
-    
+
     const chapters: Chapter[] = [];
 
     return chapters;
@@ -109,4 +106,4 @@ class TemplateSource implements ContentSource, SearchProvider {
   }
 }
 
-export class Target extends TemplateSource {};
+export class Target extends TemplateSource {}

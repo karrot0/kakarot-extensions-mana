@@ -1,7 +1,4 @@
-import {
-    type SearchFilter,
-    FilterType
-} from "@mana-app/types";
+import { type SearchFilter, FilterType } from "@mana-app/types";
 
 export enum FilterID {
   Status = "status",

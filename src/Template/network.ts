@@ -1,12 +1,6 @@
-import {
-  type NetworkRequest,
-  type NetworkResponse,
-  NetworkClientBuilder,
-} from "@mana-app/types";
+import { type NetworkRequest, type NetworkResponse, NetworkClientBuilder } from "@mana-app/types";
 
-export async function interceptRequest(
-  request: NetworkRequest,
-): Promise<NetworkRequest> {
+export async function interceptRequest(request: NetworkRequest): Promise<NetworkRequest> {
   return {
     ...request,
     headers: {
@@ -15,9 +9,7 @@ export async function interceptRequest(
   };
 }
 
-export async function interceptResponse(
-  response: NetworkResponse,
-): Promise<NetworkResponse> {
+export async function interceptResponse(response: NetworkResponse): Promise<NetworkResponse> {
   if (response.status === 403) {
     throw new CloudflareError();
   }

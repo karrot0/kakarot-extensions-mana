@@ -1,35 +1,24 @@
-import {
-  type NetworkRequest,
-  type NetworkResponse,
-  NetworkClientBuilder
-} from "@mana-app/types";
+import { type NetworkRequest, type NetworkResponse, NetworkClientBuilder } from "@mana-app/types";
 
 const BASE_URL = "https://mangaball.net";
 const COOKIE_STORE_KEY = "mangaball.cookies";
 
 async function getCookieJar(): Promise<Record<string, string>> {
   try {
-    const raw = (await ObjectStore.get(
-      COOKIE_STORE_KEY,
-    )) as Record<string, string> | null;
+    const raw = (await ObjectStore.get(COOKIE_STORE_KEY)) as Record<string, string> | null;
     return raw && typeof raw === "object" ? raw : {};
   } catch {
     return {};
   }
 }
 
-export async function setCookie(
-  name: string,
-  value: string,
-): Promise<void> {
+export async function setCookie(name: string, value: string): Promise<void> {
   const jar = await getCookieJar();
   jar[name] = value;
   await ObjectStore.set(COOKIE_STORE_KEY, jar);
 }
 
-export async function getCookie(
-  name: string,
-): Promise<string | undefined> {
+export async function getCookie(name: string): Promise<string | undefined> {
   const jar = await getCookieJar();
   return jar[name];
 }

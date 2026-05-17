@@ -158,9 +158,7 @@ class MangaballSource implements ContentSource, SearchProvider {
     const $ = load(response.data);
 
     const title =
-      $("h6").first().text().trim() ||
-      $('meta[property="og:title"]').attr("content") ||
-      "";
+      $("h6").first().text().trim() || $('meta[property="og:title"]').attr("content") || "";
 
     const coverEl = $("img.featured-cover").first();
     const cover =
@@ -169,8 +167,7 @@ class MangaballSource implements ContentSource, SearchProvider {
       $('meta[property="og:image"]').attr("content") ||
       "";
 
-    const summary =
-      $(".description-text").first().text().trim();
+    const summary = $(".description-text").first().text().trim();
 
     const additionalTitles: string[] = [];
     $(".alternate-name-container span").each((_, el) => {
@@ -185,15 +182,13 @@ class MangaballSource implements ContentSource, SearchProvider {
       if (id && title) tags.push({ id, title });
     });
 
-    const statusText =
-      $("span.badge[class*='bg-success'], span.badge[class*='bg-danger']")
-        .first()
-        .text()
-        .trim();
+    const statusText = $("span.badge[class*='bg-success'], span.badge[class*='bg-danger']")
+      .first()
+      .text()
+      .trim();
     const status = mapStatus(statusText);
 
-    const isNSFW =
-      /show18PlusContent|18\+|adult/i.test(response.data);
+    const isNSFW = /show18PlusContent|18\+|adult/i.test(response.data);
 
     return {
       title,
@@ -265,9 +260,7 @@ class MangaballSource implements ContentSource, SearchProvider {
       .find((s) => s.includes("chapterImages"));
 
     if (scriptContent) {
-      const match = scriptContent.match(
-        /const\s+chapterImages\s*=\s*JSON\.parse\(`([\s\S]+?)`\)/,
-      );
+      const match = scriptContent.match(/const\s+chapterImages\s*=\s*JSON\.parse\(`([\s\S]+?)`\)/);
       if (match) {
         try {
           const images = JSON.parse(match[1]);
@@ -350,7 +343,9 @@ function toHighlight(raw: APIItem): Highlight {
   const title = String(raw.name ?? "").trim();
   const cover = absoluteUrl(String(raw.cover || raw.background || ""));
 
-  const altText = load(String(raw.alternateName ?? "")).text().trim();
+  const altText = load(String(raw.alternateName ?? ""))
+    .text()
+    .trim();
 
   const $tags = load(String(raw.tags ?? ""));
   const tagBadges: string[] = [];
@@ -359,11 +354,11 @@ function toHighlight(raw: APIItem): Highlight {
     if (t) tagBadges.push(t);
   });
 
-  const chapterText = load(String(raw.last_chapter ?? "")).text().trim();
+  const chapterText = load(String(raw.last_chapter ?? ""))
+    .text()
+    .trim();
   const updated = toRelativeTime(String(raw.updated_at ?? ""));
-  const subtitle = chapterText
-    ? `${chapterText} | ${updated}`
-    : updated || undefined;
+  const subtitle = chapterText ? `${chapterText} | ${updated}` : updated || undefined;
 
   const info: Record<string, string> = {};
   if (altText) info.alt = altText;
@@ -451,4 +446,4 @@ function toRelativeTime(dateText: string): string {
   return `${v} year${v === 1 ? "" : "s"} ago`;
 }
 
-export class Target extends MangaballSource {};
+export class Target extends MangaballSource {}
