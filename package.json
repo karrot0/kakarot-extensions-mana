@@ -2,10 +2,12 @@
   "name": "kakarot_extensions_mana",
   "version": "1.0.0",
   "description": "Kakarot Extensions for Mana app",
+  "homepage": "https://karrot0.github.io/kakarot-extensions-mana",
   "author": "Karrot",
   "scripts": {
     "dev": "mana-dev serve --watch",
     "build": "mana-dev build",
+    "postbuild": "node scripts/build-page.js",
     "lint": "oxlint src/",
     "lint:fix": "oxlint --fix src/",
     "format": "oxfmt src/",
