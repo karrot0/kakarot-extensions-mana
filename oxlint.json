@@ -1,0 +1,17 @@
+{
+  "$schema": "https://raw.githubusercontent.com/oxc-project/oxc/main/crates/oxc_linter/src/rules.rs",
+  "rules": {
+    "no-unused-vars": "warn",
+    "no-console": "off",
+    "eqeqeq": "warn",
+    "no-debugger": "error"
+  },
+  "env": {
+    "es2020": true
+  },
+  "globals": {
+    "fetch": "readonly",
+    "SecureStore": "readonly",
+    "ObjectStore": "readonly"
+  }
+}

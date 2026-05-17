@@ -1,0 +1,27 @@
+{
+  "name": "kakarot_extensions_mana",
+  "version": "1.0.0",
+  "description": "Kakarot Extensions for Mana app",
+  "author": "Karrot",
+  "scripts": {
+    "dev": "mana-dev server --watch",
+    "build": "mana-dev build",
+    "lint": "oxlint src/",
+    "lint:fix": "oxlint --fix src/",
+    "format": "oxfmt src/",
+    "format:check": "oxfmt --check src/"
+  },
+  "mana": {
+    "src": "src/",
+    "out": "dist/",
+    "target": "es2020",
+    "minify": true,
+    "platform": "web"
+  },
+  "devDependencies": {
+    "@mana-app/dev": "^0.1.6",
+    "@mana-app/types": "^0.0.20",
+    "oxfmt": "^0.50.0",
+    "oxlint": "^1.65.0"
+  }
+}
