@@ -3,6 +3,7 @@ name: Bundle & Deploy
 on:
   push:
     branches:
+      - test_page
       - main
 
 permissions:
