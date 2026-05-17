@@ -4,7 +4,7 @@
     {
       "id": "mangaball",
       "name": "Mangaball",
-      "version": "1.0.0",
+      "version": "1.0.2",
       "description": "Pulls content from mangaball.net",
       "website": "https://mangaball.net",
       "rating": 1,
@@ -20,7 +20,7 @@
       "path": "Mangaball",
       "environment": "source",
       "intents": 536870920,
-      "hash": "349a64df349a64df349a64df349a64df349a64df349a64df349a64df349a64df"
+      "hash": "4209ca424209ca424209ca424209ca424209ca424209ca424209ca424209ca42"
     },
     {
       "id": "template",
@@ -35,8 +35,8 @@
       "thumbnail": "icon.png",
       "path": "Template",
       "environment": "source",
-      "intents": 536870912,
-      "hash": "3c616a483c616a483c616a483c616a483c616a483c616a483c616a483c616a48"
+      "intents": 536870920,
+      "hash": "7d8c54f07d8c54f07d8c54f07d8c54f07d8c54f07d8c54f07d8c54f07d8c54f0"
     }
   ]
 }
