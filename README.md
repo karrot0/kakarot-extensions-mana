@@ -2,10 +2,8 @@
   <h1>Kakarot Extensions</h1>
   <p>A collection of content sources for the <a href="https://github.com/Mana-iOS/mana-dev">Mana</a> app, built with <code>@mana-app/dev</code>.</p>
 
-  <img src="https://img.shields.io/github/actions/workflow/status/karrot0/kakarot-extensions-mana/test.yaml
-  " alt="Tests">
-  <img src="https://img.shields.io/github/actions/workflow/status/karrot0/kakarot-extensions-mana/bundle-deploy.yaml
-  " alt="Deploy">
+  <img src="https://img.shields.io/github/actions/workflow/status/karrot0/kakarot-extensions-mana/test.yaml" alt="Tests">
+  <img src="https://img.shields.io/github/actions/workflow/status/karrot0/kakarot-extensions-mana/bundle-deploy.yaml" alt="Deploy">
 </div>
 
 ---
@@ -17,7 +15,7 @@
 3. Tap **Plus**
 4. Paste the URL:
    ```
-   https://karrot.github.io/kakarot-extensions-mana/
+   https://karrot.github.io/kakarot-extensions-mana/main
    ```
 
 ---
@@ -46,9 +44,6 @@ bun install
 ### Creating a New Source
 
 1. Copy `src/Template/` to `src/<YourSourceName>/`
-2. Update `info.id`, `info.name`, and `info.website` in `main.ts`
-3. Implement `search`, `getContent`, `getChapters`, and `getChapterData`
-4. Add your `icon.png` to `src/<YourSourceName>/assets/`
-5. Run `bun run build` to verify
+2. Start developing
 
 ---
