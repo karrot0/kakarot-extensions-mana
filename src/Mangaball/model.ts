@@ -65,11 +65,11 @@ export interface ChapterApiResponse {
 }
 
 export const SORT_OPTIONS = [
-  { id: "updated_chapters_desc", label: "Latest Updated Chapters" },
-  { id: "created_at_desc", label: "Latest Created" },
-  { id: "name_asc", label: "Title A-Z" },
-  { id: "name_desc", label: "Title Z-A" },
-  { id: "views_desc", label: "Views High to Low" },
+  { id: "updated_chapters_desc", title: "Latest Updated Chapters" },
+  { id: "created_at_desc", title: "Latest Created" },
+  { id: "name_asc", title: "Title A-Z" },
+  { id: "name_desc", title: "Title Z-A" },
+  { id: "views_desc", title: "Views High to Low" },
 ];
 
 export const STATUS_OPTIONS = [

@@ -1,3 +1,4 @@
+import { load } from "cheerio";
 import {
   type ContentSource,
   type SourceConfig,
@@ -27,7 +28,7 @@ import {
   type SearchAPIResponse,
   type ChapterApiResponse,
 } from "./model.ts";
-import { BASE_URL, buildClient, getCookie, setCookie } from "./network.ts";
+import { BASE_URL, buildClient, setCookie } from "./network.ts";
 
 const CSRF_STORE_KEY = "mangaball.csrf";
 
@@ -73,7 +74,7 @@ class MangaballSource implements ContentSource, SearchProvider {
   async getSortOptions(): Promise<SortOption[]> {
     return SORT_OPTIONS.map((s, i) => ({
       id: s.id,
-      title: s.label,
+      title: s.title,
       isDefault: i === 0,
       isOrderable: false,
     }));
@@ -154,52 +155,50 @@ class MangaballSource implements ContentSource, SearchProvider {
   async getContent(contentId: string): Promise<Content> {
     const url = `${BASE_URL}/title-detail/${contentId}`;
     const response = await this.client.get(url);
-    const html = response.data;
+    const $ = load(response.data);
 
     const title =
-      pickTagText(html, /<h6[^>]*>([\s\S]*?)<\/h6>/i)?.trim() ||
-      pickAttr(html, /<meta[^>]+property="og:title"[^>]+content="([^"]+)"/i) ||
+      $("h6").first().text().trim() ||
+      $('meta[property="og:title"]').attr("content") ||
       "";
 
+    const coverEl = $("img.featured-cover").first();
     const cover =
-      pickAttr(html, /<img[^>]+class="[^"]*featured-cover[^"]*"[^>]+(?:data-src|src)="([^"]+)"/i) ||
-      pickAttr(html, /<meta[^>]+property="og:image"[^>]+content="([^"]+)"/i) ||
+      coverEl.attr("data-src") ||
+      coverEl.attr("src") ||
+      $('meta[property="og:image"]').attr("content") ||
       "";
 
     const summary =
-      pickTagText(
-        html,
-        /<div[^>]+class="[^"]*description-text[^"]*"[^>]*>([\s\S]*?)<\/div>/i,
-      )?.trim() || "";
+      $(".description-text").first().text().trim();
 
-    const additionalTitles = extractAll(
-      html,
-      /<div[^>]+class="[^"]*alternate-name-container[^"]*"[^>]*>([\s\S]*?)<\/div>/i,
-      /<span[^>]*>([\s\S]*?)<\/span>/gi,
-    ).map(stripTags);
+    const additionalTitles: string[] = [];
+    $(".alternate-name-container span").each((_, el) => {
+      const t = $(el).text().trim();
+      if (t) additionalTitles.push(t);
+    });
 
-    const tagMatches = matchAll(
-      html,
-      /<span[^>]+class="[^"]*badge[^"]*"[^>]+data-tag-id="([^"]+)"[^>]*>([\s\S]*?)<\/span>/gi,
-    );
-    const tags: Tag[] = tagMatches.map((m) => ({
-      id: m[1],
-      title: stripTags(m[2]).trim(),
-    }));
+    const tags: Tag[] = [];
+    $("span.badge[data-tag-id]").each((_, el) => {
+      const id = $(el).attr("data-tag-id")!;
+      const title = $(el).text().trim();
+      if (id && title) tags.push({ id, title });
+    });
 
     const statusText =
-      pickTagText(
-        html,
-        /<span[^>]+class="[^"]*badge[^"]*bg-(?:success|danger)[^"]*"[^>]*>([\s\S]*?)<\/span>/i,
-      )?.trim() ?? "";
+      $("span.badge[class*='bg-success'], span.badge[class*='bg-danger']")
+        .first()
+        .text()
+        .trim();
     const status = mapStatus(statusText);
 
-    const isNSFW = /show18PlusContent|18\+|adult/i.test(html);
+    const isNSFW =
+      /show18PlusContent|18\+|adult/i.test(response.data);
 
     return {
       title,
       cover: absoluteUrl(cover),
-      summary: stripTags(summary).replace(/\s+/g, " ").trim(),
+      summary: summary.replace(/\s+/g, " ").trim(),
       additionalTitles,
       tags,
       contentType: ContentType.MANGA,
@@ -257,22 +256,31 @@ class MangaballSource implements ContentSource, SearchProvider {
   async getChapterData(_contentId: string, chapterId: string): Promise<ChapterData> {
     const url = `${BASE_URL}/chapter-detail/${chapterId}`;
     const response = await this.client.get(url);
-    const html = response.data;
+    const $ = load(response.data);
 
     const pages: ChapterPage[] = [];
-    const scriptMatch = html.match(/const\s+chapterImages\s*=\s*JSON\.parse\(`([\s\S]+?)`\)/);
-    if (scriptMatch) {
-      try {
-        const images = JSON.parse(scriptMatch[1]);
-        if (Array.isArray(images)) {
-          for (const src of images) {
-            if (typeof src === "string" && src.length > 0) {
-              pages.push({ url: absoluteUrl(src) });
+    const scriptContent = $("script")
+      .toArray()
+      .map((el) => $(el).html() ?? "")
+      .find((s) => s.includes("chapterImages"));
+
+    if (scriptContent) {
+      const match = scriptContent.match(
+        /const\s+chapterImages\s*=\s*JSON\.parse\(`([\s\S]+?)`\)/,
+      );
+      if (match) {
+        try {
+          const images = JSON.parse(match[1]);
+          if (Array.isArray(images)) {
+            for (const src of images) {
+              if (typeof src === "string" && src.length > 0) {
+                pages.push({ url: absoluteUrl(src) });
+              }
             }
           }
+        } catch {
+          throw new Error("Failed to parse chapter images");
         }
-      } catch {
-        throw new Error("Failed to parse chapter images");
       }
     }
 
@@ -298,25 +306,36 @@ class MangaballSource implements ContentSource, SearchProvider {
   private async refreshCsrf(): Promise<void> {
     try {
       const response = await this.client.get(BASE_URL);
-      const html = response.data;
-      const meta = html.match(/<meta[^>]+name="csrf-token"[^>]+content="([^"]+)"/i);
+      const $ = load(response.data);
+
+      const meta = $('meta[name="csrf-token"]').attr("content");
       if (meta) {
-        this.csrfToken = meta[1].trim();
+        this.csrfToken = meta.trim();
         await ObjectStore.set(CSRF_STORE_KEY, this.csrfToken);
         return;
       }
-      const script = html.match(/csrfToken\s*[:=]\s*["']([^"']+)["']/i);
+
+      const script = $("script")
+        .toArray()
+        .map((el) => $(el).html() ?? "")
+        .find((s) => /csrfToken\s*[:=]/i.test(s));
       if (script) {
-        this.csrfToken = script[1].trim();
-        await ObjectStore.set(CSRF_STORE_KEY, this.csrfToken);
-        return;
+        const m = script.match(/csrfToken\s*[:=]\s*["']([^"']+)["']/i);
+        if (m) {
+          this.csrfToken = m[1].trim();
+          await ObjectStore.set(CSRF_STORE_KEY, this.csrfToken);
+          return;
+        }
       }
-      const cookieToken = (await getCookie("XSRF-TOKEN")) ?? (await getCookie("xsrf-token"));
-      if (cookieToken) {
+
+      const xsrfToken =
+        (await ObjectStore.string("mangaball.xsrf-token")) ??
+        (await ObjectStore.string(CSRF_STORE_KEY));
+      if (xsrfToken) {
         try {
-          this.csrfToken = decodeURIComponent(cookieToken);
+          this.csrfToken = decodeURIComponent(xsrfToken);
         } catch {
-          this.csrfToken = cookieToken;
+          this.csrfToken = xsrfToken;
         }
         await ObjectStore.set(CSRF_STORE_KEY, this.csrfToken);
       }
@@ -331,13 +350,20 @@ function toHighlight(raw: APIItem): Highlight {
   const title = String(raw.name ?? "").trim();
   const cover = absoluteUrl(String(raw.cover || raw.background || ""));
 
-  const altText = stripTags(String(raw.alternateName ?? "")).trim();
-  const tagBadges = matchAll(String(raw.tags ?? ""), /<[^>]+data-tag-id="[^"]+"[^>]*>([\s\S]*?)</gi)
-    .map((m) => stripTags(m[1]).trim())
-    .filter(Boolean);
-  const chapterText = stripTags(String(raw.last_chapter ?? "")).trim();
+  const altText = load(String(raw.alternateName ?? "")).text().trim();
+
+  const $tags = load(String(raw.tags ?? ""));
+  const tagBadges: string[] = [];
+  $tags("[data-tag-id]").each((_, el) => {
+    const t = $tags(el).text().trim();
+    if (t) tagBadges.push(t);
+  });
+
+  const chapterText = load(String(raw.last_chapter ?? "")).text().trim();
   const updated = toRelativeTime(String(raw.updated_at ?? ""));
-  const subtitle = chapterText ? `${chapterText} | ${updated}` : updated || undefined;
+  const subtitle = chapterText
+    ? `${chapterText} | ${updated}`
+    : updated || undefined;
 
   const info: Record<string, string> = {};
   if (altText) info.alt = altText;
@@ -365,42 +391,6 @@ function absoluteUrl(url: string): string {
   if (!url) return "";
   if (url.startsWith("http://") || url.startsWith("https://")) return url;
   return url.startsWith("/") ? `${BASE_URL}${url}` : `${BASE_URL}/${url}`;
-}
-
-function stripTags(html: string): string {
-  return html.replace(/<[^>]*>/g, "");
-}
-
-function pickTagText(html: string, regex: RegExp): string | undefined {
-  const m = html.match(regex);
-  return m ? stripTags(m[1]) : undefined;
-}
-
-function pickAttr(html: string, regex: RegExp): string | undefined {
-  const m = html.match(regex);
-  return m ? m[1] : undefined;
-}
-
-function extractAll(html: string, outer: RegExp, inner: RegExp): string[] {
-  const block = html.match(outer);
-  if (!block) return [];
-  const results: string[] = [];
-  let m: RegExpExecArray | null;
-  const re = new RegExp(inner.source, inner.flags);
-  while ((m = re.exec(block[1])) !== null) {
-    results.push(m[1]);
-  }
-  return results;
-}
-
-function matchAll(html: string, regex: RegExp): RegExpExecArray[] {
-  const results: RegExpExecArray[] = [];
-  let m: RegExpExecArray | null;
-  const re = new RegExp(regex.source, regex.flags);
-  while ((m = re.exec(html)) !== null) {
-    results.push(m);
-  }
-  return results;
 }
 
 function mapStatus(text: string): PublicationStatus | undefined {
@@ -461,4 +451,4 @@ function toRelativeTime(dateText: string): string {
   return `${v} year${v === 1 ? "" : "s"} ago`;
 }
 
-export default MangaballSource;
+export class Target extends MangaballSource {};
