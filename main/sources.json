@@ -20,7 +20,7 @@
       "path": "Mangaball",
       "environment": "source",
       "intents": 536870912,
-      "hash": "3a53a9133a53a9133a53a9133a53a9133a53a9133a53a9133a53a9133a53a913"
+      "hash": "3d96d5063d96d5063d96d5063d96d5063d96d5063d96d5063d96d5063d96d506"
     },
     {
       "id": "template",
@@ -36,7 +36,7 @@
       "path": "Template",
       "environment": "source",
       "intents": 536870912,
-      "hash": "6f4263656f4263656f4263656f4263656f4263656f4263656f4263656f426365"
+      "hash": "6bff376c6bff376c6bff376c6bff376c6bff376c6bff376c6bff376c6bff376c"
     }
   ]
 }
