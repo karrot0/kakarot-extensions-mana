@@ -6,10 +6,10 @@ const path = require("path");
 
 const cwd = process.cwd();
 const distDir = path.join(cwd, "dist");
-const sourcesPath = path.join(distDir, "main");
+const sourcesPath = path.join(distDir, "sources.json");
 
 if (!fs.existsSync(sourcesPath)) {
-  process.stderr.write("[mana-dev] main not found — skipping page generation\n");
+  process.stderr.write("[mana-dev] sources.json not found — skipping page generation\n");
   return;
 }
 
@@ -18,7 +18,7 @@ let data;
 try {
   data = JSON.parse(fs.readFileSync(sourcesPath, "utf-8"));
 } catch {
-  process.stderr.write("[mana-dev] Failed to parse main — skipping page generation\n");
+  process.stderr.write("[mana-dev] Failed to parse sources.json — skipping page generation\n");
   return;
 }
 
@@ -29,8 +29,8 @@ try { pkg = JSON.parse(fs.readFileSync(path.join(cwd, "package.json"), "utf-8"))
 const repoDisplayName = data.repositoryName ?? pkg.name ?? "Extensions";
 const homepage = pkg.homepage ?? "";
 const sourcesUrl = homepage
-  ? homepage.replace(/\/?$/, "/main")
-  : "https://karrot0.github.io/kakarot-extensions-mana/main";
+  ? homepage.replace(/\/?$/, "/sources.json")
+  : "https://your-pages-url/sources.json";
 
 const sources = data.sources ?? [];
 
