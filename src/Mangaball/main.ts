@@ -40,7 +40,7 @@ const info: SourceInfo = {
   website: BASE_URL,
   rating: CatalogRating.MIXED,
   supportedLanguages: [DefinedLanguages.ENGLISH],
-  thumbnail: "icon.png",
+  thumbnail: "/src/Mangaball/icon.png",
   developers: [{ name: "Karrot" }],
 };
 
