@@ -40,7 +40,7 @@ const CSRF_STORE_KEY = "mangaball.csrf";
 const info: SourceInfo = {
   id: "mangaball",
   name: "Mangaball",
-  version: "1.0.0",
+  version: "1.0.2",
   description: "Pulls content from mangaball.net",
   website: BASE_URL,
   rating: CatalogRating.MIXED,
@@ -290,34 +290,11 @@ class MangaballSource implements ContentSource, SearchProvider, PageLinkResolver
   }
 
   async getSectionsForPage(_link: PageLink): Promise<PageSection[]> {
-    const sectionDefs = [
-      { id: "latest", title: "Latest Updates", sort: "updated_chapters_desc" },
-      { id: "popular", title: "Most Popular",   sort: "views_desc" },
-      { id: "new",    title: "New Titles",      sort: "created_at_desc" },
+    return [
+      { id: "latest", title: "Latest Updates", style: SectionStyle.SimpleSingleRow, viewMoreLink: { request: { page: 1, listId: "latest" } } },
+      { id: "popular", title: "Most Popular",  style: SectionStyle.SimpleSingleRow, viewMoreLink: { request: { page: 1, listId: "popular" } } },
+      { id: "new",    title: "New Titles",     style: SectionStyle.SimpleSingleRow, viewMoreLink: { request: { page: 1, listId: "new" } } },
     ];
-
-    const promises = sectionDefs.map(async (def): Promise<PageSection> => {
-      const response = await this.client.request({
-        url: `${BASE_URL}/api/v1/title/search-advanced`,
-        method: "POST",
-        headers: this.apiHeaders(),
-        body: this.buildSectionBody(def.sort, 1),
-      });
-      const json = JSON.parse(response.data) as SearchAPIResponse;
-      const items: Highlight[] = (json.data ?? []).map((raw) => toHighlight(raw));
-      return {
-        id: def.id,
-        title: def.title,
-        style: SectionStyle.SimpleSingleRow,
-        items,
-        viewMoreLink: { request: { page: 1, listId: def.id } },
-      };
-    });
-
-    const settled = await Promise.allSettled(promises);
-    return settled
-      .filter((r): r is PromiseFulfilledResult<PageSection> => r.status === "fulfilled")
-      .map((r) => r.value);
   }
 
   async resolvePageSection(_link: PageLink, sectionID: string): Promise<ResolvedPageSection> {
@@ -334,6 +311,10 @@ class MangaballSource implements ContentSource, SearchProvider, PageLinkResolver
       headers: this.apiHeaders(),
       body: this.buildSectionBody(sort, 1),
     });
+
+    if (response.status !== 200) {
+      throw new Error(`Failed to load section ${sectionID}`);
+    }
 
     const json = JSON.parse(response.data) as SearchAPIResponse;
     const items: Highlight[] = (json.data ?? []).map((raw) => toHighlight(raw));

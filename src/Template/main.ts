@@ -13,6 +13,10 @@ import {
   CatalogRating,
   DefinedLanguages,
   PublicationStatus,
+  type PageLinkResolver,
+  type PageLink,
+  type PageSection,
+  type ResolvedPageSection,
   type Highlight,
   SearchProvider,
   SortOption,
@@ -39,7 +43,7 @@ const config: SourceConfig = {
   requiresAuthenticationToAccessContent: false,
 };
 
-class TemplateSource implements ContentSource, SearchProvider {
+class TemplateSource implements ContentSource, SearchProvider, PageLinkResolver {
   readonly info = info;
   readonly config = config;
   private client!: NetworkClient;
@@ -104,6 +108,23 @@ class TemplateSource implements ContentSource, SearchProvider {
     const pages: ChapterPage[] = [];
     return { pages };
   }
+
+  async getSectionsForPage(_link: PageLink): Promise<PageSection[]> {
+    // Function to provide sections for a custom page
+
+    const sections: PageSection[] = [];
+    return sections;
+  }
+
+  async resolvePageSection(_link: PageLink, sectionID: string): Promise<ResolvedPageSection> {
+    // Function to resolve a page section when the user tries to view it
+    const resolvedSection: ResolvedPageSection = {
+      items: [],
+    };
+
+    return resolvedSection;
+  }
+
 }
 
 export class Target extends TemplateSource {}
