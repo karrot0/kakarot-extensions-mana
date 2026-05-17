@@ -11,7 +11,7 @@
       "supportedLanguages": [
         "en_US"
       ],
-      "thumbnail": "icon.png",
+      "thumbnail": "/src/Mangaball/icon.png",
       "developers": [
         {
           "name": "Karrot"
@@ -20,7 +20,7 @@
       "path": "Mangaball",
       "environment": "source",
       "intents": 536870912,
-      "hash": "544ad020544ad020544ad020544ad020544ad020544ad020544ad020544ad020"
+      "hash": "3f5cab3c3f5cab3c3f5cab3c3f5cab3c3f5cab3c3f5cab3c3f5cab3c3f5cab3c"
     },
     {
       "id": "template",
@@ -36,7 +36,7 @@
       "path": "Template",
       "environment": "source",
       "intents": 536870912,
-      "hash": "021f2357021f2357021f2357021f2357021f2357021f2357021f2357021f2357"
+      "hash": "03d3ffb403d3ffb403d3ffb403d3ffb403d3ffb403d3ffb403d3ffb403d3ffb4"
     }
   ]
 }
