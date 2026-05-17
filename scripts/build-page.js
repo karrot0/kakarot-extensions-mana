@@ -119,9 +119,9 @@ for (const s of sources) {
   const iconFile = s.thumbnail ?? "icon.png";
   const srcIcon = path.join(cwd, "src", s.path, iconFile);
   if (fs.existsSync(srcIcon)) {
-    const destDir = path.join(distDir, "sources", s.path);
-    fs.mkdirSync(destDir, { recursive: true });
-    fs.copyFileSync(srcIcon, path.join(destDir, iconFile));
+    const destPath = path.join(distDir, "sources", s.path, iconFile);
+    fs.mkdirSync(path.dirname(destPath), { recursive: true });
+    fs.copyFileSync(srcIcon, destPath);
   }
 }
 
