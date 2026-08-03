@@ -447,4 +447,4 @@ function parsePublishDate(date: string | undefined): Date | undefined {
   return new Date(`${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`);
 }
 
-export class Target extends BatcaveSource { }
+export class Target extends BatcaveSource {}
