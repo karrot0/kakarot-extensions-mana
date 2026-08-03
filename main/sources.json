@@ -2,12 +2,12 @@
   "repositoryName": "kakarot_extensions_mana",
   "sources": [
     {
-      "id": "mangaball",
-      "name": "Mangaball",
-      "version": "1.0.2",
-      "description": "Pulls content from mangaball.net",
-      "website": "https://mangaball.net",
-      "rating": 1,
+      "id": "batcave",
+      "name": "Batcave",
+      "version": "1.0.0",
+      "description": "Pulls comics from batcave.biz",
+      "website": "https://batcave.biz",
+      "rating": 0,
       "supportedLanguages": [
         "en_US"
       ],
@@ -17,10 +17,10 @@
           "name": "Karrot"
         }
       ],
-      "path": "Mangaball",
+      "path": "Batcave",
       "environment": "source",
       "intents": 536870920,
-      "hash": "4209ca424209ca424209ca424209ca424209ca424209ca424209ca424209ca42"
+      "hash": "0870d7150870d7150870d7150870d7150870d7150870d7150870d7150870d715"
     },
     {
       "id": "template",
@@ -36,7 +36,28 @@
       "path": "Template",
       "environment": "source",
       "intents": 536870920,
-      "hash": "7d8c54f07d8c54f07d8c54f07d8c54f07d8c54f07d8c54f07d8c54f07d8c54f0"
+      "hash": "3b87d7873b87d7873b87d7873b87d7873b87d7873b87d7873b87d7873b87d787"
+    },
+    {
+      "id": "zipcomic",
+      "name": "ZipComic",
+      "version": "1.0.0",
+      "description": "Pulls comics from zipcomic.com",
+      "website": "https://www.zipcomic.com",
+      "rating": 1,
+      "supportedLanguages": [
+        "en_US"
+      ],
+      "thumbnail": "assets/icon.png",
+      "developers": [
+        {
+          "name": "Karrot"
+        }
+      ],
+      "path": "ZipComic",
+      "environment": "source",
+      "intents": 536870920,
+      "hash": "61c29da361c29da361c29da361c29da361c29da361c29da361c29da361c29da3"
     }
   ]
 }
