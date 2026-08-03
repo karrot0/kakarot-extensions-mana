@@ -32,7 +32,7 @@ import { BASE_URL, buildClient } from "./network.ts";
 const info: SourceInfo = {
   id: "batcave",
   name: "Batcave",
-  version: "1.0.0",
+  version: "1.2",
   description: "Pulls comics from batcave.biz",
   website: BASE_URL,
   rating: CatalogRating.SAFE,
@@ -447,4 +447,4 @@ function parsePublishDate(date: string | undefined): Date | undefined {
   return new Date(`${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`);
 }
 
-export class Target extends BatcaveSource {}
+export class Target extends BatcaveSource { }
