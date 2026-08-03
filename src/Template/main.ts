@@ -116,7 +116,7 @@ class TemplateSource implements ContentSource, SearchProvider, PageLinkResolver 
     return sections;
   }
 
-  async resolvePageSection(_link: PageLink, sectionID: string): Promise<ResolvedPageSection> {
+  async resolvePageSection(_link: PageLink, _sectionID: string): Promise<ResolvedPageSection> {
     // Function to resolve a page section when the user tries to view it
     const resolvedSection: ResolvedPageSection = {
       items: [],
@@ -124,7 +124,6 @@ class TemplateSource implements ContentSource, SearchProvider, PageLinkResolver 
 
     return resolvedSection;
   }
-
 }
 
 export class Target extends TemplateSource {}

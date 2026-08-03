@@ -24,7 +24,8 @@
 
 | Name | Version | Language | Rating |
 |------|---------|----------|--------|
-| Template | 1.0.0 | English | Safe |
+| Batcave | 1.0.0 | English | Safe |
+| ZipComic | 1.0.0 | English | Mixed |
 
 ---
 
