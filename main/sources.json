@@ -20,7 +20,28 @@
       "path": "Batcave",
       "environment": "source",
       "intents": 2102280,
-      "hash": "584d056f584d056f584d056f584d056f584d056f584d056f584d056f584d056f"
+      "hash": "1345180513451805134518051345180513451805134518051345180513451805"
+    },
+    {
+      "id": "getcomics",
+      "name": "GetComics",
+      "version": "1.0.0",
+      "description": "Pulls comics from getcomics.org",
+      "website": "https://getcomics.org",
+      "rating": 0,
+      "supportedLanguages": [
+        "en_US"
+      ],
+      "thumbnail": "icon.png",
+      "developers": [
+        {
+          "name": "Karrot"
+        }
+      ],
+      "path": "GetComics",
+      "environment": "source",
+      "intents": 2102280,
+      "hash": "3977e7ff3977e7ff3977e7ff3977e7ff3977e7ff3977e7ff3977e7ff3977e7ff"
     },
     {
       "id": "template",
@@ -36,7 +57,7 @@
       "path": "Template",
       "environment": "source",
       "intents": 2102280,
-      "hash": "772697fd772697fd772697fd772697fd772697fd772697fd772697fd772697fd"
+      "hash": "1d474a8c1d474a8c1d474a8c1d474a8c1d474a8c1d474a8c1d474a8c1d474a8c"
     },
     {
       "id": "zipcomic",
@@ -57,7 +78,7 @@
       "path": "ZipComic",
       "environment": "source",
       "intents": 2102280,
-      "hash": "14710a6b14710a6b14710a6b14710a6b14710a6b14710a6b14710a6b14710a6b"
+      "hash": "7ffcd7e27ffcd7e27ffcd7e27ffcd7e27ffcd7e27ffcd7e27ffcd7e27ffcd7e2"
     }
   ]
 }
