@@ -19,8 +19,8 @@
       ],
       "path": "Batcave",
       "environment": "source",
-      "intents": 536870920,
-      "hash": "0b2ff6b50b2ff6b50b2ff6b50b2ff6b50b2ff6b50b2ff6b50b2ff6b50b2ff6b5"
+      "intents": 2102280,
+      "hash": "2a3199f82a3199f82a3199f82a3199f82a3199f82a3199f82a3199f82a3199f8"
     },
     {
       "id": "template",
@@ -35,8 +35,8 @@
       "thumbnail": "icon.png",
       "path": "Template",
       "environment": "source",
-      "intents": 536870920,
-      "hash": "3bbc59493bbc59493bbc59493bbc59493bbc59493bbc59493bbc59493bbc5949"
+      "intents": 2102280,
+      "hash": "5abdff4a5abdff4a5abdff4a5abdff4a5abdff4a5abdff4a5abdff4a5abdff4a"
     },
     {
       "id": "zipcomic",
@@ -56,8 +56,8 @@
       ],
       "path": "ZipComic",
       "environment": "source",
-      "intents": 536870920,
-      "hash": "618e195f618e195f618e195f618e195f618e195f618e195f618e195f618e195f"
+      "intents": 2102280,
+      "hash": "428c7600428c7600428c7600428c7600428c7600428c7600428c7600428c7600"
     }
   ]
 }
