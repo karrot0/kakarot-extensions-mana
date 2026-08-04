@@ -46,7 +46,7 @@ const config: SourceConfig = {
   disableUpdateChecks: false,
   allowsMultipleInstances: false,
   cloudflareResolutionURL: BASE_URL,
-  owningLinks: ["zipcomic.com"],
+  owningLinks: ["www.zipcomic.com", "zipcomic.com"],
   requiresAuthenticationToAccessContent: false,
 };
 
