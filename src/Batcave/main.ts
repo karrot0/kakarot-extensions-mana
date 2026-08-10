@@ -32,7 +32,7 @@ import { BASE_URL, buildClient } from "./network.ts";
 const info: SourceInfo = {
   id: "batcave",
   name: "Batcave",
-  version: "1.2",
+  version: "1.3",
   description: "Pulls comics from batcave.biz",
   website: BASE_URL,
   rating: CatalogRating.SAFE,
@@ -108,7 +108,8 @@ class BatcaveSource implements ContentSource, SearchProvider, PageLinkResolver {
     const $ = await this.fetchCheerio(contentUrl(contentId));
 
     const title = $("h1").first().text().trim();
-    const cover = absoluteUrl($(".page__poster img").attr("src"));
+    const posterImg = $(".page__poster img");
+    const cover = absoluteUrl(posterImg.attr("data-src") || posterImg.attr("src"));
     const summary = $(".page__text").text().replace(/\s+/g, " ").trim();
 
     const statusText = $(".page__list li")
@@ -221,33 +222,28 @@ class BatcaveSource implements ContentSource, SearchProvider, PageLinkResolver {
       {
         id: "popular",
         title: "Popular",
-        style: SectionStyle.SimpleSingleRow,
+        style: SectionStyle.SimpleHero,
       },
       {
         id: "catalogue",
         title: "Catalogue",
-        style: SectionStyle.SimpleSingleRow,
+        style: SectionStyle.DetailedTripleRowPaged,
         viewMoreLink: { request: { page: 1, listId: "catalogue" } },
       },
       {
         id: "new",
         title: "New Comics",
-        style: SectionStyle.SimpleSingleRow,
+        style: SectionStyle.DetailedVerticalListGrouped,
         viewMoreLink: { request: { page: 1, listId: "new" } },
-      },
-      {
-        id: "genres",
-        title: "Genres",
-        style: SectionStyle.Grid,
-      },
+      }
     ];
   }
 
-  async resolvePageSection(_link: PageLink, sectionID: string): Promise<ResolvedPageSection> {
-    if (sectionID === "genres") {
-      return { items: genreHighlights() };
-    }
+  async willResolveSectionsForPage(_link: PageLink): Promise<void> {
+    await this.fetchCheerio(BASE_URL);
+  }
 
+  async resolvePageSection(_link: PageLink, sectionID: string): Promise<ResolvedPageSection> {
     const $ = await this.fetchCheerio(this.sectionUrl(sectionID, 1));
     return { items: this.parseSectionItems(sectionID, $) };
   }
@@ -406,15 +402,6 @@ function parseLatestList($: CheerioAPI): Highlight[] {
   return results;
 }
 
-function genreHighlights(): Highlight[] {
-  return GENRE_OPTIONS.filter((g) => g.id).map((genre) => ({
-    id: `genre:${genre.id}`,
-    title: genre.title,
-    cover: "",
-    link: { request: { page: 1, filters: { [FilterID.Genre]: genre.id } } },
-  }));
-}
-
 function absoluteUrl(raw: string | undefined): string {
   const url = (raw ?? "").replace(/\\\//g, "/").trim();
   if (!url) return "";
@@ -447,4 +434,4 @@ function parsePublishDate(date: string | undefined): Date | undefined {
   return new Date(`${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`);
 }
 
-export class Target extends BatcaveSource {}
+export class Target extends BatcaveSource { }

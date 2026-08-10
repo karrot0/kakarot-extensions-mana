@@ -27,6 +27,7 @@ import {
 
 import { FILTERS, FilterID, NON_COMIC_CATEGORIES } from "./model.ts";
 import { BASE_URL, buildClient } from "./network.ts";
+import { fetchArchivePages } from "./archive.ts";
 
 const info: SourceInfo = {
   id: "getcomics",
@@ -133,11 +134,17 @@ class GetComicsSource implements ContentSource, SearchProvider, PageLinkResolver
   }
 
   async getChapterData(contentId: string): Promise<ChapterData> {
-    // GetComics is a download-link aggregator: releases are distributed as
-    // .cbr/.cbz archives through mirrors (Mega, TeraBox, PixelDrain, etc.)
-    // rather than hosted as readable pages, so there are no images to return
-    // here. The mirrors are surfaced on the content page's "Download Links"
-    // section instead.
+    const $ = await this.fetchCheerio(contentUrl(contentId));
+    const downloadUrl = findDownloadNowUrl($);
+
+    if (downloadUrl) {
+      try {
+        return { pages: await fetchArchivePages(this.client, downloadUrl) };
+      } catch {
+        // fall through to the error below
+      }
+    }
+
     throw new Error(
       `"${contentId}" is not readable in-app. Use the Download Links on ${contentUrl(contentId)} to get this release.`,
     );
@@ -315,6 +322,15 @@ function parseDownloadLinks($: CheerioAPI): LinkItem[] {
   return items;
 }
 
+function findDownloadNowUrl($: CheerioAPI): string | undefined {
+  const anchor = $(".aio-button-center a")
+    .filter(
+      (_, el) => ($(el).attr("title") || $(el).text()).trim().toLowerCase() === "download now",
+    )
+    .first();
+  return anchor.attr("href")?.trim() || undefined;
+}
+
 function parsePublishDate($: CheerioAPI): Date | undefined {
   const datetime = $("time").first().attr("datetime");
   if (!datetime) return undefined;
@@ -322,4 +338,4 @@ function parsePublishDate($: CheerioAPI): Date | undefined {
   return isNaN(date.getTime()) ? undefined : date;
 }
 
-export class Target extends GetComicsSource {}
+export class Target extends GetComicsSource { }
