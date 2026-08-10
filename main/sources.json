@@ -4,7 +4,7 @@
     {
       "id": "batcave",
       "name": "Batcave",
-      "version": "1.2",
+      "version": "1.3",
       "description": "Pulls comics from batcave.biz",
       "website": "https://batcave.biz",
       "rating": 0,
@@ -20,7 +20,7 @@
       "path": "Batcave",
       "environment": "source",
       "intents": 2102280,
-      "hash": "1345180513451805134518051345180513451805134518051345180513451805"
+      "hash": "7e3bea4a7e3bea4a7e3bea4a7e3bea4a7e3bea4a7e3bea4a7e3bea4a7e3bea4a"
     },
     {
       "id": "getcomics",
@@ -41,7 +41,28 @@
       "path": "GetComics",
       "environment": "source",
       "intents": 2102280,
-      "hash": "3977e7ff3977e7ff3977e7ff3977e7ff3977e7ff3977e7ff3977e7ff3977e7ff"
+      "hash": "1bf817421bf817421bf817421bf817421bf817421bf817421bf817421bf81742"
+    },
+    {
+      "id": "ocecomic",
+      "name": "OceComic",
+      "version": "1.0.0",
+      "description": "Pulls comics from ocecomic.com",
+      "website": "https://ocecomic.com",
+      "rating": 1,
+      "supportedLanguages": [
+        "en_US"
+      ],
+      "thumbnail": "assets/icon.png",
+      "developers": [
+        {
+          "name": "Karrot"
+        }
+      ],
+      "path": "OceComic",
+      "environment": "source",
+      "intents": 2102280,
+      "hash": "6eac84576eac84576eac84576eac84576eac84576eac84576eac84576eac8457"
     },
     {
       "id": "template",
@@ -57,7 +78,7 @@
       "path": "Template",
       "environment": "source",
       "intents": 2102280,
-      "hash": "1d474a8c1d474a8c1d474a8c1d474a8c1d474a8c1d474a8c1d474a8c1d474a8c"
+      "hash": "3ac71bc03ac71bc03ac71bc03ac71bc03ac71bc03ac71bc03ac71bc03ac71bc0"
     },
     {
       "id": "zipcomic",
@@ -78,7 +99,7 @@
       "path": "ZipComic",
       "environment": "source",
       "intents": 2102280,
-      "hash": "7ffcd7e27ffcd7e27ffcd7e27ffcd7e27ffcd7e27ffcd7e27ffcd7e27ffcd7e2"
+      "hash": "6283572562835725628357256283572562835725628357256283572562835725"
     }
   ]
 }
