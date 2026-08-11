@@ -24,15 +24,17 @@ import {
   SearchProvider,
   SortOption,
   SectionStyle,
+  type ImageRequestHandler,
+  type NetworkRequest,
 } from "@mana-app/types";
 
 import { FILTERS, FilterID, GENRE_OPTIONS } from "./model.ts";
-import { BASE_URL, buildClient } from "./network.ts";
+import { BASE_URL, buildClient, buildImageRequest } from "./network.ts";
 
 const info: SourceInfo = {
   id: "batcave",
   name: "Batcave",
-  version: "1.3",
+  version: "1.4",
   description: "Pulls comics from batcave.biz",
   website: BASE_URL,
   rating: CatalogRating.SAFE,
@@ -50,7 +52,8 @@ const config: SourceConfig = {
   requiresAuthenticationToAccessContent: false,
 };
 
-class BatcaveSource implements ContentSource, SearchProvider, PageLinkResolver {
+class BatcaveSource
+  implements ContentSource, SearchProvider, PageLinkResolver, ImageRequestHandler {
   readonly info = info;
   readonly config = config;
 
@@ -194,7 +197,12 @@ class BatcaveSource implements ContentSource, SearchProvider, PageLinkResolver {
     const response = await this.client.request({
       url: `${BASE_URL}/engine/ajax/controller.php?mod=api&action=reader/getChapterData`,
       method: "POST",
-      headers: { "content-type": "application/x-www-form-urlencoded" },
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        origin: BASE_URL,
+        referer: contentUrl(contentId),
+        accept: "application/json, text/javascript, */*; q=0.01",
+      },
       body: `news_id=${newsId}&chapter_id=${chapterId}`,
     });
 
@@ -215,6 +223,10 @@ class BatcaveSource implements ContentSource, SearchProvider, PageLinkResolver {
       url: absoluteUrl(src),
     }));
     return { pages };
+  }
+
+  async willRequestImage(imageURL: string): Promise<NetworkRequest> {
+    return buildImageRequest(imageURL);
   }
 
   async getSectionsForPage(_link: PageLink): Promise<PageSection[]> {
