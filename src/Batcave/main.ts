@@ -34,7 +34,7 @@ import { BASE_URL, buildClient, buildImageRequest } from "./network.ts";
 const info: SourceInfo = {
   id: "batcave",
   name: "Batcave",
-  version: "1.4",
+  version: "1.5",
   description: "Pulls comics from batcave.biz",
   website: BASE_URL,
   rating: CatalogRating.SAFE,
