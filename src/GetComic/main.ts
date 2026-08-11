@@ -137,17 +137,23 @@ class GetComicsSource implements ContentSource, SearchProvider, PageLinkResolver
     const $ = await this.fetchCheerio(contentUrl(contentId));
     const downloadUrl = findDownloadNowUrl($);
 
-    if (downloadUrl) {
-      try {
-        return { pages: await fetchArchivePages(this.client, downloadUrl) };
-      } catch {
-        // fall through to the error below
-      }
+    const fallback = `Use the Download Links on ${contentUrl(contentId)} to get this release.`;
+
+    if (!downloadUrl) {
+      throw new Error(
+        `No "DOWNLOAD NOW" link found on the page for "${contentId}" -- the .aio-button-center markup may have changed. ${fallback}`,
+      );
     }
 
-    throw new Error(
-      `"${contentId}" is not readable in-app. Use the Download Links on ${contentUrl(contentId)} to get this release.`,
-    );
+    try {
+      return { pages: await fetchArchivePages(this.client, downloadUrl) };
+    } catch (error) {
+      // The unpack trace rides along on the message: it is the only diagnostic
+      // channel guaranteed to reach the app UI, since the runtime may not
+      // install a `console` at all.
+      const detail = error instanceof Error ? error.message : String(error);
+      throw new Error(`"${contentId}" is not readable in-app.\n\n${detail}\n\n${fallback}`);
+    }
   }
 
   async getSectionsForPage(_link: PageLink): Promise<PageSection[]> {
@@ -338,4 +344,4 @@ function parsePublishDate($: CheerioAPI): Date | undefined {
   return isNaN(date.getTime()) ? undefined : date;
 }
 
-export class Target extends GetComicsSource { }
+export class Target extends GetComicsSource {}
