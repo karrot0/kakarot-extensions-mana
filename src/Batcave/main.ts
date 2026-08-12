@@ -34,7 +34,7 @@ import { BASE_URL, buildClient, buildImageRequest } from "./network.ts";
 const info: SourceInfo = {
   id: "batcave",
   name: "Batcave",
-  version: "1.5",
+  version: "1.6",
   description: "Pulls comics from batcave.biz",
   website: BASE_URL,
   rating: CatalogRating.SAFE,
@@ -166,19 +166,22 @@ class BatcaveSource
     }
 
     let parsed: { chapters?: RawChapter[] };
+
     try {
       parsed = JSON.parse(match[1]) as { chapters?: RawChapter[] };
     } catch {
       return chapters;
     }
 
-    let index = 0;
-    for (const raw of parsed.chapters ?? []) {
-      if (typeof raw.id !== "number") continue;
+    const sortedChapters = (parsed.chapters ?? [])
+        .filter((raw) => typeof raw.id === "number")
+        .sort((a, b) => a.posi - b.posi);
+
+    for (const [index, raw] of sortedChapters.entries()) {
       chapters.push({
         chapterId: raw.id.toString(),
         number: raw.posi,
-        index: index++,
+        index,
         date: parsePublishDate(raw.date) ?? new Date(0),
         language: DefinedLanguages.ENGLISH,
         title: raw.title?.trim() || `Chapter ${raw.posi}`,
