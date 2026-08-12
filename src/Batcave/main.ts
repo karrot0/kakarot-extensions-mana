@@ -174,8 +174,8 @@ class BatcaveSource
     }
 
     const sortedChapters = (parsed.chapters ?? [])
-        .filter((raw) => typeof raw.id === "number")
-        .sort((a, b) => a.posi - b.posi);
+      .filter((raw) => typeof raw.id === "number")
+      .sort((a, b) => a.posi - b.posi);
 
     for (const [index, raw] of sortedChapters.entries()) {
       chapters.push({
