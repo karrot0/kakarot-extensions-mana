@@ -4,7 +4,7 @@
     {
       "id": "batcave",
       "name": "Batcave",
-      "version": "1.5",
+      "version": "1.6",
       "description": "Pulls comics from batcave.biz",
       "website": "https://batcave.biz",
       "rating": 0,
@@ -20,7 +20,7 @@
       "path": "Batcave",
       "environment": "source",
       "intents": 2102284,
-      "hash": "3a8a4add3a8a4add3a8a4add3a8a4add3a8a4add3a8a4add3a8a4add3a8a4add"
+      "hash": "387fae80387fae80387fae80387fae80387fae80387fae80387fae80387fae80"
     },
     {
       "id": "getcomics",
@@ -41,7 +41,7 @@
       "path": "GetComics",
       "environment": "source",
       "intents": 2102280,
-      "hash": "52449b5a52449b5a52449b5a52449b5a52449b5a52449b5a52449b5a52449b5a"
+      "hash": "3427688734276887342768873427688734276887342768873427688734276887"
     },
     {
       "id": "ocecomic",
@@ -62,7 +62,7 @@
       "path": "OceComic",
       "environment": "source",
       "intents": 2102280,
-      "hash": "3860000538600005386000053860000538600005386000053860000538600005"
+      "hash": "4133f93f4133f93f4133f93f4133f93f4133f93f4133f93f4133f93f4133f93f"
     },
     {
       "id": "template",
@@ -78,7 +78,7 @@
       "path": "Template",
       "environment": "source",
       "intents": 2102280,
-      "hash": "047a9a1c047a9a1c047a9a1c047a9a1c047a9a1c047a9a1c047a9a1c047a9a1c"
+      "hash": "751961d3751961d3751961d3751961d3751961d3751961d3751961d3751961d3"
     },
     {
       "id": "zipcomic",
@@ -99,7 +99,7 @@
       "path": "ZipComic",
       "environment": "source",
       "intents": 2102280,
-      "hash": "673024c7673024c7673024c7673024c7673024c7673024c7673024c7673024c7"
+      "hash": "1263d75c1263d75c1263d75c1263d75c1263d75c1263d75c1263d75c1263d75c"
     }
   ]
 }
