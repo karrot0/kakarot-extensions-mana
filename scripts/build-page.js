@@ -26,6 +26,122 @@ try {
 let pkg = {};
 try { pkg = JSON.parse(fs.readFileSync(path.join(cwd, "package.json"), "utf-8")); } catch {}
 
+/**
+ * Parses CHANGELOG.md's `## Extension (current: vX.Y.Z)` / `### heading` /
+ * `- item` structure. Wrapped bullet lines (indented continuation, no
+ * leading "-") are folded back onto the previous item so authors can wrap
+ * long entries in the source file without it showing up as a second bullet.
+ * @param {string} markdown
+ */
+function parseChangelog(markdown) {
+  /** @type {{ name: string; version: string; entries: { heading: string; items: string[] }[] }[]} */
+  const extensions = [];
+  let currentExt = /** @type {typeof extensions[number] | null} */ (null);
+  let currentEntry = /** @type {typeof extensions[number]["entries"][number] | null} */ (null);
+
+  for (const rawLine of markdown.split(/\r?\n/)) {
+    const line = rawLine.trimEnd();
+
+    const extMatch = /^##\s+(.+?)\s*\(current:\s*v?([^)]+)\)\s*$/.exec(line);
+    if (extMatch) {
+      currentExt = { name: extMatch[1].trim(), version: extMatch[2].trim(), entries: [] };
+      extensions.push(currentExt);
+      currentEntry = null;
+      continue;
+    }
+
+    const entryMatch = /^###\s+(.+?)\s*$/.exec(line);
+    if (entryMatch && currentExt) {
+      currentEntry = { heading: entryMatch[1].trim(), items: [] };
+      currentExt.entries.push(currentEntry);
+      continue;
+    }
+
+    const itemMatch = /^-\s+(.+)$/.exec(line);
+    if (itemMatch && currentEntry) {
+      currentEntry.items.push(itemMatch[1].trim());
+      continue;
+    }
+
+    if (currentEntry?.items.length && /^\s+\S/.test(rawLine)) {
+      const items = currentEntry.items;
+      items[items.length - 1] += ` ${line.trim()}`;
+    }
+  }
+
+  return extensions;
+}
+
+/** @param {string} str */
+function escapeHtml(str) {
+  return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+/** Escapes text, then renders markdown `code` spans -- the only inline markdown a changelog entry needs. @param {string} text */
+function renderInline(text) {
+  return escapeHtml(text).replace(
+    /`([^`]+)`/g,
+    '<code class="px-1 py-0.5 rounded bg-zinc-800 text-zinc-300 text-[11px] font-mono">$1</code>',
+  );
+}
+
+/** @param {ReturnType<typeof parseChangelog>} extensions */
+function changelogSection(extensions) {
+  if (!extensions.length) return "";
+
+  const blocks = extensions
+    .map(
+      (ext, i) => `
+<details class="group rounded-xl border border-zinc-800 bg-zinc-900 overflow-hidden"${i === 0 ? " open" : ""}>
+  <summary class="cursor-pointer select-none list-none flex items-center justify-between gap-3 px-4 py-3 hover:bg-zinc-800/50 transition-colors">
+    <div class="flex items-center gap-2">
+      <span class="text-sm font-semibold text-zinc-100">${escapeHtml(ext.name)}</span>
+      <span class="text-[10px] font-mono text-zinc-500 bg-zinc-800 px-1.5 py-0.5 rounded border border-zinc-700">v${escapeHtml(ext.version)}</span>
+    </div>
+    <svg class="w-4 h-4 text-zinc-500 transition-transform group-open:rotate-180" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+  </summary>
+  <div class="px-4 pb-4 space-y-4 border-t border-zinc-800 pt-3">
+    ${ext.entries
+      .map(
+        (entry) => `
+    <div>
+      <p class="text-xs font-medium text-zinc-400 mb-1.5">${escapeHtml(entry.heading)}</p>
+      <ul class="space-y-1">
+        ${entry.items
+          .map(
+            (item) =>
+              `<li class="text-xs text-zinc-500 leading-relaxed pl-3 relative before:content-['—'] before:absolute before:left-0 before:text-zinc-700">${renderInline(item)}</li>`,
+          )
+          .join("\n        ")}
+      </ul>
+    </div>`,
+      )
+      .join("\n")}
+  </div>
+</details>`,
+    )
+    .join("\n");
+
+  return `
+    <!-- changelog -->
+    <div class="space-y-3">
+      <div class="flex items-center justify-between">
+        <h1 class="text-base font-semibold text-zinc-100">Changelog</h1>
+        <a href="CHANGELOG.md" class="text-[11px] text-zinc-500 hover:text-zinc-300 transition-colors">View raw</a>
+      </div>
+      <div class="space-y-2.5">
+        ${blocks}
+      </div>
+    </div>`;
+}
+
+let changelogExtensions = /** @type {ReturnType<typeof parseChangelog>} */ ([]);
+try {
+  changelogExtensions = parseChangelog(fs.readFileSync(path.join(cwd, "CHANGELOG.md"), "utf-8"));
+} catch {
+  process.stderr.write("[mana-dev] CHANGELOG.md not found -- skipping changelog section\n");
+}
+
 const repoDisplayName = data.repositoryName ?? pkg.name ?? "Extensions";
 const homepage = pkg.homepage ?? "";
 const sourcesUrl = homepage
@@ -231,7 +347,7 @@ const html = `<!DOCTYPE html>
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
 ${cards}
     </div>
-
+${changelogSection(changelogExtensions)}
   </main>
 
   <footer class="border-t border-zinc-800 mt-12">
@@ -259,4 +375,11 @@ ${cards}
 </html>`;
 
 fs.writeFileSync(path.join(distDir, "index.html"), html, "utf-8");
+
+// Copied alongside index.html so the "View raw" changelog link resolves on GitHub Pages too.
+const changelogSrc = path.join(cwd, "CHANGELOG.md");
+if (fs.existsSync(changelogSrc)) {
+  fs.copyFileSync(changelogSrc, path.join(distDir, "CHANGELOG.md"));
+}
+
 process.stdout.write("[mana-dev] \uD83C\uDF10 Generated dist/index.html\n");

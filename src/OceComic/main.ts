@@ -1,37 +1,56 @@
-import { load } from "cheerio";
-import type { CheerioAPI } from "cheerio";
+import { load, type Cheerio, type CheerioAPI } from "cheerio";
+import type { AnyNode } from "domhandler";
 import {
-  type ContentSource,
-  type SourceConfig,
-  type Content,
+  CatalogRating,
+  ContentRating,
   ContentType,
+  DefinedLanguages,
+  SectionStyle,
   type Chapter,
   type ChapterData,
   type ChapterPage,
-  type SearchRequest,
-  type PagedSearchResult,
-  type SourceInfo,
-  type SearchFilter,
-  CatalogRating,
-  DefinedLanguages,
-  type PageLinkResolver,
-  type PageLink,
-  type PageSection,
-  type ResolvedPageSection,
+  type Content,
+  type ContentSource,
   type Highlight,
+  type PageLink,
+  type PageLinkResolver,
+  type PageSection,
+  type PagedSearchResult,
+  type ResolvedPageSection,
+  type SearchForm,
+  type SearchProvider,
+  type SearchRequest,
+  type SortOption,
+  type SourceConfig,
+  type SourceInfo,
   type Tag,
-  SearchProvider,
-  SortOption,
-  SectionStyle,
 } from "@mana-app/types";
 
-import { FILTERS, FilterID } from "./model.ts";
-import { BASE_URL, buildClient } from "./network.ts";
+import { buildClient } from "./client.ts";
+import {
+  FilterReader,
+  buildSearchForm,
+  listResults,
+  pageOf,
+  resolveSortId,
+  sectionById,
+  toPageSections,
+  type SectionSpec,
+} from "./forms/index.ts";
+import {
+  BASE_URL,
+  FilterID,
+  GENRE_FIELD,
+  ListID,
+  MATURE_GENRE,
+  SORT_OPTIONS,
+  SortID,
+} from "./model.ts";
 
 const info: SourceInfo = {
   id: "ocecomic",
   name: "OceComic",
-  version: "1.0.0",
+  version: "1.1.0",
   description: "Pulls comics from ocecomic.com",
   website: BASE_URL,
   rating: CatalogRating.MIXED,
@@ -41,188 +60,182 @@ const info: SourceInfo = {
 };
 
 const config: SourceConfig = {
-  disableTagNavigation: false,
   disableUpdateChecks: false,
-  allowsMultipleInstances: false,
   owningLinks: ["ocecomic.com", "www.ocecomic.com"],
-  requiresAuthenticationToAccessContent: false,
 };
 
 class OceComicSource implements ContentSource, SearchProvider, PageLinkResolver {
   readonly info = info;
   readonly config = config;
 
-  private client!: NetworkClient;
+  private client: NetworkClient | undefined;
 
-  async onEnvironmentLoaded(): Promise<void> {
-    this.client = buildClient();
+  private get http(): NetworkClient {
+    this.client ??= buildClient({ baseUrl: BASE_URL, requests: 5, interval: 1 });
+    return this.client;
   }
 
-  async getSearchFilters(): Promise<SearchFilter[]> {
-    return FILTERS;
+  private async fetchHtml(url: string): Promise<CheerioAPI> {
+    const response = await this.http.get(url);
+    return load(response.data);
   }
 
-  async getSortOptions(): Promise<SortOption[]> {
+  private sections(): SectionSpec[] {
     return [
-      { id: "latest", title: "Latest", isDefault: true, isOrderable: false },
-      { id: "popular", title: "Popular", isOrderable: false },
-      { id: "newer", title: "Newest", isOrderable: false },
-      { id: "older", title: "Oldest", isOrderable: false },
+      {
+        id: ListID.New,
+        title: "New Comics",
+        style: SectionStyle.SimpleSingleRow,
+        load: (page) => this.listing("all", SortID.Latest, page),
+      },
+      {
+        id: ListID.Popular,
+        title: "Popular Comics",
+        style: SectionStyle.SimpleSingleRow,
+        load: (page) => this.listing("all", SortID.Popular, page),
+      },
     ];
   }
 
-  async search(request: SearchRequest): Promise<PagedSearchResult> {
-    if (request.listId) {
-      return this.getViewMoreItems(request);
-    }
+  async getSearchForm(): Promise<SearchForm> {
+    return buildSearchForm({ tags: GENRE_FIELD, tagsHeader: "Genre" });
+  }
 
-    const page = request.page > 0 ? request.page : 1;
-    const sort = request.sort?.id || "latest";
+  async getSortOptions(): Promise<SortOption[]> {
+    return SORT_OPTIONS;
+  }
+
+  async getSectionsForPage(_link: PageLink): Promise<PageSection[]> {
+    return toPageSections(this.sections());
+  }
+
+  async resolvePageSection(_link: PageLink, sectionID: string): Promise<ResolvedPageSection> {
+    const spec = sectionById(this.sections(), sectionID);
+    if (!spec) return { items: [] };
+    const { results } = await spec.load(1);
+    return { items: results };
+  }
+
+  async search(request: SearchRequest): Promise<PagedSearchResult> {
+    const list = listResults(this.sections(), request);
+    if (list) return list;
+
+    const page = pageOf(request);
+    const sort = resolveSortId(SORT_OPTIONS, request, SortID.Latest);
     const query = request.query?.trim() ?? "";
 
     if (query) {
-      const $ = await this.fetchCheerio(searchUrl(query, sort, page));
+      const $ = await this.fetchHtml(searchUrl(query, sort, page));
       return { results: parseCards($), isLastPage: isLastPage($, page) };
     }
 
-    const filters = (request.filters ?? {}) as Record<string, unknown>;
-    const genre = (filters[FilterID.Genre] as string) || "all";
-
-    const $ = await this.fetchCheerio(listingUrl(genre, sort, page));
-    return { results: parseCards($), isLastPage: isLastPage($, page) };
+    const genre = new FilterReader(request).option(FilterID.Genre, "all");
+    return this.listing(genre, sort, page);
   }
 
   async getContent(contentId: string): Promise<Content> {
-    const $ = await this.fetchCheerio(contentUrl(contentId));
+    const url = contentUrl(contentId);
+    const $ = await this.fetchHtml(url);
 
-    const title = $(".detail .title h1").first().text().trim() || contentId;
-    const cover = absoluteUrl($(".page.home img").first().attr("src"));
-    const summary = $(".about").first().text().replace(/\s+/g, " ").trim();
-
-    const fields: Record<string, string[]> = {};
-    $(".info ul").each((_, ul) => {
-      const el = $(ul);
-      const label = el.find("li").first().text().trim().toLowerCase();
-      const linkTitles = el
-        .find("li a")
-        .toArray()
-        .map((a) => $(a).text().trim())
-        .filter(Boolean);
-      fields[label] = linkTitles;
-    });
-
+    const fields = parseFields($);
     const genreTitles = [...(fields["theme"] ?? []), ...(fields["genre"] ?? [])];
-    const tags: Tag[] = genreTitles.map((genreTitle) => ({
-      id: genreTitle.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
-      title: genreTitle,
-    }));
+    const tags: Tag[] = genreTitles.map((title) => ({ id: slug(title), title }));
 
     return {
-      title,
-      cover,
-      summary,
+      title: text($(".detail .title h1").first()) || contentId,
+      cover: absolute(imageSrc($(".page.home img").first())),
+      summary: text($(".about").first()),
       tags,
       contentType: ContentType.COMIC,
-      isNSFW: genreTitles.some((genreTitle) => /mature/i.test(genreTitle)),
-      webUrl: contentUrl(contentId),
+      contentRating: genreTitles.some((genre) => MATURE_GENRE.test(genre))
+        ? ContentRating.MATURE
+        : ContentRating.SAFE,
+      webUrl: url,
     };
   }
 
   async getChapters(contentId: string): Promise<Chapter[]> {
-    const $ = await this.fetchCheerio(contentUrl(contentId));
+    const $ = await this.fetchHtml(contentUrl(contentId));
     const chapters: Chapter[] = [];
 
-    let index = 0;
-    $("a.issue-link").each((_, element) => {
+    for (const element of $("a.issue-link").toArray()) {
       const link = $(element);
       const chapterId = parseChapterId(link.attr("href"));
-      if (!chapterId) return;
+      if (!chapterId) continue;
 
-      const title = link.text().replace(/\s+/g, " ").trim();
-      const numMatch = /#\s*([\d.]+)/.exec(title);
-      const number = numMatch ? parseFloat(numMatch[1]) : index + 1;
+      const title = text(link);
+      const number = chapterNumber(title, chapters.length + 1);
 
       chapters.push({
         chapterId,
         number,
-        index: index++,
+        index: chapters.length,
         date: new Date(0),
         language: DefinedLanguages.ENGLISH,
         title: title || `Issue #${number}`,
         webUrl: chapterUrl(contentId, chapterId),
       });
-    });
+    }
 
     return chapters;
   }
 
   async getChapterData(contentId: string, chapterId: string): Promise<ChapterData> {
-    const $ = await this.fetchCheerio(chapterUrl(contentId, chapterId));
+    const $ = await this.fetchHtml(chapterUrl(contentId, chapterId));
 
     const pages: ChapterPage[] = [];
-    $(".pages .page.issue img").each((_, element) => {
-      const url = ($(element).attr("src") ?? "").trim();
+    for (const element of $(".pages .page.issue img").toArray()) {
+      const url = absolute(imageSrc($(element)));
       if (url) pages.push({ url });
-    });
+    }
+
+    if (pages.length === 0) {
+      throw new Error(`No pages found for issue "${chapterId}" of "${contentId}".`);
+    }
 
     return { pages };
   }
 
-  async getSectionsForPage(_link: PageLink): Promise<PageSection[]> {
-    return [
-      {
-        id: "new",
-        title: "New Comics",
-        style: SectionStyle.SimpleSingleRow,
-        viewMoreLink: { request: { page: 1, listId: "new" } },
-      },
-      {
-        id: "popular",
-        title: "Popular Comics",
-        style: SectionStyle.SimpleSingleRow,
-        viewMoreLink: { request: { page: 1, listId: "popular" } },
-      },
-    ];
-  }
-
-  async resolvePageSection(_link: PageLink, sectionID: string): Promise<ResolvedPageSection> {
-    const $ = await this.fetchCheerio(this.sectionUrl(sectionID, 1));
-    return { items: parseCards($) };
-  }
-
-  private async getViewMoreItems(request: SearchRequest): Promise<PagedSearchResult> {
-    const page = request.page > 0 ? request.page : 1;
-    const listId = request.listId ?? "new";
-    const $ = await this.fetchCheerio(this.sectionUrl(listId, page));
+  private async listing(genre: string, sort: string, page: number): Promise<PagedSearchResult> {
+    const $ = await this.fetchHtml(listingUrl(genre, sort, page));
     return { results: parseCards($), isLastPage: isLastPage($, page) };
   }
-
-  private sectionUrl(sectionID: string, page: number): string {
-    switch (sectionID) {
-      case "popular":
-        return listingUrl("all", "popular", page);
-      case "new":
-      default:
-        return listingUrl("all", "latest", page);
-    }
-  }
-
-  private async fetchCheerio(url: string): Promise<CheerioAPI> {
-    const response = await this.client.get(url);
-    return load(response.data);
-  }
 }
 
-function parseComicId(href: string | undefined): string | undefined {
-  if (!href) return undefined;
-  const match = /\/comic\/(\d+\/[^/?#]+)/.exec(href);
-  return match ? match[1] : undefined;
+const LAZY_ATTRS = ["data-src", "data-original", "data-lazy-src", "srcset", "src"];
+
+function text(node: Cheerio<AnyNode>): string {
+  return node.text().replace(/\s+/g, " ").trim();
 }
 
-function parseChapterId(href: string | undefined): string | undefined {
-  if (!href) return undefined;
-  const match = /\/comic\/\d+\/([^/?#]+)/.exec(href);
-  return match ? match[1] : undefined;
+function imageSrc(node: Cheerio<AnyNode>): string {
+  for (const name of LAZY_ATTRS) {
+    const raw = (node.attr(name) ?? "").trim();
+    const first = raw.split(",")[0]?.trim().split(/\s+/)[0];
+    if (first) return first;
+  }
+  return "";
+}
+
+function absolute(raw: string): string {
+  const value = raw.trim();
+  if (!value) return "";
+  if (value.startsWith("//")) return `https:${value}`;
+  if (/^[a-z][a-z0-9+.-]*:/i.test(value)) return value;
+  return `${BASE_URL}/${value.replace(/^\/+/, "")}`;
+}
+
+function slug(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+function chapterNumber(title: string, fallback: number): number {
+  const match = /#\s*(\d+(?:\.\d+)?)/.exec(title) ?? /(\d+(?:\.\d+)?)\s*$/.exec(title);
+  const parsed = Number.parseFloat(match?.[1] ?? "");
+  return Number.isFinite(parsed) ? parsed : fallback;
 }
 
 function contentUrl(contentId: string): string {
@@ -230,14 +243,7 @@ function contentUrl(contentId: string): string {
 }
 
 function chapterUrl(contentId: string, chapterId: string): string {
-  const numericId = contentId.split("/")[0];
-  return `${BASE_URL}/comic/${numericId}/${chapterId}`;
-}
-
-function absoluteUrl(raw: string | undefined): string {
-  const url = (raw ?? "").trim();
-  if (!url) return "";
-  return url.startsWith("http") ? url : `${BASE_URL}${url.startsWith("/") ? "" : "/"}${url}`;
+  return `${BASE_URL}/comic/${contentId.split("/")[0] ?? ""}/${chapterId}`;
 }
 
 function listingUrl(genre: string, sort: string, page: number): string {
@@ -250,48 +256,75 @@ function searchUrl(query: string, sort: string, page: number): string {
   return page > 1 ? `${base}/page/${page}` : base;
 }
 
+function parseComicId(href: string | undefined): string {
+  return /\/comic\/(\d+\/[^/?#]+)/.exec(href ?? "")?.[1] ?? "";
+}
+
+function parseChapterId(href: string | undefined): string {
+  return /\/comic\/\d+\/([^/?#]+)/.exec(href ?? "")?.[1] ?? "";
+}
+
+function parseFields($: CheerioAPI): Record<string, string[]> {
+  const fields: Record<string, string[]> = {};
+
+  for (const element of $(".info ul").toArray()) {
+    const list = $(element);
+    const label = text(list.find("li").first()).toLowerCase();
+    fields[label] = list
+      .find("li a")
+      .toArray()
+      .map((anchor) => text($(anchor)))
+      .filter(Boolean);
+  }
+
+  return fields;
+}
+
+/**
+ * ocecomic.com truncates listing titles mid UTF-8 character before appending
+ * "...", leaving an unencodable fragment. Cut from the corruption point rather
+ * than ship an invalid string back to the app.
+ */
+function sanitizeTitle(raw: string): string {
+  let value = raw;
+  const replacementIndex = value.indexOf("�");
+  if (replacementIndex >= 0) {
+    value = value.slice(0, replacementIndex);
+  } else {
+    value = value.replace(/[Â-ô]\s*\.{2,}\s*$/, "");
+  }
+  return value.replace(/[.\s]+$/, "").trim();
+}
+
 function parseCards($: CheerioAPI): Highlight[] {
   const results: Highlight[] = [];
 
-  $(".items .item").each((_, element) => {
+  for (const element of $(".items .item").toArray()) {
     const item = $(element);
     const anchor = item.find("figure a").first();
     const id = parseComicId(anchor.attr("href"));
-    if (!id) return;
+    if (!id) continue;
 
     const img = anchor.find("img").first();
-    const cover = absoluteUrl(img.attr("src"));
-    const rawTitle = item.find("h2 a").first().text().trim() || img.attr("alt")?.trim() || id;
-    const title = sanitizeText(rawTitle) || id;
+    const rawTitle =
+      text(item.find("h2 a").first()) || (img.attr("alt") ?? "").replace(/\s+/g, " ").trim() || id;
 
-    results.push({ id, title, cover, webUrl: contentUrl(id) });
-  });
+    results.push({
+      id,
+      title: sanitizeTitle(rawTitle) || id,
+      cover: absolute(imageSrc(img)),
+      contentRating: ContentRating.SAFE,
+      webUrl: contentUrl(id),
+    });
+  }
 
   return results;
-}
-
-function sanitizeText(raw: string): string {
-  // ocecomic.com sometimes truncates listing titles mid UTF-8 character
-  // (byte-unsafe server-side substring) before appending "...", leaving an
-  // unencodable fragment. Cut from the corruption point rather than ship
-  // an invalid string back to the app.
-  let text = raw;
-  const replacementIndex = text.indexOf("�");
-  if (replacementIndex >= 0) {
-    text = text.slice(0, replacementIndex);
-  } else {
-    // Guard the case where the truncated lead byte survives as a literal
-    // high codepoint (a valid UTF-8 lead byte is 0xC2-0xF4) right before
-    // the site's "..." suffix, instead of being replaced with U+FFFD.
-    text = text.replace(/[Â-ô]\s*\.{2,}\s*$/, "");
-  }
-  return text.replace(/[.\s]+$/, "").trim();
 }
 
 function totalPages($: CheerioAPI): number {
   const options = $(".pagin select[name='page'] option");
   if (options.length === 0) return 1;
-  const last = parseInt(options.last().attr("value") ?? "1", 10);
+  const last = Number.parseInt(options.last().attr("value") ?? "1", 10);
   return Number.isFinite(last) && last > 0 ? last : 1;
 }
 

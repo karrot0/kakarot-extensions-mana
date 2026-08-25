@@ -1,4 +1,7 @@
-import type { SearchFilter } from "@mana-app/types";
+export const BASE_URL = "https://www.zipcomic.com";
 
-// zipcomic.com only exposes a free-text search, no filterable facets.
-export const FILTERS: SearchFilter[] = [];
+export const ListID = {
+  Latest: "latest",
+} as const;
+
+export const MATURE_GENRE = /mature|adult|ecchi|smut/i;

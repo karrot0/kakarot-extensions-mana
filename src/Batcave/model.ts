@@ -1,10 +1,20 @@
-import { type SearchFilter, FilterType } from "@mana-app/types";
+import { SearchPicker, type Option } from "@mana-app/types";
 
-export enum FilterID {
-  Genre = "genre",
-}
+export const BASE_URL = "https://batcave.biz";
 
-export const GENRE_OPTIONS = [
+export const CDN_ORIGINS = ["https://readcomicsonline.ru"];
+
+export const FilterID = {
+  Genre: "genre",
+} as const;
+
+export const ListID = {
+  Popular: "popular",
+  Catalogue: "catalogue",
+  New: "new",
+} as const;
+
+export const GENRE_OPTIONS: Option[] = [
   { id: "", title: "Any" },
   { id: "Action", title: "Action" },
   { id: "Adventure", title: "Adventure" },
@@ -57,11 +67,25 @@ export const GENRE_OPTIONS = [
   { id: "Zombies", title: "Zombies" },
 ];
 
-export const FILTERS: SearchFilter[] = [
-  {
-    id: FilterID.Genre,
-    title: "Genre",
-    type: FilterType.SELECT,
-    options: GENRE_OPTIONS,
-  },
-];
+export const GENRE_FIELD = SearchPicker({
+  id: FilterID.Genre,
+  title: "Genre",
+  options: GENRE_OPTIONS,
+});
+
+export type RawChapter = {
+  id: number;
+  title?: string;
+  posi: number;
+  date?: string;
+};
+
+export type ChapterPayload = {
+  chapters?: RawChapter[];
+};
+
+export type ChapterDataResponse = {
+  success?: boolean;
+  error?: string;
+  data?: { images?: string[] };
+};

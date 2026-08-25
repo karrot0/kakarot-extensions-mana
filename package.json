@@ -10,6 +10,9 @@
     "postbuild": "node scripts/build-page.js",
     "lint": "oxlint src/",
     "lint:fix": "oxlint --fix src/",
+    "typecheck": "tsc --noEmit",
+    "verify": "node scripts/verify-source.mjs",
+    "new-source": "node scripts/new-source.mjs",
     "format": "oxfmt src/",
     "format:check": "oxfmt --check src/"
   },
@@ -24,7 +27,8 @@
     "@mana-app/dev": "^0.1.13",
     "@mana-app/types": "^0.0.24",
     "oxfmt": "^0.50.0",
-    "oxlint": "^1.65.0"
+    "oxlint": "^1.65.0",
+    "typescript": "^7.0.2"
   },
   "dependencies": {
     "cheerio": "^1.2.0",

@@ -1,10 +1,24 @@
-import { type SearchFilter, FilterType } from "@mana-app/types";
+import { SearchPicker, type Option, type SortOption } from "@mana-app/types";
 
-export enum FilterID {
-  Genre = "genre",
-}
+export const BASE_URL = "https://ocecomic.com";
 
-export const GENRE_OPTIONS = [
+export const FilterID = {
+  Genre: "genre",
+} as const;
+
+export const SortID = {
+  Latest: "latest",
+  Popular: "popular",
+  Newer: "newer",
+  Older: "older",
+} as const;
+
+export const ListID = {
+  New: "new",
+  Popular: "popular",
+} as const;
+
+export const GENRE_OPTIONS: Option[] = [
   { id: "all", title: "All" },
   { id: "action", title: "Action" },
   { id: "adventure", title: "Adventure" },
@@ -43,11 +57,17 @@ export const GENRE_OPTIONS = [
   { id: "zombie", title: "Zombie" },
 ];
 
-export const FILTERS: SearchFilter[] = [
-  {
-    id: FilterID.Genre,
-    title: "Genre",
-    type: FilterType.SELECT,
-    options: GENRE_OPTIONS,
-  },
+export const GENRE_FIELD = SearchPicker({
+  id: FilterID.Genre,
+  title: "Genre",
+  options: GENRE_OPTIONS,
+});
+
+export const SORT_OPTIONS: SortOption[] = [
+  { id: SortID.Latest, title: "Latest", isDefault: true, isOrderable: false },
+  { id: SortID.Popular, title: "Popular", isOrderable: false },
+  { id: SortID.Newer, title: "Newest", isOrderable: false },
+  { id: SortID.Older, title: "Oldest", isOrderable: false },
 ];
+
+export const MATURE_GENRE = /mature/i;
