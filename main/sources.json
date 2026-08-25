@@ -4,7 +4,7 @@
     {
       "id": "batcave",
       "name": "Batcave",
-      "version": "1.6",
+      "version": "1.7.0",
       "description": "Pulls comics from batcave.biz",
       "website": "https://batcave.biz",
       "rating": 0,
@@ -19,34 +19,34 @@
       ],
       "path": "Batcave",
       "environment": "source",
-      "intents": 2102284,
-      "hash": "34efcaf334efcaf334efcaf334efcaf334efcaf334efcaf334efcaf334efcaf3"
+      "intents": 2100236,
+      "hash": "0c74b8d10c74b8d10c74b8d10c74b8d10c74b8d10c74b8d10c74b8d10c74b8d1"
     },
     {
-      "id": "getcomics",
-      "name": "GetComics",
-      "version": "1.0.0",
-      "description": "Pulls comics from getcomics.org",
-      "website": "https://getcomics.org",
-      "rating": 0,
+      "id": "kakarotcomics",
+      "name": "KakarotComics",
+      "version": "1.2.0",
+      "description": "Kakarot Comics",
+      "website": "https://comics.karrot.dev",
+      "rating": 1,
       "supportedLanguages": [
         "en_US"
       ],
-      "thumbnail": "icon.png",
+      "thumbnail": "assets/icon.jpg",
       "developers": [
         {
           "name": "Karrot"
         }
       ],
-      "path": "GetComics",
+      "path": "KakarotComics",
       "environment": "source",
-      "intents": 2102280,
-      "hash": "3097876030978760309787603097876030978760309787603097876030978760"
+      "intents": 10492937,
+      "hash": "29d7ecdb29d7ecdb29d7ecdb29d7ecdb29d7ecdb29d7ecdb29d7ecdb29d7ecdb"
     },
     {
       "id": "ocecomic",
       "name": "OceComic",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "description": "Pulls comics from ocecomic.com",
       "website": "https://ocecomic.com",
       "rating": 1,
@@ -61,29 +61,34 @@
       ],
       "path": "OceComic",
       "environment": "source",
-      "intents": 2102280,
-      "hash": "44c3dcca44c3dcca44c3dcca44c3dcca44c3dcca44c3dcca44c3dcca44c3dcca"
+      "intents": 2104328,
+      "hash": "0114176601141766011417660114176601141766011417660114176601141766"
     },
     {
       "id": "template",
       "name": "Template",
-      "version": "1.0.0",
-      "description": "template source for mana",
-      "website": "",
+      "version": "2.0.0",
+      "description": "Starting point for a Mana content source",
+      "website": "https://example.com",
       "rating": 0,
       "supportedLanguages": [
         "en_US"
       ],
-      "thumbnail": "icon.png",
+      "thumbnail": "assets/icon.png",
+      "developers": [
+        {
+          "name": "Developer"
+        }
+      ],
       "path": "Template",
       "environment": "source",
-      "intents": 2102280,
-      "hash": "78a945a478a945a478a945a478a945a478a945a478a945a478a945a478a945a4"
+      "intents": 2104329,
+      "hash": "582421f3582421f3582421f3582421f3582421f3582421f3582421f3582421f3"
     },
     {
       "id": "zipcomic",
       "name": "ZipComic",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "description": "Pulls comics from zipcomic.com",
       "website": "https://www.zipcomic.com",
       "rating": 1,
@@ -98,8 +103,8 @@
       ],
       "path": "ZipComic",
       "environment": "source",
-      "intents": 2102280,
-      "hash": "15f3b89e15f3b89e15f3b89e15f3b89e15f3b89e15f3b89e15f3b89e15f3b89e"
+      "intents": 2098184,
+      "hash": "62c6ad2062c6ad2062c6ad2062c6ad2062c6ad2062c6ad2062c6ad2062c6ad20"
     }
   ]
 }
