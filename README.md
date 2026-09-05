@@ -1,9 +1,12 @@
 <div align="center">
-  <h1>Kakarot Extensions</h1>
-  <p>A collection of content sources for the <a href="https://github.com/Mana-iOS/mana-dev">Mana</a> app, built with <code>@mana-app/dev</code>.</p>
-
-  <img src="https://img.shields.io/github/actions/workflow/status/karrot0/kakarot-extensions-mana/test.yaml?label=test" alt="Tests">
-  <img src="https://img.shields.io/github/actions/workflow/status/karrot0/kakarot-extensions-mana/bundle-deploy.yaml?label=build" alt="Deploy">
+  <img src=".github/assets/header.svg" alt="Kakarot Extensions" width="100%">
+  <br><br>
+  <a href="https://karrot0.github.io/kakarot-extensions-mana"><img src="https://img.shields.io/badge/Add_to_Mana-dc2626?style=for-the-badge&labelColor=0a0a0a&logo=apple&logoColor=white" alt="Add to Mana"></a>
+  <a href="CHANGELOG.md"><img src="https://img.shields.io/badge/Changelog-0a0a0a?style=for-the-badge&labelColor=dc2626&logo=git&logoColor=white" alt="Changelog"></a>
+  <a href="https://github.com/Mana-iOS/mana-dev"><img src="https://img.shields.io/badge/Mana-0a0a0a?style=for-the-badge&labelColor=dc2626&logo=github&logoColor=white" alt="Mana"></a>
+  <br><br>
+  <img src="https://img.shields.io/github/actions/workflow/status/karrot0/kakarot-extensions-mana/test.yaml?label=test&style=for-the-badge&labelColor=0a0a0a" alt="Tests">
+  <img src="https://img.shields.io/github/actions/workflow/status/karrot0/kakarot-extensions-mana/bundle-deploy.yaml?label=build&style=for-the-badge&labelColor=0a0a0a" alt="Deploy">
 </div>
 
 ---
@@ -22,12 +25,12 @@
 
 ## Sources
 
-| Name          | Version | Language | Rating |
-| ------------- | ------- | -------- | ------ |
-| Batcave       | 1.7.0   | English  | Safe   |
-| KakarotComics | 1.2.0   | English  | Mixed  |
-| OceComic      | 1.1.0   | English  | Mixed  |
-| ZipComic      | 1.1.0   | English  | Mixed  |
+|                                                                             | Name          | Version | Language | Rating |
+| :-------------------------------------------------------------------------: | ------------- | ------- | -------- | ------ |
+|    <img src="src/Batcave/assets/icon.png" width="28" height="28" alt="">    | Batcave       | 1.7.1   | English  | Safe   |
+| <img src="src/KakarotComics/assets/icon.jpg" width="28" height="28" alt=""> | KakarotComics | 1.2.1   | English  | Mixed  |
+|   <img src="src/OceComic/assets/icon.png" width="28" height="28" alt="">    | OceComic      | 1.2.1   | English  | Mixed  |
+|   <img src="src/Zipcomic/assets/icon.png" width="28" height="28" alt="">    | ZipComic      | 1.1.1   | English  | Mixed  |
 
 See [CHANGELOG.md](CHANGELOG.md) for what changed.
 
