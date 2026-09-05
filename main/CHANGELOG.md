@@ -4,7 +4,17 @@ Notable changes to the extensions in this repository, grouped by extension —
 each one versions independently (see `info.version` in its `main.ts`). Dates
 are UTC. Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## Batcave (current: v1.7.0)
+## Batcave (current: v1.7.1)
+
+### 2026-09-05 — @mana-app/types 0.0.25
+
+- Migrated to the `ChapterSource` interface. `getChapters`/`getChapterData` moved
+  off `ContentSource` in 0.0.25; the old declaration still compiled, so nothing
+  flagged it.
+- Dropped `SearchSortStyle`, removed from the types package. No source passed a
+  sort style, so the rendered form is unchanged.
+- Page fetches now go through `getText`, so a listing carrying malformed UTF-8
+  is recovered through a WebView instead of failing the request.
 
 ### 2026-08-25
 
@@ -20,7 +30,15 @@ are UTC. Format loosely follows [Keep a Changelog](https://keepachangelog.com/en
 - Removed `config.disableTagNavigation`, which was dropped from `SourceConfig`.
 - Network client, image referer rules and parsing moved onto the shared toolkit.
 
-## KakarotComics (current: v1.2.0)
+## KakarotComics (current: v1.2.1)
+
+### 2026-09-05 — @mana-app/types 0.0.25
+
+- Migrated to the `ChapterSource` interface. `getChapters`/`getChapterData` moved
+  off `ContentSource` in 0.0.25; the old declaration still compiled, so nothing
+  flagged it.
+- Dropped `SearchSortStyle`, removed from the types package. No source passed a
+  sort style, so the rendered form is unchanged.
 
 ### 2026-08-25 — Settings fix
 
@@ -61,7 +79,30 @@ are UTC. Format loosely follows [Keep a Changelog](https://keepachangelog.com/en
   and issues, with search, a publisher-allowlist preference, and page
   reading proxied through the server.
 
-## OceComic (current: v1.1.0)
+## OceComic (current: v1.2.1)
+
+### 2026-09-05 — @mana-app/types 0.0.25
+
+- Migrated to the `ChapterSource` interface. `getChapters`/`getChapterData` moved
+  off `ContentSource` in 0.0.25; the old declaration still compiled, so nothing
+  flagged it.
+- Dropped `SearchSortStyle`, removed from the types package. No source passed a
+  sort style, so the rendered form is unchanged.
+- Card titles are cut at the U+FFFD the WebView substitutes even when the title
+  comes from the `title` attribute, not just from the visible link text.
+
+### 2026-08-25 — Listing pages load again
+
+- **Sections failed with "String could not be serialized with encoding: Unicode
+  (UTF-8)".** ocecomic.com truncates card titles and blurbs at a fixed byte
+  count, cutting multi-byte characters in half, so listing pages ship bytes that
+  are not valid UTF-8. Mana decodes response bodies natively before a source
+  sees them, so the request rejected outright — five of eight "New Comics" pages
+  sampled were affected. Pages the bridge cannot decode are now re-read through
+  an auxiliary WebView, whose parser substitutes U+FFFD for the malformed bytes
+  instead of failing.
+- Card titles are read from the untruncated `title` attribute rather than the
+  truncated link text, so results no longer end in "...".
 
 ### 2026-08-25
 
@@ -72,7 +113,17 @@ are UTC. Format loosely follows [Keep a Changelog](https://keepachangelog.com/en
   maps to `ContentRating.MATURE`.
 - Removed `config.disableTagNavigation`.
 
-## ZipComic (current: v1.1.0)
+## ZipComic (current: v1.1.1)
+
+### 2026-09-05 — @mana-app/types 0.0.25
+
+- Migrated to the `ChapterSource` interface. `getChapters`/`getChapterData` moved
+  off `ContentSource` in 0.0.25; the old declaration still compiled, so nothing
+  flagged it.
+- Dropped `SearchSortStyle`, removed from the types package. No source passed a
+  sort style, so the rendered form is unchanged.
+- Page fetches now go through `getText`, so a listing carrying malformed UTF-8
+  is recovered through a WebView instead of failing the request.
 
 ### 2026-08-25
 
@@ -88,7 +139,15 @@ are UTC. Format loosely follows [Keep a Changelog](https://keepachangelog.com/en
 - Registered `www.zipcomic.com` in `owningLinks`.
 - Initial implementation.
 
-## Template (current: v2.0.0)
+## Template (current: v2.0.1)
+
+### 2026-09-05 — @mana-app/types 0.0.25
+
+- Migrated to the `ChapterSource` interface. `getChapters`/`getChapterData` moved
+  off `ContentSource` in 0.0.25; the old declaration still compiled, so nothing
+  flagged it.
+- Dropped `SearchSortStyle`, removed from the types package. No source passed a
+  sort style, so the rendered form is unchanged.
 
 ### 2026-08-25
 

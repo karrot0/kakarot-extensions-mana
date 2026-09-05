@@ -1,10 +1,11 @@
 {
-  "repositoryName": "kakarot_extensions_mana",
+  "repositoryName": "Kakarot Extensions",
+  "thumbnail": "https://raw.githubusercontent.com/karrot0/kakarot-extensions-mana/refs/heads/gh-pages/main/sources/KakarotComics/assets/icon.jpg",
   "sources": [
     {
       "id": "batcave",
       "name": "Batcave",
-      "version": "1.7.0",
+      "version": "1.7.1",
       "description": "Pulls comics from batcave.biz",
       "website": "https://batcave.biz",
       "rating": 0,
@@ -20,12 +21,12 @@
       "path": "Batcave",
       "environment": "source",
       "intents": 2100236,
-      "hash": "513a49e7513a49e7513a49e7513a49e7513a49e7513a49e7513a49e7513a49e7"
+      "hash": "3e9b6d6f3e9b6d6f3e9b6d6f3e9b6d6f3e9b6d6f3e9b6d6f3e9b6d6f3e9b6d6f"
     },
     {
       "id": "kakarotcomics",
       "name": "KakarotComics",
-      "version": "1.2.0",
+      "version": "1.2.1",
       "description": "Kakarot Comics",
       "website": "https://comics.karrot.dev",
       "rating": 1,
@@ -41,12 +42,12 @@
       "path": "KakarotComics",
       "environment": "source",
       "intents": 10492937,
-      "hash": "33d718a933d718a933d718a933d718a933d718a933d718a933d718a933d718a9"
+      "hash": "0d703de40d703de40d703de40d703de40d703de40d703de40d703de40d703de4"
     },
     {
       "id": "ocecomic",
       "name": "OceComic",
-      "version": "1.1.0",
+      "version": "1.2.1",
       "description": "Pulls comics from ocecomic.com",
       "website": "https://ocecomic.com",
       "rating": 1,
@@ -62,12 +63,12 @@
       "path": "OceComic",
       "environment": "source",
       "intents": 2104328,
-      "hash": "5ec31ca85ec31ca85ec31ca85ec31ca85ec31ca85ec31ca85ec31ca85ec31ca8"
+      "hash": "1a2d4bba1a2d4bba1a2d4bba1a2d4bba1a2d4bba1a2d4bba1a2d4bba1a2d4bba"
     },
     {
       "id": "template",
       "name": "Template",
-      "version": "2.0.0",
+      "version": "2.0.1",
       "description": "Starting point for a Mana content source",
       "website": "https://example.com",
       "rating": 0,
@@ -83,12 +84,12 @@
       "path": "Template",
       "environment": "source",
       "intents": 2104329,
-      "hash": "4a2cdb8d4a2cdb8d4a2cdb8d4a2cdb8d4a2cdb8d4a2cdb8d4a2cdb8d4a2cdb8d"
+      "hash": "5b25d8355b25d8355b25d8355b25d8355b25d8355b25d8355b25d8355b25d835"
     },
     {
       "id": "zipcomic",
       "name": "ZipComic",
-      "version": "1.1.0",
+      "version": "1.1.1",
       "description": "Pulls comics from zipcomic.com",
       "website": "https://www.zipcomic.com",
       "rating": 1,
@@ -104,7 +105,7 @@
       "path": "ZipComic",
       "environment": "source",
       "intents": 2098184,
-      "hash": "3f8a50433f8a50433f8a50433f8a50433f8a50433f8a50433f8a50433f8a5043"
+      "hash": "79b13bca79b13bca79b13bca79b13bca79b13bca79b13bca79b13bca79b13bca"
     }
   ]
 }

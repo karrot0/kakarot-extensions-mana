@@ -3,7 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>kakarot_extensions_mana</title>
+  <title>Kakarot Extensions</title>
+  <link rel="icon" href="sources/KakarotComics/assets/icon.jpg" />
+  <link rel="apple-touch-icon" href="sources/KakarotComics/assets/icon.jpg" />
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     function imgErr(el) {
@@ -16,6 +18,13 @@
       theme: {
         extend: {
           fontFamily: { sans: ["Inter","ui-sans-serif","system-ui","sans-serif"] },
+          // Mirrors .github/assets/header.svg: text stays neutral, surfaces pick up its red-black.
+          colors: {
+            ink: {
+              50: "#fafafa", 100: "#f4f4f5", 300: "#d4d4d8", 400: "#a1a1aa", 500: "#71717a",
+              600: "#52525b", 700: "#3a2222", 800: "#261414", 900: "#160707", 950: "#0a0a0a",
+            },
+          },
         },
       },
     };
@@ -23,28 +32,60 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" />
   <style>
-    body { font-family: "Inter", ui-sans-serif, system-ui, sans-serif; }
+    body { font-family: "Inter", ui-sans-serif, system-ui, sans-serif; background-color: #0a0a0a; }
+
+    /* Ambient background: three soft red blobs drifting on slow, offset loops over the
+       banner's #0a0a0a -> #160707 base. Motion is on transform only, so it composites on
+       the GPU and never repaints the page. Blurring is done on the blob, not the layer. */
+    .bg { position: fixed; inset: 0; z-index: -1; overflow: hidden; pointer-events: none;
+          background: linear-gradient(135deg, #0a0a0a 0%, #160707 100%); }
+    .bg::after { content: ""; position: absolute; inset: 0;
+          background: radial-gradient(ellipse at center, transparent 55%, rgba(10,10,10,.4) 100%); }
+    .blob { position: absolute; width: 60vmax; height: 60vmax; border-radius: 50%;
+            filter: blur(70px); opacity: .8; will-change: transform; }
+    .blob-1 { top: -30vmax; right: -20vmax;
+              background: radial-gradient(circle, rgba(220,38,38,.75), rgba(220,38,38,0) 70%);
+              animation: drift-1 16s ease-in-out infinite; }
+    .blob-2 { bottom: -35vmax; left: -25vmax;
+              background: radial-gradient(circle, rgba(153,27,27,.7), rgba(153,27,27,0) 70%);
+              animation: drift-2 20s ease-in-out infinite; }
+    .blob-3 { top: 30%; left: 35%; width: 45vmax; height: 45vmax; opacity: .5;
+              background: radial-gradient(circle, rgba(239,68,68,.6), rgba(239,68,68,0) 70%);
+              animation: drift-3 24s ease-in-out infinite; }
+    @keyframes drift-1 { 0%,100% { transform: translate(0,0) scale(1); }
+                          50%     { transform: translate(-18vw, 22vh) scale(1.15); } }
+    @keyframes drift-2 { 0%,100% { transform: translate(0,0) scale(1); }
+                          50%     { transform: translate(22vw, -20vh) scale(1.1); } }
+    @keyframes drift-3 { 0%,100% { transform: translate(0,0) scale(1); }
+                          33%     { transform: translate(-16vw, -14vh) scale(1.2); }
+                          66%     { transform: translate(14vw, 12vh) scale(.9); } }
+    @media (prefers-reduced-motion: reduce) { .blob { animation: none; } }
+    ::selection { background: #dc2626; color: #fff; }
     .line-clamp-2 { display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden; }
     .truncate { overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
-    #copy-btn.copied { color:#4ade80; }
+    #copy-btn.copied { background:#7f1d1d; border-color:#7f1d1d; }
   </style>
 </head>
-<body class="bg-zinc-950 text-zinc-50 min-h-screen antialiased">
+<body class="bg-ink-950 text-ink-50 min-h-screen antialiased pt-[4.25rem] sm:pt-[4.5rem]">
+  <div class="bg" aria-hidden="true"><div class="blob blob-1"></div><div class="blob blob-2"></div><div class="blob blob-3"></div></div>
 
-  <!-- sticky header -->
-  <header class="sticky top-0 z-20 border-b border-zinc-800 bg-zinc-950/90 backdrop-blur-md">
-    <div class="max-w-5xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-4">
+  <!-- floating header -->
+  <header class="fixed inset-x-0 top-3 sm:top-4 z-20 px-3 sm:px-6">
+    <div class="max-w-5xl mx-auto h-14 px-4 sm:px-5 flex items-center justify-between gap-4 rounded-2xl border border-ink-800 bg-ink-950/80 backdrop-blur-md shadow-lg shadow-black/50">
       <div class="flex items-center gap-2.5">
-        <svg class="w-5 h-5 text-zinc-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
-          <path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/>
-        </svg>
-        <span class="font-semibold text-sm text-zinc-100">kakarot_extensions_mana</span>
-        <span class="hidden sm:inline-flex items-center text-[11px] font-medium px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-400 border border-zinc-700">
+        <img src="sources/KakarotComics/assets/icon.jpg" alt="" class="w-6 h-6 rounded-md object-cover shrink-0 ring-1 ring-red-600/70" />
+        <span class="font-semibold text-sm text-ink-100">Kakarot Extensions</span>
+        <span class="hidden sm:inline-flex items-center text-[11px] font-medium px-2 py-0.5 rounded-full bg-red-950/60 text-red-300 border border-red-900/70">
           5 extensions
         </span>
       </div>
-      <div class="flex items-center gap-2">
-        <span class="text-[11px] text-zinc-600 hidden md:block">Built 2026-09-05 22:54 UTC</span>
+      <div class="flex items-center gap-2.5">
+        <span class="text-[11px] text-ink-600 hidden md:block">Built 2026-09-05 23:30 UTC</span>
+        <a href="https://github.com/karrot0/kakarot-extensions-mana" target="_blank" rel="noopener" aria-label="View source on GitHub"
+           class="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-lg bg-ink-900 hover:bg-red-950/40 border border-ink-800 hover:border-red-700 text-ink-400 hover:text-white transition-colors">
+          <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5C5.37.5 0 5.87 0 12.5c0 5.3 3.44 9.8 8.21 11.39.6.11.82-.26.82-.58l-.01-2.05c-3.34.73-4.04-1.61-4.04-1.61-.55-1.39-1.34-1.76-1.34-1.76-1.09-.75.08-.73.08-.73 1.21.08 1.84 1.24 1.84 1.24 1.07 1.83 2.81 1.3 3.5.99.11-.78.42-1.31.76-1.61-2.67-.3-5.47-1.33-5.47-5.93 0-1.31.47-2.38 1.24-3.22-.13-.3-.54-1.52.11-3.18 0 0 1.01-.32 3.3 1.23a11.5 11.5 0 016.01 0c2.29-1.55 3.3-1.23 3.3-1.23.65 1.66.24 2.88.12 3.18.77.84 1.23 1.91 1.23 3.22 0 4.61-2.8 5.62-5.48 5.92.43.37.81 1.1.81 2.22l-.01 3.29c0 .32.22.7.83.58A12 12 0 0024 12.5C24 5.87 18.63.5 12 .5z"/></svg>
+          <span class="hidden sm:inline">GitHub</span>
+        </a>
       </div>
     </div>
   </header>
@@ -52,18 +93,18 @@
   <main class="max-w-5xl mx-auto px-4 sm:px-6 py-10 space-y-8">
 
     <!-- install banner -->
-    <div class="rounded-xl border border-zinc-800 bg-zinc-900 p-4">
+    <div class="rounded-xl border border-ink-800 bg-ink-900 p-4">
       <div class="flex items-start gap-3">
-        <div class="mt-0.5 w-8 h-8 rounded-lg bg-zinc-800 border border-zinc-700 flex items-center justify-center shrink-0">
-          <svg class="w-4 h-4 text-zinc-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <div class="mt-0.5 w-8 h-8 rounded-lg bg-red-600/15 border border-red-800/60 flex items-center justify-center shrink-0">
+          <svg class="w-4 h-4 text-red-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
           </svg>
         </div>
         <div class="flex-1 min-w-0 space-y-2">
           <div>
-            <p class="text-sm font-medium text-zinc-100">Add Repository to Mana</p>
-            <p class="text-xs text-zinc-500 mt-0.5 flex items-center gap-1 flex-wrap">Copy the URL below and paste it in
-              <span class="inline-flex items-center gap-0.5 text-zinc-400 font-medium">Mana
+            <p class="text-sm font-medium text-ink-100">Add Repository to Mana</p>
+            <p class="text-xs text-ink-500 mt-0.5 flex items-center gap-1 flex-wrap">Copy the URL below and paste it in
+              <span class="inline-flex items-center gap-0.5 text-ink-400 font-medium">Mana
                 <svg class="w-3 h-3 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
                 Discover
                 <svg class="w-3 h-3 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
@@ -74,10 +115,10 @@
             </p>
           </div>
           <div class="flex items-center gap-2">
-            <code class="flex-1 min-w-0 block text-xs font-mono text-zinc-300 bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 truncate">https://karrot0.github.io/kakarot-extensions-mana/main</code>
+            <code class="flex-1 min-w-0 block text-xs font-mono text-ink-300 bg-ink-950 border border-ink-800 rounded-lg px-3 py-2 truncate">https://karrot0.github.io/kakarot-extensions-mana/main</code>
             <button id="copy-btn"
               onclick="navigator.clipboard.writeText('https://karrot0.github.io/kakarot-extensions-mana/main').then(()=>{const b=document.getElementById('copy-btn');b.classList.add('copied');b.querySelector('span').textContent='Copied!';setTimeout(()=>{b.classList.remove('copied');b.querySelector('span').textContent='Copy';},2000)})"
-              class="shrink-0 inline-flex items-center gap-1.5 text-xs font-medium px-3 py-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-zinc-300 hover:text-zinc-100 transition-colors">
+              class="shrink-0 inline-flex items-center gap-1.5 text-xs font-medium px-3 py-2 rounded-lg bg-red-600 hover:bg-red-500 border border-red-500 text-white transition-colors">
               <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>
               </svg>
@@ -90,174 +131,174 @@
 
     <!-- section heading -->
     <div class="flex items-center justify-between">
-      <h1 class="text-base font-semibold text-zinc-100">
+      <h1 class="text-base font-semibold text-ink-100 border-l-2 border-red-600 pl-3">
         Extensions
-        <span class="ml-2 text-sm font-normal text-zinc-500">5 available</span>
+        <span class="ml-2 text-sm font-normal text-ink-500">5 available</span>
       </h1>
     </div>
 
     <!-- cards grid -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
 
-<div class="group relative flex flex-col bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden hover:border-zinc-600 hover:shadow-lg hover:shadow-black/40 transition-all duration-200">
+<div class="group relative flex flex-col bg-ink-900 border border-ink-800 rounded-xl overflow-hidden hover:border-red-800 hover:shadow-lg hover:shadow-red-950/50 transition-all duration-200">
   <div class="flex items-start gap-3.5 p-4 pb-3">
-    <div class="w-12 h-12 rounded-lg bg-zinc-800 border border-zinc-700/50 flex items-center justify-center shrink-0 overflow-hidden">
+    <div class="w-12 h-12 rounded-lg bg-ink-800 border border-ink-700/50 flex items-center justify-center shrink-0 overflow-hidden">
       <img src="sources/Batcave/assets/icon.png" alt="Batcave" class="w-full h-full object-cover rounded-lg" onerror="imgErr(this)" />
     </div>
     <div class="flex-1 min-w-0">
       <div class="flex items-center gap-2 flex-wrap">
-        <h2 class="font-semibold text-sm text-zinc-100 leading-tight">Batcave</h2>
-        <span class="text-[10px] font-mono text-zinc-500 bg-zinc-800 px-1.5 py-0.5 rounded border border-zinc-700">v1.7.0</span>
+        <h2 class="font-semibold text-sm text-ink-100 leading-tight">Batcave</h2>
+        <span class="text-[10px] font-mono text-ink-500 bg-ink-800 px-1.5 py-0.5 rounded border border-ink-700">v1.7.1</span>
       </div>
-      <p class="text-[11px] text-zinc-500 mt-0.5">Karrot</p>
+      <p class="text-[11px] text-ink-500 mt-0.5">Karrot</p>
     </div>
   </div>
 
   
   <div class="px-4 pb-3">
-    <p class="text-xs text-zinc-400 leading-relaxed line-clamp-2">Pulls comics from batcave.biz</p>
+    <p class="text-xs text-ink-400 leading-relaxed line-clamp-2">Pulls comics from batcave.biz</p>
   </div>
 
   <div class="px-4 pb-4 flex flex-wrap items-center gap-1.5 mt-auto">
     <span class="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full bg-emerald-950 text-emerald-400 border border-emerald-900">
     <svg class="w-2.5 h-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
     Safe</span>
-    <span class="text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-400 border border-zinc-700">EN</span>
+    <span class="text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded bg-ink-800 text-ink-400 border border-ink-700">EN</span>
     
     <a href="https://batcave.biz" target="_blank" rel="noopener"
-       class="ml-auto inline-flex items-center gap-1 text-[11px] text-zinc-500 hover:text-zinc-300 transition-colors">
+       class="ml-auto inline-flex items-center gap-1 text-[11px] text-ink-500 hover:text-red-400 transition-colors">
       <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 010 20M12 2a15.3 15.3 0 000 20"/></svg>
       Site
     </a>
   </div>
 </div>
 
-<div class="group relative flex flex-col bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden hover:border-zinc-600 hover:shadow-lg hover:shadow-black/40 transition-all duration-200">
+<div class="group relative flex flex-col bg-ink-900 border border-ink-800 rounded-xl overflow-hidden hover:border-red-800 hover:shadow-lg hover:shadow-red-950/50 transition-all duration-200">
   <div class="flex items-start gap-3.5 p-4 pb-3">
-    <div class="w-12 h-12 rounded-lg bg-zinc-800 border border-zinc-700/50 flex items-center justify-center shrink-0 overflow-hidden">
+    <div class="w-12 h-12 rounded-lg bg-ink-800 border border-ink-700/50 flex items-center justify-center shrink-0 overflow-hidden">
       <img src="sources/KakarotComics/assets/icon.jpg" alt="KakarotComics" class="w-full h-full object-cover rounded-lg" onerror="imgErr(this)" />
     </div>
     <div class="flex-1 min-w-0">
       <div class="flex items-center gap-2 flex-wrap">
-        <h2 class="font-semibold text-sm text-zinc-100 leading-tight">KakarotComics</h2>
-        <span class="text-[10px] font-mono text-zinc-500 bg-zinc-800 px-1.5 py-0.5 rounded border border-zinc-700">v1.2.0</span>
+        <h2 class="font-semibold text-sm text-ink-100 leading-tight">KakarotComics</h2>
+        <span class="text-[10px] font-mono text-ink-500 bg-ink-800 px-1.5 py-0.5 rounded border border-ink-700">v1.2.1</span>
       </div>
-      <p class="text-[11px] text-zinc-500 mt-0.5">Karrot</p>
+      <p class="text-[11px] text-ink-500 mt-0.5">Karrot</p>
     </div>
   </div>
 
   
   <div class="px-4 pb-3">
-    <p class="text-xs text-zinc-400 leading-relaxed line-clamp-2">Kakarot Comics</p>
+    <p class="text-xs text-ink-400 leading-relaxed line-clamp-2">Kakarot Comics</p>
   </div>
 
   <div class="px-4 pb-4 flex flex-wrap items-center gap-1.5 mt-auto">
     <span class="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full bg-yellow-950 text-yellow-400 border border-yellow-900">
       <svg class="w-2.5 h-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
       Mixed</span>
-    <span class="text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-400 border border-zinc-700">EN</span>
+    <span class="text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded bg-ink-800 text-ink-400 border border-ink-700">EN</span>
     
     <a href="https://comics.karrot.dev" target="_blank" rel="noopener"
-       class="ml-auto inline-flex items-center gap-1 text-[11px] text-zinc-500 hover:text-zinc-300 transition-colors">
+       class="ml-auto inline-flex items-center gap-1 text-[11px] text-ink-500 hover:text-red-400 transition-colors">
       <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 010 20M12 2a15.3 15.3 0 000 20"/></svg>
       Site
     </a>
   </div>
 </div>
 
-<div class="group relative flex flex-col bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden hover:border-zinc-600 hover:shadow-lg hover:shadow-black/40 transition-all duration-200">
+<div class="group relative flex flex-col bg-ink-900 border border-ink-800 rounded-xl overflow-hidden hover:border-red-800 hover:shadow-lg hover:shadow-red-950/50 transition-all duration-200">
   <div class="flex items-start gap-3.5 p-4 pb-3">
-    <div class="w-12 h-12 rounded-lg bg-zinc-800 border border-zinc-700/50 flex items-center justify-center shrink-0 overflow-hidden">
+    <div class="w-12 h-12 rounded-lg bg-ink-800 border border-ink-700/50 flex items-center justify-center shrink-0 overflow-hidden">
       <img src="sources/OceComic/assets/icon.png" alt="OceComic" class="w-full h-full object-cover rounded-lg" onerror="imgErr(this)" />
     </div>
     <div class="flex-1 min-w-0">
       <div class="flex items-center gap-2 flex-wrap">
-        <h2 class="font-semibold text-sm text-zinc-100 leading-tight">OceComic</h2>
-        <span class="text-[10px] font-mono text-zinc-500 bg-zinc-800 px-1.5 py-0.5 rounded border border-zinc-700">v1.1.0</span>
+        <h2 class="font-semibold text-sm text-ink-100 leading-tight">OceComic</h2>
+        <span class="text-[10px] font-mono text-ink-500 bg-ink-800 px-1.5 py-0.5 rounded border border-ink-700">v1.2.1</span>
       </div>
-      <p class="text-[11px] text-zinc-500 mt-0.5">Karrot</p>
+      <p class="text-[11px] text-ink-500 mt-0.5">Karrot</p>
     </div>
   </div>
 
   
   <div class="px-4 pb-3">
-    <p class="text-xs text-zinc-400 leading-relaxed line-clamp-2">Pulls comics from ocecomic.com</p>
+    <p class="text-xs text-ink-400 leading-relaxed line-clamp-2">Pulls comics from ocecomic.com</p>
   </div>
 
   <div class="px-4 pb-4 flex flex-wrap items-center gap-1.5 mt-auto">
     <span class="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full bg-yellow-950 text-yellow-400 border border-yellow-900">
       <svg class="w-2.5 h-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
       Mixed</span>
-    <span class="text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-400 border border-zinc-700">EN</span>
+    <span class="text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded bg-ink-800 text-ink-400 border border-ink-700">EN</span>
     
     <a href="https://ocecomic.com" target="_blank" rel="noopener"
-       class="ml-auto inline-flex items-center gap-1 text-[11px] text-zinc-500 hover:text-zinc-300 transition-colors">
+       class="ml-auto inline-flex items-center gap-1 text-[11px] text-ink-500 hover:text-red-400 transition-colors">
       <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 010 20M12 2a15.3 15.3 0 000 20"/></svg>
       Site
     </a>
   </div>
 </div>
 
-<div class="group relative flex flex-col bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden hover:border-zinc-600 hover:shadow-lg hover:shadow-black/40 transition-all duration-200">
+<div class="group relative flex flex-col bg-ink-900 border border-ink-800 rounded-xl overflow-hidden hover:border-red-800 hover:shadow-lg hover:shadow-red-950/50 transition-all duration-200">
   <div class="flex items-start gap-3.5 p-4 pb-3">
-    <div class="w-12 h-12 rounded-lg bg-zinc-800 border border-zinc-700/50 flex items-center justify-center shrink-0 overflow-hidden">
+    <div class="w-12 h-12 rounded-lg bg-ink-800 border border-ink-700/50 flex items-center justify-center shrink-0 overflow-hidden">
       <img src="sources/Template/assets/icon.png" alt="Template" class="w-full h-full object-cover rounded-lg" onerror="imgErr(this)" />
     </div>
     <div class="flex-1 min-w-0">
       <div class="flex items-center gap-2 flex-wrap">
-        <h2 class="font-semibold text-sm text-zinc-100 leading-tight">Template</h2>
-        <span class="text-[10px] font-mono text-zinc-500 bg-zinc-800 px-1.5 py-0.5 rounded border border-zinc-700">v2.0.0</span>
+        <h2 class="font-semibold text-sm text-ink-100 leading-tight">Template</h2>
+        <span class="text-[10px] font-mono text-ink-500 bg-ink-800 px-1.5 py-0.5 rounded border border-ink-700">v2.0.1</span>
       </div>
-      <p class="text-[11px] text-zinc-500 mt-0.5">Developer</p>
+      <p class="text-[11px] text-ink-500 mt-0.5">Developer</p>
     </div>
   </div>
 
   
   <div class="px-4 pb-3">
-    <p class="text-xs text-zinc-400 leading-relaxed line-clamp-2">Starting point for a Mana content source</p>
+    <p class="text-xs text-ink-400 leading-relaxed line-clamp-2">Starting point for a Mana content source</p>
   </div>
 
   <div class="px-4 pb-4 flex flex-wrap items-center gap-1.5 mt-auto">
     <span class="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full bg-emerald-950 text-emerald-400 border border-emerald-900">
     <svg class="w-2.5 h-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
     Safe</span>
-    <span class="text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-400 border border-zinc-700">EN</span>
+    <span class="text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded bg-ink-800 text-ink-400 border border-ink-700">EN</span>
     
     <a href="https://example.com" target="_blank" rel="noopener"
-       class="ml-auto inline-flex items-center gap-1 text-[11px] text-zinc-500 hover:text-zinc-300 transition-colors">
+       class="ml-auto inline-flex items-center gap-1 text-[11px] text-ink-500 hover:text-red-400 transition-colors">
       <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 010 20M12 2a15.3 15.3 0 000 20"/></svg>
       Site
     </a>
   </div>
 </div>
 
-<div class="group relative flex flex-col bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden hover:border-zinc-600 hover:shadow-lg hover:shadow-black/40 transition-all duration-200">
+<div class="group relative flex flex-col bg-ink-900 border border-ink-800 rounded-xl overflow-hidden hover:border-red-800 hover:shadow-lg hover:shadow-red-950/50 transition-all duration-200">
   <div class="flex items-start gap-3.5 p-4 pb-3">
-    <div class="w-12 h-12 rounded-lg bg-zinc-800 border border-zinc-700/50 flex items-center justify-center shrink-0 overflow-hidden">
+    <div class="w-12 h-12 rounded-lg bg-ink-800 border border-ink-700/50 flex items-center justify-center shrink-0 overflow-hidden">
       <img src="sources/ZipComic/assets/icon.png" alt="ZipComic" class="w-full h-full object-cover rounded-lg" onerror="imgErr(this)" />
     </div>
     <div class="flex-1 min-w-0">
       <div class="flex items-center gap-2 flex-wrap">
-        <h2 class="font-semibold text-sm text-zinc-100 leading-tight">ZipComic</h2>
-        <span class="text-[10px] font-mono text-zinc-500 bg-zinc-800 px-1.5 py-0.5 rounded border border-zinc-700">v1.1.0</span>
+        <h2 class="font-semibold text-sm text-ink-100 leading-tight">ZipComic</h2>
+        <span class="text-[10px] font-mono text-ink-500 bg-ink-800 px-1.5 py-0.5 rounded border border-ink-700">v1.1.1</span>
       </div>
-      <p class="text-[11px] text-zinc-500 mt-0.5">Karrot</p>
+      <p class="text-[11px] text-ink-500 mt-0.5">Karrot</p>
     </div>
   </div>
 
   
   <div class="px-4 pb-3">
-    <p class="text-xs text-zinc-400 leading-relaxed line-clamp-2">Pulls comics from zipcomic.com</p>
+    <p class="text-xs text-ink-400 leading-relaxed line-clamp-2">Pulls comics from zipcomic.com</p>
   </div>
 
   <div class="px-4 pb-4 flex flex-wrap items-center gap-1.5 mt-auto">
     <span class="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full bg-yellow-950 text-yellow-400 border border-yellow-900">
       <svg class="w-2.5 h-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
       Mixed</span>
-    <span class="text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-400 border border-zinc-700">EN</span>
+    <span class="text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded bg-ink-800 text-ink-400 border border-ink-700">EN</span>
     
     <a href="https://www.zipcomic.com" target="_blank" rel="noopener"
-       class="ml-auto inline-flex items-center gap-1 text-[11px] text-zinc-500 hover:text-zinc-300 transition-colors">
+       class="ml-auto inline-flex items-center gap-1 text-[11px] text-ink-500 hover:text-red-400 transition-colors">
       <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 010 20M12 2a15.3 15.3 0 000 20"/></svg>
       Site
     </a>
@@ -268,138 +309,189 @@
     <!-- changelog -->
     <div class="space-y-3">
       <div class="flex items-center justify-between">
-        <h1 class="text-base font-semibold text-zinc-100">Changelog</h1>
-        <a href="CHANGELOG.md" class="text-[11px] text-zinc-500 hover:text-zinc-300 transition-colors">View raw</a>
+        <h1 class="text-base font-semibold text-ink-100 border-l-2 border-red-600 pl-3">Changelog</h1>
+        <a href="CHANGELOG.md" class="text-[11px] text-ink-500 hover:text-red-400 transition-colors">View raw</a>
       </div>
       <div class="space-y-2.5">
         
-<details class="group rounded-xl border border-zinc-800 bg-zinc-900 overflow-hidden" open>
-  <summary class="cursor-pointer select-none list-none flex items-center justify-between gap-3 px-4 py-3 hover:bg-zinc-800/50 transition-colors">
+<details class="group rounded-xl border border-ink-800 bg-ink-900 overflow-hidden" open>
+  <summary class="cursor-pointer select-none list-none flex items-center justify-between gap-3 px-4 py-3 hover:bg-red-950/30 transition-colors">
     <div class="flex items-center gap-2">
-      <span class="text-sm font-semibold text-zinc-100">Batcave</span>
-      <span class="text-[10px] font-mono text-zinc-500 bg-zinc-800 px-1.5 py-0.5 rounded border border-zinc-700">v1.7.0</span>
+      <span class="text-sm font-semibold text-ink-100">Batcave</span>
+      <span class="text-[10px] font-mono text-ink-500 bg-ink-800 px-1.5 py-0.5 rounded border border-ink-700">v1.7.1</span>
     </div>
-    <svg class="w-4 h-4 text-zinc-500 transition-transform group-open:rotate-180" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+    <svg class="w-4 h-4 text-ink-500 transition-transform group-open:rotate-180" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
   </summary>
-  <div class="px-4 pb-4 space-y-4 border-t border-zinc-800 pt-3">
+  <div class="px-4 pb-4 space-y-4 border-t border-ink-800 pt-3">
     
     <div>
-      <p class="text-xs font-medium text-zinc-400 mb-1.5">2026-08-25</p>
+      <p class="text-xs font-medium text-ink-400 mb-1.5">2026-09-05 — @mana-app/types 0.0.25</p>
       <ul class="space-y-1">
-        <li class="text-xs text-zinc-500 leading-relaxed pl-3 relative before:content-['—'] before:absolute before:left-0 before:text-zinc-700">**Search filters work again.** The genre filter was declared through <code class="px-1 py-0.5 rounded bg-zinc-800 text-zinc-300 text-[11px] font-mono">getSearchFilters</code>, which no longer exists in <code class="px-1 py-0.5 rounded bg-zinc-800 text-zinc-300 text-[11px] font-mono">@mana-app/types</code> — the app never saw it. It is now a <code class="px-1 py-0.5 rounded bg-zinc-800 text-zinc-300 text-[11px] font-mono">getSearchForm</code> tags section, and the selected genre is read through <code class="px-1 py-0.5 rounded bg-zinc-800 text-zinc-300 text-[11px] font-mono">FilterReader</code> rather than an <code class="px-1 py-0.5 rounded bg-zinc-800 text-zinc-300 text-[11px] font-mono">as string</code> cast that always yielded <code class="px-1 py-0.5 rounded bg-zinc-800 text-zinc-300 text-[11px] font-mono">undefined</code>.</li>
-        <li class="text-xs text-zinc-500 leading-relaxed pl-3 relative before:content-['—'] before:absolute before:left-0 before:text-zinc-700">Chapter dates are parsed from the site's <code class="px-1 py-0.5 rounded bg-zinc-800 text-zinc-300 text-[11px] font-mono">DD.MM.YYYY</code> format via the shared <code class="px-1 py-0.5 rounded bg-zinc-800 text-zinc-300 text-[11px] font-mono">parseDate</code> instead of a local regex.</li>
-        <li class="text-xs text-zinc-500 leading-relaxed pl-3 relative before:content-['—'] before:absolute before:left-0 before:text-zinc-700">The <code class="px-1 py-0.5 rounded bg-zinc-800 text-zinc-300 text-[11px] font-mono">window.__DATA__</code> chapter payload is extracted with a balanced-brace scanner, so a nested object no longer truncates the chapter list.</li>
-        <li class="text-xs text-zinc-500 leading-relaxed pl-3 relative before:content-['—'] before:absolute before:left-0 before:text-zinc-700">Removed <code class="px-1 py-0.5 rounded bg-zinc-800 text-zinc-300 text-[11px] font-mono">config.disableTagNavigation</code>, which was dropped from <code class="px-1 py-0.5 rounded bg-zinc-800 text-zinc-300 text-[11px] font-mono">SourceConfig</code>.</li>
-        <li class="text-xs text-zinc-500 leading-relaxed pl-3 relative before:content-['—'] before:absolute before:left-0 before:text-zinc-700">Network client, image referer rules and parsing moved onto the shared toolkit.</li>
+        <li class="text-xs text-ink-500 leading-relaxed pl-3 relative before:content-['—'] before:absolute before:left-0 before:text-red-800">Migrated to the <code class="px-1 py-0.5 rounded bg-ink-800 text-red-300 text-[11px] font-mono">ChapterSource</code> interface. <code class="px-1 py-0.5 rounded bg-ink-800 text-red-300 text-[11px] font-mono">getChapters</code>/<code class="px-1 py-0.5 rounded bg-ink-800 text-red-300 text-[11px] font-mono">getChapterData</code> moved off <code class="px-1 py-0.5 rounded bg-ink-800 text-red-300 text-[11px] font-mono">ContentSource</code> in 0.0.25; the old declaration still compiled, so nothing flagged it.</li>
+        <li class="text-xs text-ink-500 leading-relaxed pl-3 relative before:content-['—'] before:absolute before:left-0 before:text-red-800">Dropped <code class="px-1 py-0.5 rounded bg-ink-800 text-red-300 text-[11px] font-mono">SearchSortStyle</code>, removed from the types package. No source passed a sort style, so the rendered form is unchanged.</li>
+        <li class="text-xs text-ink-500 leading-relaxed pl-3 relative before:content-['—'] before:absolute before:left-0 before:text-red-800">Page fetches now go through <code class="px-1 py-0.5 rounded bg-ink-800 text-red-300 text-[11px] font-mono">getText</code>, so a listing carrying malformed UTF-8 is recovered through a WebView instead of failing the request.</li>
+      </ul>
+    </div>
+
+    <div>
+      <p class="text-xs font-medium text-ink-400 mb-1.5">2026-08-25</p>
+      <ul class="space-y-1">
+        <li class="text-xs text-ink-500 leading-relaxed pl-3 relative before:content-['—'] before:absolute before:left-0 before:text-red-800">**Search filters work again.** The genre filter was declared through <code class="px-1 py-0.5 rounded bg-ink-800 text-red-300 text-[11px] font-mono">getSearchFilters</code>, which no longer exists in <code class="px-1 py-0.5 rounded bg-ink-800 text-red-300 text-[11px] font-mono">@mana-app/types</code> — the app never saw it. It is now a <code class="px-1 py-0.5 rounded bg-ink-800 text-red-300 text-[11px] font-mono">getSearchForm</code> tags section, and the selected genre is read through <code class="px-1 py-0.5 rounded bg-ink-800 text-red-300 text-[11px] font-mono">FilterReader</code> rather than an <code class="px-1 py-0.5 rounded bg-ink-800 text-red-300 text-[11px] font-mono">as string</code> cast that always yielded <code class="px-1 py-0.5 rounded bg-ink-800 text-red-300 text-[11px] font-mono">undefined</code>.</li>
+        <li class="text-xs text-ink-500 leading-relaxed pl-3 relative before:content-['—'] before:absolute before:left-0 before:text-red-800">Chapter dates are parsed from the site's <code class="px-1 py-0.5 rounded bg-ink-800 text-red-300 text-[11px] font-mono">DD.MM.YYYY</code> format via the shared <code class="px-1 py-0.5 rounded bg-ink-800 text-red-300 text-[11px] font-mono">parseDate</code> instead of a local regex.</li>
+        <li class="text-xs text-ink-500 leading-relaxed pl-3 relative before:content-['—'] before:absolute before:left-0 before:text-red-800">The <code class="px-1 py-0.5 rounded bg-ink-800 text-red-300 text-[11px] font-mono">window.__DATA__</code> chapter payload is extracted with a balanced-brace scanner, so a nested object no longer truncates the chapter list.</li>
+        <li class="text-xs text-ink-500 leading-relaxed pl-3 relative before:content-['—'] before:absolute before:left-0 before:text-red-800">Removed <code class="px-1 py-0.5 rounded bg-ink-800 text-red-300 text-[11px] font-mono">config.disableTagNavigation</code>, which was dropped from <code class="px-1 py-0.5 rounded bg-ink-800 text-red-300 text-[11px] font-mono">SourceConfig</code>.</li>
+        <li class="text-xs text-ink-500 leading-relaxed pl-3 relative before:content-['—'] before:absolute before:left-0 before:text-red-800">Network client, image referer rules and parsing moved onto the shared toolkit.</li>
       </ul>
     </div>
   </div>
 </details>
 
-<details class="group rounded-xl border border-zinc-800 bg-zinc-900 overflow-hidden">
-  <summary class="cursor-pointer select-none list-none flex items-center justify-between gap-3 px-4 py-3 hover:bg-zinc-800/50 transition-colors">
+<details class="group rounded-xl border border-ink-800 bg-ink-900 overflow-hidden">
+  <summary class="cursor-pointer select-none list-none flex items-center justify-between gap-3 px-4 py-3 hover:bg-red-950/30 transition-colors">
     <div class="flex items-center gap-2">
-      <span class="text-sm font-semibold text-zinc-100">KakarotComics</span>
-      <span class="text-[10px] font-mono text-zinc-500 bg-zinc-800 px-1.5 py-0.5 rounded border border-zinc-700">v1.2.0</span>
+      <span class="text-sm font-semibold text-ink-100">KakarotComics</span>
+      <span class="text-[10px] font-mono text-ink-500 bg-ink-800 px-1.5 py-0.5 rounded border border-ink-700">v1.2.1</span>
     </div>
-    <svg class="w-4 h-4 text-zinc-500 transition-transform group-open:rotate-180" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+    <svg class="w-4 h-4 text-ink-500 transition-transform group-open:rotate-180" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
   </summary>
-  <div class="px-4 pb-4 space-y-4 border-t border-zinc-800 pt-3">
+  <div class="px-4 pb-4 space-y-4 border-t border-ink-800 pt-3">
     
     <div>
-      <p class="text-xs font-medium text-zinc-400 mb-1.5">2026-08-25 — Settings fix</p>
+      <p class="text-xs font-medium text-ink-400 mb-1.5">2026-09-05 — @mana-app/types 0.0.25</p>
       <ul class="space-y-1">
-        <li class="text-xs text-zinc-500 leading-relaxed pl-3 relative before:content-['—'] before:absolute before:left-0 before:text-zinc-700">**Settings could fail to open.** Preference values were read with <code class="px-1 py-0.5 rounded bg-zinc-800 text-zinc-300 text-[11px] font-mono">ObjectStore.string()</code> regardless of their type, and that accessor throws when the stored value is not a string — one non-string value took down the whole preference form. Values are now stored natively and read with the accessor matching their type, with every read wrapped so a corrupt or legacy value falls back to its default instead of failing the form.</li>
-        <li class="text-xs text-zinc-500 leading-relaxed pl-3 relative before:content-['—'] before:absolute before:left-0 before:text-zinc-700">Preference values are no longer double JSON-encoded. Values written by the previous version are still read correctly.</li>
-        <li class="text-xs text-zinc-500 leading-relaxed pl-3 relative before:content-['—'] before:absolute before:left-0 before:text-zinc-700">The publisher allowlist is no longer blanked when the publisher list cannot be fetched — a selection is only reconciled against the option list when that list is non-empty, so an unreachable server no longer wipes the saved choice on the next edit.</li>
-        <li class="text-xs text-zinc-500 leading-relaxed pl-3 relative before:content-['—'] before:absolute before:left-0 before:text-zinc-700">Preference element ids are the full store key again, matching the convention used before the refactor.</li>
-        <li class="text-xs text-zinc-500 leading-relaxed pl-3 relative before:content-['—'] before:absolute before:left-0 before:text-zinc-700">A picker whose options cannot be loaded is no longer emitted with an empty options list, and a section left with no renderable fields is dropped rather than sent empty. When the publisher list is unreachable the settings screen now shows the server field plus a note explaining what is missing, instead of a control the app cannot present.</li>
+        <li class="text-xs text-ink-500 leading-relaxed pl-3 relative before:content-['—'] before:absolute before:left-0 before:text-red-800">Migrated to the <code class="px-1 py-0.5 rounded bg-ink-800 text-red-300 text-[11px] font-mono">ChapterSource</code> interface. <code class="px-1 py-0.5 rounded bg-ink-800 text-red-300 text-[11px] font-mono">getChapters</code>/<code class="px-1 py-0.5 rounded bg-ink-800 text-red-300 text-[11px] font-mono">getChapterData</code> moved off <code class="px-1 py-0.5 rounded bg-ink-800 text-red-300 text-[11px] font-mono">ContentSource</code> in 0.0.25; the old declaration still compiled, so nothing flagged it.</li>
+        <li class="text-xs text-ink-500 leading-relaxed pl-3 relative before:content-['—'] before:absolute before:left-0 before:text-red-800">Dropped <code class="px-1 py-0.5 rounded bg-ink-800 text-red-300 text-[11px] font-mono">SearchSortStyle</code>, removed from the types package. No source passed a sort style, so the rendered form is unchanged.</li>
       </ul>
     </div>
 
     <div>
-      <p class="text-xs font-medium text-zinc-400 mb-1.5">2026-08-25</p>
+      <p class="text-xs font-medium text-ink-400 mb-1.5">2026-08-25 — Settings fix</p>
       <ul class="space-y-1">
-        <li class="text-xs text-zinc-500 leading-relaxed pl-3 relative before:content-['—'] before:absolute before:left-0 before:text-zinc-700">**Search filters work again** — type, publisher, character and year are now a <code class="px-1 py-0.5 rounded bg-zinc-800 text-zinc-300 text-[11px] font-mono">getSearchForm</code> list section, read through <code class="px-1 py-0.5 rounded bg-zinc-800 text-zinc-300 text-[11px] font-mono">FilterReader</code>.</li>
-        <li class="text-xs text-zinc-500 leading-relaxed pl-3 relative before:content-['—'] before:absolute before:left-0 before:text-zinc-700">Preferences (API base URL, publisher allowlist) are built from a declarative spec and persisted through <code class="px-1 py-0.5 rounded bg-zinc-800 text-zinc-300 text-[11px] font-mono">PreferenceStore</code>. Existing settings are preserved: the store keeps the original <code class="px-1 py-0.5 rounded bg-zinc-800 text-zinc-300 text-[11px] font-mono">kakarot-comics.*</code> keys and falls back to reading a raw string when the stored value predates JSON encoding.</li>
-        <li class="text-xs text-zinc-500 leading-relaxed pl-3 relative before:content-['—'] before:absolute before:left-0 before:text-zinc-700">The network client is built lazily on first use rather than in <code class="px-1 py-0.5 rounded bg-zinc-800 text-zinc-300 text-[11px] font-mono">onEnvironmentLoaded</code>, which the runtime does not await.</li>
+        <li class="text-xs text-ink-500 leading-relaxed pl-3 relative before:content-['—'] before:absolute before:left-0 before:text-red-800">**Settings could fail to open.** Preference values were read with <code class="px-1 py-0.5 rounded bg-ink-800 text-red-300 text-[11px] font-mono">ObjectStore.string()</code> regardless of their type, and that accessor throws when the stored value is not a string — one non-string value took down the whole preference form. Values are now stored natively and read with the accessor matching their type, with every read wrapped so a corrupt or legacy value falls back to its default instead of failing the form.</li>
+        <li class="text-xs text-ink-500 leading-relaxed pl-3 relative before:content-['—'] before:absolute before:left-0 before:text-red-800">Preference values are no longer double JSON-encoded. Values written by the previous version are still read correctly.</li>
+        <li class="text-xs text-ink-500 leading-relaxed pl-3 relative before:content-['—'] before:absolute before:left-0 before:text-red-800">The publisher allowlist is no longer blanked when the publisher list cannot be fetched — a selection is only reconciled against the option list when that list is non-empty, so an unreachable server no longer wipes the saved choice on the next edit.</li>
+        <li class="text-xs text-ink-500 leading-relaxed pl-3 relative before:content-['—'] before:absolute before:left-0 before:text-red-800">Preference element ids are the full store key again, matching the convention used before the refactor.</li>
+        <li class="text-xs text-ink-500 leading-relaxed pl-3 relative before:content-['—'] before:absolute before:left-0 before:text-red-800">A picker whose options cannot be loaded is no longer emitted with an empty options list, and a section left with no renderable fields is dropped rather than sent empty. When the publisher list is unreachable the settings screen now shows the server field plus a note explaining what is missing, instead of a control the app cannot present.</li>
       </ul>
     </div>
 
     <div>
-      <p class="text-xs font-medium text-zinc-400 mb-1.5">2026-08-13 — Initial implementation</p>
+      <p class="text-xs font-medium text-ink-400 mb-1.5">2026-08-25</p>
       <ul class="space-y-1">
-        <li class="text-xs text-zinc-500 leading-relaxed pl-3 relative before:content-['—'] before:absolute before:left-0 before:text-zinc-700">Browses a self-hosted comic-api catalogue: publishers, characters, series, and issues, with search, a publisher-allowlist preference, and page reading proxied through the server.</li>
+        <li class="text-xs text-ink-500 leading-relaxed pl-3 relative before:content-['—'] before:absolute before:left-0 before:text-red-800">**Search filters work again** — type, publisher, character and year are now a <code class="px-1 py-0.5 rounded bg-ink-800 text-red-300 text-[11px] font-mono">getSearchForm</code> list section, read through <code class="px-1 py-0.5 rounded bg-ink-800 text-red-300 text-[11px] font-mono">FilterReader</code>.</li>
+        <li class="text-xs text-ink-500 leading-relaxed pl-3 relative before:content-['—'] before:absolute before:left-0 before:text-red-800">Preferences (API base URL, publisher allowlist) are built from a declarative spec and persisted through <code class="px-1 py-0.5 rounded bg-ink-800 text-red-300 text-[11px] font-mono">PreferenceStore</code>. Existing settings are preserved: the store keeps the original <code class="px-1 py-0.5 rounded bg-ink-800 text-red-300 text-[11px] font-mono">kakarot-comics.*</code> keys and falls back to reading a raw string when the stored value predates JSON encoding.</li>
+        <li class="text-xs text-ink-500 leading-relaxed pl-3 relative before:content-['—'] before:absolute before:left-0 before:text-red-800">The network client is built lazily on first use rather than in <code class="px-1 py-0.5 rounded bg-ink-800 text-red-300 text-[11px] font-mono">onEnvironmentLoaded</code>, which the runtime does not await.</li>
+      </ul>
+    </div>
+
+    <div>
+      <p class="text-xs font-medium text-ink-400 mb-1.5">2026-08-13 — Initial implementation</p>
+      <ul class="space-y-1">
+        <li class="text-xs text-ink-500 leading-relaxed pl-3 relative before:content-['—'] before:absolute before:left-0 before:text-red-800">Browses a self-hosted comic-api catalogue: publishers, characters, series, and issues, with search, a publisher-allowlist preference, and page reading proxied through the server.</li>
       </ul>
     </div>
   </div>
 </details>
 
-<details class="group rounded-xl border border-zinc-800 bg-zinc-900 overflow-hidden">
-  <summary class="cursor-pointer select-none list-none flex items-center justify-between gap-3 px-4 py-3 hover:bg-zinc-800/50 transition-colors">
+<details class="group rounded-xl border border-ink-800 bg-ink-900 overflow-hidden">
+  <summary class="cursor-pointer select-none list-none flex items-center justify-between gap-3 px-4 py-3 hover:bg-red-950/30 transition-colors">
     <div class="flex items-center gap-2">
-      <span class="text-sm font-semibold text-zinc-100">OceComic</span>
-      <span class="text-[10px] font-mono text-zinc-500 bg-zinc-800 px-1.5 py-0.5 rounded border border-zinc-700">v1.1.0</span>
+      <span class="text-sm font-semibold text-ink-100">OceComic</span>
+      <span class="text-[10px] font-mono text-ink-500 bg-ink-800 px-1.5 py-0.5 rounded border border-ink-700">v1.2.1</span>
     </div>
-    <svg class="w-4 h-4 text-zinc-500 transition-transform group-open:rotate-180" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+    <svg class="w-4 h-4 text-ink-500 transition-transform group-open:rotate-180" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
   </summary>
-  <div class="px-4 pb-4 space-y-4 border-t border-zinc-800 pt-3">
+  <div class="px-4 pb-4 space-y-4 border-t border-ink-800 pt-3">
     
     <div>
-      <p class="text-xs font-medium text-zinc-400 mb-1.5">2026-08-25</p>
+      <p class="text-xs font-medium text-ink-400 mb-1.5">2026-09-05 — @mana-app/types 0.0.25</p>
       <ul class="space-y-1">
-        <li class="text-xs text-zinc-500 leading-relaxed pl-3 relative before:content-['—'] before:absolute before:left-0 before:text-zinc-700">**Search filters work again.** The genre filter never reached the app, and the <code class="px-1 py-0.5 rounded bg-zinc-800 text-zinc-300 text-[11px] font-mono">filters[id] as string</code> read would have returned <code class="px-1 py-0.5 rounded bg-zinc-800 text-zinc-300 text-[11px] font-mono">undefined</code> even if it had — browsing was pinned to "all" regardless of what the user picked.</li>
-        <li class="text-xs text-zinc-500 leading-relaxed pl-3 relative before:content-['—'] before:absolute before:left-0 before:text-zinc-700">Removed <code class="px-1 py-0.5 rounded bg-zinc-800 text-zinc-300 text-[11px] font-mono">Content.isNSFW</code>, replaced by <code class="px-1 py-0.5 rounded bg-zinc-800 text-zinc-300 text-[11px] font-mono">contentRating</code>; a "Mature" genre now maps to <code class="px-1 py-0.5 rounded bg-zinc-800 text-zinc-300 text-[11px] font-mono">ContentRating.MATURE</code>.</li>
-        <li class="text-xs text-zinc-500 leading-relaxed pl-3 relative before:content-['—'] before:absolute before:left-0 before:text-zinc-700">Removed <code class="px-1 py-0.5 rounded bg-zinc-800 text-zinc-300 text-[11px] font-mono">config.disableTagNavigation</code>.</li>
+        <li class="text-xs text-ink-500 leading-relaxed pl-3 relative before:content-['—'] before:absolute before:left-0 before:text-red-800">Migrated to the <code class="px-1 py-0.5 rounded bg-ink-800 text-red-300 text-[11px] font-mono">ChapterSource</code> interface. <code class="px-1 py-0.5 rounded bg-ink-800 text-red-300 text-[11px] font-mono">getChapters</code>/<code class="px-1 py-0.5 rounded bg-ink-800 text-red-300 text-[11px] font-mono">getChapterData</code> moved off <code class="px-1 py-0.5 rounded bg-ink-800 text-red-300 text-[11px] font-mono">ContentSource</code> in 0.0.25; the old declaration still compiled, so nothing flagged it.</li>
+        <li class="text-xs text-ink-500 leading-relaxed pl-3 relative before:content-['—'] before:absolute before:left-0 before:text-red-800">Dropped <code class="px-1 py-0.5 rounded bg-ink-800 text-red-300 text-[11px] font-mono">SearchSortStyle</code>, removed from the types package. No source passed a sort style, so the rendered form is unchanged.</li>
+        <li class="text-xs text-ink-500 leading-relaxed pl-3 relative before:content-['—'] before:absolute before:left-0 before:text-red-800">Card titles are cut at the U+FFFD the WebView substitutes even when the title comes from the <code class="px-1 py-0.5 rounded bg-ink-800 text-red-300 text-[11px] font-mono">title</code> attribute, not just from the visible link text.</li>
+      </ul>
+    </div>
+
+    <div>
+      <p class="text-xs font-medium text-ink-400 mb-1.5">2026-08-25 — Listing pages load again</p>
+      <ul class="space-y-1">
+        <li class="text-xs text-ink-500 leading-relaxed pl-3 relative before:content-['—'] before:absolute before:left-0 before:text-red-800">**Sections failed with "String could not be serialized with encoding: Unicode (UTF-8)".** ocecomic.com truncates card titles and blurbs at a fixed byte count, cutting multi-byte characters in half, so listing pages ship bytes that are not valid UTF-8. Mana decodes response bodies natively before a source sees them, so the request rejected outright — five of eight "New Comics" pages sampled were affected. Pages the bridge cannot decode are now re-read through an auxiliary WebView, whose parser substitutes U+FFFD for the malformed bytes instead of failing.</li>
+        <li class="text-xs text-ink-500 leading-relaxed pl-3 relative before:content-['—'] before:absolute before:left-0 before:text-red-800">Card titles are read from the untruncated <code class="px-1 py-0.5 rounded bg-ink-800 text-red-300 text-[11px] font-mono">title</code> attribute rather than the truncated link text, so results no longer end in "...".</li>
+      </ul>
+    </div>
+
+    <div>
+      <p class="text-xs font-medium text-ink-400 mb-1.5">2026-08-25</p>
+      <ul class="space-y-1">
+        <li class="text-xs text-ink-500 leading-relaxed pl-3 relative before:content-['—'] before:absolute before:left-0 before:text-red-800">**Search filters work again.** The genre filter never reached the app, and the <code class="px-1 py-0.5 rounded bg-ink-800 text-red-300 text-[11px] font-mono">filters[id] as string</code> read would have returned <code class="px-1 py-0.5 rounded bg-ink-800 text-red-300 text-[11px] font-mono">undefined</code> even if it had — browsing was pinned to "all" regardless of what the user picked.</li>
+        <li class="text-xs text-ink-500 leading-relaxed pl-3 relative before:content-['—'] before:absolute before:left-0 before:text-red-800">Removed <code class="px-1 py-0.5 rounded bg-ink-800 text-red-300 text-[11px] font-mono">Content.isNSFW</code>, replaced by <code class="px-1 py-0.5 rounded bg-ink-800 text-red-300 text-[11px] font-mono">contentRating</code>; a "Mature" genre now maps to <code class="px-1 py-0.5 rounded bg-ink-800 text-red-300 text-[11px] font-mono">ContentRating.MATURE</code>.</li>
+        <li class="text-xs text-ink-500 leading-relaxed pl-3 relative before:content-['—'] before:absolute before:left-0 before:text-red-800">Removed <code class="px-1 py-0.5 rounded bg-ink-800 text-red-300 text-[11px] font-mono">config.disableTagNavigation</code>.</li>
       </ul>
     </div>
   </div>
 </details>
 
-<details class="group rounded-xl border border-zinc-800 bg-zinc-900 overflow-hidden">
-  <summary class="cursor-pointer select-none list-none flex items-center justify-between gap-3 px-4 py-3 hover:bg-zinc-800/50 transition-colors">
+<details class="group rounded-xl border border-ink-800 bg-ink-900 overflow-hidden">
+  <summary class="cursor-pointer select-none list-none flex items-center justify-between gap-3 px-4 py-3 hover:bg-red-950/30 transition-colors">
     <div class="flex items-center gap-2">
-      <span class="text-sm font-semibold text-zinc-100">ZipComic</span>
-      <span class="text-[10px] font-mono text-zinc-500 bg-zinc-800 px-1.5 py-0.5 rounded border border-zinc-700">v1.1.0</span>
+      <span class="text-sm font-semibold text-ink-100">ZipComic</span>
+      <span class="text-[10px] font-mono text-ink-500 bg-ink-800 px-1.5 py-0.5 rounded border border-ink-700">v1.1.1</span>
     </div>
-    <svg class="w-4 h-4 text-zinc-500 transition-transform group-open:rotate-180" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+    <svg class="w-4 h-4 text-ink-500 transition-transform group-open:rotate-180" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
   </summary>
-  <div class="px-4 pb-4 space-y-4 border-t border-zinc-800 pt-3">
+  <div class="px-4 pb-4 space-y-4 border-t border-ink-800 pt-3">
     
     <div>
-      <p class="text-xs font-medium text-zinc-400 mb-1.5">2026-08-25</p>
+      <p class="text-xs font-medium text-ink-400 mb-1.5">2026-09-05 — @mana-app/types 0.0.25</p>
       <ul class="space-y-1">
-        <li class="text-xs text-zinc-500 leading-relaxed pl-3 relative before:content-['—'] before:absolute before:left-0 before:text-zinc-700">Dropped the empty filter list and the placeholder "Default" sort — the site exposes neither, and the source no longer advertises search-form or sort intents it cannot honour.</li>
-        <li class="text-xs text-zinc-500 leading-relaxed pl-3 relative before:content-['—'] before:absolute before:left-0 before:text-zinc-700">Chapter dates are parsed from the chapter table instead of being hardcoded to the epoch.</li>
-        <li class="text-xs text-zinc-500 leading-relaxed pl-3 relative before:content-['—'] before:absolute before:left-0 before:text-zinc-700">Removed <code class="px-1 py-0.5 rounded bg-zinc-800 text-zinc-300 text-[11px] font-mono">Content.isNSFW</code> and <code class="px-1 py-0.5 rounded bg-zinc-800 text-zinc-300 text-[11px] font-mono">config.disableTagNavigation</code>.</li>
+        <li class="text-xs text-ink-500 leading-relaxed pl-3 relative before:content-['—'] before:absolute before:left-0 before:text-red-800">Migrated to the <code class="px-1 py-0.5 rounded bg-ink-800 text-red-300 text-[11px] font-mono">ChapterSource</code> interface. <code class="px-1 py-0.5 rounded bg-ink-800 text-red-300 text-[11px] font-mono">getChapters</code>/<code class="px-1 py-0.5 rounded bg-ink-800 text-red-300 text-[11px] font-mono">getChapterData</code> moved off <code class="px-1 py-0.5 rounded bg-ink-800 text-red-300 text-[11px] font-mono">ContentSource</code> in 0.0.25; the old declaration still compiled, so nothing flagged it.</li>
+        <li class="text-xs text-ink-500 leading-relaxed pl-3 relative before:content-['—'] before:absolute before:left-0 before:text-red-800">Dropped <code class="px-1 py-0.5 rounded bg-ink-800 text-red-300 text-[11px] font-mono">SearchSortStyle</code>, removed from the types package. No source passed a sort style, so the rendered form is unchanged.</li>
+        <li class="text-xs text-ink-500 leading-relaxed pl-3 relative before:content-['—'] before:absolute before:left-0 before:text-red-800">Page fetches now go through <code class="px-1 py-0.5 rounded bg-ink-800 text-red-300 text-[11px] font-mono">getText</code>, so a listing carrying malformed UTF-8 is recovered through a WebView instead of failing the request.</li>
       </ul>
     </div>
 
     <div>
-      <p class="text-xs font-medium text-zinc-400 mb-1.5">2026-08-03</p>
+      <p class="text-xs font-medium text-ink-400 mb-1.5">2026-08-25</p>
       <ul class="space-y-1">
-        <li class="text-xs text-zinc-500 leading-relaxed pl-3 relative before:content-['—'] before:absolute before:left-0 before:text-zinc-700">Registered <code class="px-1 py-0.5 rounded bg-zinc-800 text-zinc-300 text-[11px] font-mono">www.zipcomic.com</code> in <code class="px-1 py-0.5 rounded bg-zinc-800 text-zinc-300 text-[11px] font-mono">owningLinks</code>.</li>
-        <li class="text-xs text-zinc-500 leading-relaxed pl-3 relative before:content-['—'] before:absolute before:left-0 before:text-zinc-700">Initial implementation.</li>
+        <li class="text-xs text-ink-500 leading-relaxed pl-3 relative before:content-['—'] before:absolute before:left-0 before:text-red-800">Dropped the empty filter list and the placeholder "Default" sort — the site exposes neither, and the source no longer advertises search-form or sort intents it cannot honour.</li>
+        <li class="text-xs text-ink-500 leading-relaxed pl-3 relative before:content-['—'] before:absolute before:left-0 before:text-red-800">Chapter dates are parsed from the chapter table instead of being hardcoded to the epoch.</li>
+        <li class="text-xs text-ink-500 leading-relaxed pl-3 relative before:content-['—'] before:absolute before:left-0 before:text-red-800">Removed <code class="px-1 py-0.5 rounded bg-ink-800 text-red-300 text-[11px] font-mono">Content.isNSFW</code> and <code class="px-1 py-0.5 rounded bg-ink-800 text-red-300 text-[11px] font-mono">config.disableTagNavigation</code>.</li>
+      </ul>
+    </div>
+
+    <div>
+      <p class="text-xs font-medium text-ink-400 mb-1.5">2026-08-03</p>
+      <ul class="space-y-1">
+        <li class="text-xs text-ink-500 leading-relaxed pl-3 relative before:content-['—'] before:absolute before:left-0 before:text-red-800">Registered <code class="px-1 py-0.5 rounded bg-ink-800 text-red-300 text-[11px] font-mono">www.zipcomic.com</code> in <code class="px-1 py-0.5 rounded bg-ink-800 text-red-300 text-[11px] font-mono">owningLinks</code>.</li>
+        <li class="text-xs text-ink-500 leading-relaxed pl-3 relative before:content-['—'] before:absolute before:left-0 before:text-red-800">Initial implementation.</li>
       </ul>
     </div>
   </div>
 </details>
 
-<details class="group rounded-xl border border-zinc-800 bg-zinc-900 overflow-hidden">
-  <summary class="cursor-pointer select-none list-none flex items-center justify-between gap-3 px-4 py-3 hover:bg-zinc-800/50 transition-colors">
+<details class="group rounded-xl border border-ink-800 bg-ink-900 overflow-hidden">
+  <summary class="cursor-pointer select-none list-none flex items-center justify-between gap-3 px-4 py-3 hover:bg-red-950/30 transition-colors">
     <div class="flex items-center gap-2">
-      <span class="text-sm font-semibold text-zinc-100">Template</span>
-      <span class="text-[10px] font-mono text-zinc-500 bg-zinc-800 px-1.5 py-0.5 rounded border border-zinc-700">v2.0.0</span>
+      <span class="text-sm font-semibold text-ink-100">Template</span>
+      <span class="text-[10px] font-mono text-ink-500 bg-ink-800 px-1.5 py-0.5 rounded border border-ink-700">v2.0.1</span>
     </div>
-    <svg class="w-4 h-4 text-zinc-500 transition-transform group-open:rotate-180" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+    <svg class="w-4 h-4 text-ink-500 transition-transform group-open:rotate-180" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
   </summary>
-  <div class="px-4 pb-4 space-y-4 border-t border-zinc-800 pt-3">
+  <div class="px-4 pb-4 space-y-4 border-t border-ink-800 pt-3">
     
     <div>
-      <p class="text-xs font-medium text-zinc-400 mb-1.5">2026-08-25</p>
+      <p class="text-xs font-medium text-ink-400 mb-1.5">2026-09-05 — @mana-app/types 0.0.25</p>
       <ul class="space-y-1">
-        <li class="text-xs text-zinc-500 leading-relaxed pl-3 relative before:content-['—'] before:absolute before:left-0 before:text-zinc-700">Rewritten against the current <code class="px-1 py-0.5 rounded bg-zinc-800 text-zinc-300 text-[11px] font-mono">@mana-app/types</code> API and split into a per-source toolkit: <code class="px-1 py-0.5 rounded bg-zinc-800 text-zinc-300 text-[11px] font-mono">parse.ts</code> (page reading), <code class="px-1 py-0.5 rounded bg-zinc-800 text-zinc-300 text-[11px] font-mono">source.ts</code> (filters, sections, preferences, query strings) and <code class="px-1 py-0.5 rounded bg-zinc-800 text-zinc-300 text-[11px] font-mono">client.ts</code> (network client and Cloudflare detection), alongside <code class="px-1 py-0.5 rounded bg-zinc-800 text-zinc-300 text-[11px] font-mono">model.ts</code> and <code class="px-1 py-0.5 rounded bg-zinc-800 text-zinc-300 text-[11px] font-mono">main.ts</code>.</li>
-        <li class="text-xs text-zinc-500 leading-relaxed pl-3 relative before:content-['—'] before:absolute before:left-0 before:text-zinc-700">Demonstrates <code class="px-1 py-0.5 rounded bg-zinc-800 text-zinc-300 text-[11px] font-mono">getSearchForm</code>, <code class="px-1 py-0.5 rounded bg-zinc-800 text-zinc-300 text-[11px] font-mono">getSortOptions</code>, <code class="px-1 py-0.5 rounded bg-zinc-800 text-zinc-300 text-[11px] font-mono">getPreferenceMenu</code>, home sections wired to their own "view more" listings, and a lazily built network client.</li>
+        <li class="text-xs text-ink-500 leading-relaxed pl-3 relative before:content-['—'] before:absolute before:left-0 before:text-red-800">Migrated to the <code class="px-1 py-0.5 rounded bg-ink-800 text-red-300 text-[11px] font-mono">ChapterSource</code> interface. <code class="px-1 py-0.5 rounded bg-ink-800 text-red-300 text-[11px] font-mono">getChapters</code>/<code class="px-1 py-0.5 rounded bg-ink-800 text-red-300 text-[11px] font-mono">getChapterData</code> moved off <code class="px-1 py-0.5 rounded bg-ink-800 text-red-300 text-[11px] font-mono">ContentSource</code> in 0.0.25; the old declaration still compiled, so nothing flagged it.</li>
+        <li class="text-xs text-ink-500 leading-relaxed pl-3 relative before:content-['—'] before:absolute before:left-0 before:text-red-800">Dropped <code class="px-1 py-0.5 rounded bg-ink-800 text-red-300 text-[11px] font-mono">SearchSortStyle</code>, removed from the types package. No source passed a sort style, so the rendered form is unchanged.</li>
+      </ul>
+    </div>
+
+    <div>
+      <p class="text-xs font-medium text-ink-400 mb-1.5">2026-08-25</p>
+      <ul class="space-y-1">
+        <li class="text-xs text-ink-500 leading-relaxed pl-3 relative before:content-['—'] before:absolute before:left-0 before:text-red-800">Rewritten against the current <code class="px-1 py-0.5 rounded bg-ink-800 text-red-300 text-[11px] font-mono">@mana-app/types</code> API and split into a per-source toolkit: <code class="px-1 py-0.5 rounded bg-ink-800 text-red-300 text-[11px] font-mono">parse.ts</code> (page reading), <code class="px-1 py-0.5 rounded bg-ink-800 text-red-300 text-[11px] font-mono">source.ts</code> (filters, sections, preferences, query strings) and <code class="px-1 py-0.5 rounded bg-ink-800 text-red-300 text-[11px] font-mono">client.ts</code> (network client and Cloudflare detection), alongside <code class="px-1 py-0.5 rounded bg-ink-800 text-red-300 text-[11px] font-mono">model.ts</code> and <code class="px-1 py-0.5 rounded bg-ink-800 text-red-300 text-[11px] font-mono">main.ts</code>.</li>
+        <li class="text-xs text-ink-500 leading-relaxed pl-3 relative before:content-['—'] before:absolute before:left-0 before:text-red-800">Demonstrates <code class="px-1 py-0.5 rounded bg-ink-800 text-red-300 text-[11px] font-mono">getSearchForm</code>, <code class="px-1 py-0.5 rounded bg-ink-800 text-red-300 text-[11px] font-mono">getSortOptions</code>, <code class="px-1 py-0.5 rounded bg-ink-800 text-red-300 text-[11px] font-mono">getPreferenceMenu</code>, home sections wired to their own "view more" listings, and a lazily built network client.</li>
       </ul>
     </div>
   </div>
@@ -408,24 +500,20 @@
     </div>
   </main>
 
-  <footer class="border-t border-zinc-800 mt-12">
+  <footer class="border-t border-ink-800 mt-12">
     <div class="max-w-5xl mx-auto px-4 sm:px-6 py-6 flex flex-col sm:flex-row items-start sm:items-center gap-4 justify-between">
       <div class="flex items-center gap-4">
         <div class="flex items-center gap-2">
-          <svg class="w-4 h-4 text-zinc-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
-            <path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/>
-          </svg>
-          <span class="text-xs font-medium text-zinc-500">kakarot_extensions_mana</span>
+          <svg class="w-4 h-4 text-ink-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/></svg>
+          <span class="text-xs font-medium text-ink-500">Kakarot Extensions</span>
         </div>
         <a href="https://karrot0.github.io/kakarot-extensions-mana" target="_blank" rel="noopener"
-           class="inline-flex items-center gap-1.5 text-xs text-zinc-600 hover:text-zinc-400 transition-colors">
-          <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0020 4.77 5.07 5.07 0 0019.91 1S18.73.65 16 2.48a13.38 13.38 0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 005 4.77a5.44 5.44 0 00-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 009 18.13V22"/>
-          </svg>
+           class="inline-flex items-center gap-1.5 text-xs text-ink-600 hover:text-red-400 transition-colors">
+          <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5C5.37.5 0 5.87 0 12.5c0 5.3 3.44 9.8 8.21 11.39.6.11.82-.26.82-.58l-.01-2.05c-3.34.73-4.04-1.61-4.04-1.61-.55-1.39-1.34-1.76-1.34-1.76-1.09-.75.08-.73.08-.73 1.21.08 1.84 1.24 1.84 1.24 1.07 1.83 2.81 1.3 3.5.99.11-.78.42-1.31.76-1.61-2.67-.3-5.47-1.33-5.47-5.93 0-1.31.47-2.38 1.24-3.22-.13-.3-.54-1.52.11-3.18 0 0 1.01-.32 3.3 1.23a11.5 11.5 0 016.01 0c2.29-1.55 3.3-1.23 3.3-1.23.65 1.66.24 2.88.12 3.18.77.84 1.23 1.91 1.23 3.22 0 4.61-2.8 5.62-5.48 5.92.43.37.81 1.1.81 2.22l-.01 3.29c0 .32.22.7.83.58A12 12 0 0024 12.5C24 5.87 18.63.5 12 .5z"/></svg>
           GitHub Pages
         </a>
       </div>
-      <span class="text-xs text-zinc-600">Built 2026-09-05 22:54 UTC</span>
+      <span class="text-xs text-ink-600">Built 2026-09-05 23:30 UTC</span>
     </div>
   </footer>
 
