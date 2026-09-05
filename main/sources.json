@@ -20,7 +20,7 @@
       "path": "Batcave",
       "environment": "source",
       "intents": 2100236,
-      "hash": "0c74b8d10c74b8d10c74b8d10c74b8d10c74b8d10c74b8d10c74b8d10c74b8d1"
+      "hash": "513a49e7513a49e7513a49e7513a49e7513a49e7513a49e7513a49e7513a49e7"
     },
     {
       "id": "kakarotcomics",
@@ -41,7 +41,7 @@
       "path": "KakarotComics",
       "environment": "source",
       "intents": 10492937,
-      "hash": "29d7ecdb29d7ecdb29d7ecdb29d7ecdb29d7ecdb29d7ecdb29d7ecdb29d7ecdb"
+      "hash": "33d718a933d718a933d718a933d718a933d718a933d718a933d718a933d718a9"
     },
     {
       "id": "ocecomic",
@@ -62,7 +62,7 @@
       "path": "OceComic",
       "environment": "source",
       "intents": 2104328,
-      "hash": "0114176601141766011417660114176601141766011417660114176601141766"
+      "hash": "5ec31ca85ec31ca85ec31ca85ec31ca85ec31ca85ec31ca85ec31ca85ec31ca8"
     },
     {
       "id": "template",
@@ -83,7 +83,7 @@
       "path": "Template",
       "environment": "source",
       "intents": 2104329,
-      "hash": "582421f3582421f3582421f3582421f3582421f3582421f3582421f3582421f3"
+      "hash": "4a2cdb8d4a2cdb8d4a2cdb8d4a2cdb8d4a2cdb8d4a2cdb8d4a2cdb8d4a2cdb8d"
     },
     {
       "id": "zipcomic",
@@ -104,7 +104,7 @@
       "path": "ZipComic",
       "environment": "source",
       "intents": 2098184,
-      "hash": "62c6ad2062c6ad2062c6ad2062c6ad2062c6ad2062c6ad2062c6ad2062c6ad20"
+      "hash": "3f8a50433f8a50433f8a50433f8a50433f8a50433f8a50433f8a50433f8a5043"
     }
   ]
 }
