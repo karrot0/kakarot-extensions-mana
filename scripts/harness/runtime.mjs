@@ -36,9 +36,7 @@ export class NetworkError extends Error {
 
 export class CloudflareError extends Error {
   constructor(resolutionURL) {
-    super(
-      `Cloudflare challenge encountered${resolutionURL ? ` (${resolutionURL})` : ""}`,
-    );
+    super(`Cloudflare challenge encountered${resolutionURL ? ` (${resolutionURL})` : ""}`);
     this.name = "CloudflareError";
     this.resolutionURL = resolutionURL;
   }
@@ -51,9 +49,7 @@ function buildUrl(url, params) {
   );
   if (entries.length === 0) return url;
   const query = entries
-    .map(
-      ([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(String(v))}`,
-    )
+    .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(String(v))}`)
     .join("&");
   return `${url}${url.includes("?") ? "&" : "?"}${query}`;
 }
@@ -73,9 +69,7 @@ function decodeStrictUtf8(buffer) {
   try {
     return new TextDecoder("utf-8", { fatal: true }).decode(buffer);
   } catch {
-    throw new Error(
-      "String could not be serialized with encoding: Unicode (UTF-8)",
-    );
+    throw new Error("String could not be serialized with encoding: Unicode (UTF-8)");
   }
 }
 
@@ -127,10 +121,7 @@ export class NetworkClient {
     }
 
     const controller = new AbortController();
-    const timer = setTimeout(
-      () => controller.abort(),
-      prepared.timeout ?? this.timeout,
-    );
+    const timer = setTimeout(() => controller.abort(), prepared.timeout ?? this.timeout);
 
     let raw;
     try {
@@ -154,9 +145,7 @@ export class NetworkClient {
     };
 
     const validate = prepared.validateStatus ?? this.statusValidator;
-    const ok = validate
-      ? validate(raw.status)
-      : raw.status >= 200 && raw.status < 300;
+    const ok = validate ? validate(raw.status) : raw.status >= 200 && raw.status < 300;
 
     const transformed = await applyAll(response, [
       ...this.responseTransformers,
@@ -166,8 +155,7 @@ export class NetworkClient {
     if (!ok) {
       throw new NetworkError(
         "NetworkError",
-        STATUS_MESSAGES[raw.status] ??
-          `Request failed with status ${raw.status}`,
+        STATUS_MESSAGES[raw.status] ?? `Request failed with status ${raw.status}`,
         prepared,
         transformed,
       );
@@ -216,8 +204,7 @@ class WebViewPageShim {
 export const WebViewPage = {
   active: false,
   async create() {
-    if (WebViewPage.active)
-      throw new Error("A WebView is already active for this source");
+    if (WebViewPage.active) throw new Error("A WebView is already active for this source");
     WebViewPage.active = true;
     return new WebViewPageShim(() => {
       WebViewPage.active = false;
@@ -267,10 +254,7 @@ export class ManaStore {
   async stringArray(k) {
     const value = this.values.get(k);
     if (value === undefined) return null;
-    if (
-      !Array.isArray(value) ||
-      value.some((entry) => typeof entry !== "string")
-    ) {
+    if (!Array.isArray(value) || value.some((entry) => typeof entry !== "string")) {
       throw new Error(`${k} is not a string array`);
     }
     return value;

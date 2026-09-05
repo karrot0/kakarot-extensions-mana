@@ -9,9 +9,7 @@ const distDir = path.join(cwd, "dist");
 const sourcesPath = path.join(distDir, "sources.json");
 
 if (!fs.existsSync(sourcesPath)) {
-  process.stderr.write(
-    "[mana-dev] sources.json not found — skipping page generation\n",
-  );
+  process.stderr.write("[mana-dev] sources.json not found — skipping page generation\n");
   return;
 }
 
@@ -20,9 +18,7 @@ let data;
 try {
   data = JSON.parse(fs.readFileSync(sourcesPath, "utf-8"));
 } catch {
-  process.stderr.write(
-    "[mana-dev] Failed to parse sources.json — skipping page generation\n",
-  );
+  process.stderr.write("[mana-dev] Failed to parse sources.json — skipping page generation\n");
   return;
 }
 
@@ -43,8 +39,7 @@ function parseChangelog(markdown) {
   /** @type {{ name: string; version: string; entries: { heading: string; items: string[] }[] }[]} */
   const extensions = [];
   let currentExt = /** @type {typeof extensions[number] | null} */ (null);
-  let currentEntry =
-    /** @type {typeof extensions[number]["entries"][number] | null} */ (null);
+  let currentEntry = /** @type {typeof extensions[number]["entries"][number] | null} */ (null);
 
   for (const rawLine of markdown.split(/\r?\n/)) {
     const line = rawLine.trimEnd();
@@ -148,20 +143,14 @@ function changelogSection(extensions) {
 
 let changelogExtensions = /** @type {ReturnType<typeof parseChangelog>} */ ([]);
 try {
-  changelogExtensions = parseChangelog(
-    fs.readFileSync(path.join(cwd, "CHANGELOG.md"), "utf-8"),
-  );
+  changelogExtensions = parseChangelog(fs.readFileSync(path.join(cwd, "CHANGELOG.md"), "utf-8"));
 } catch {
-  process.stderr.write(
-    "[mana-dev] CHANGELOG.md not found -- skipping changelog section\n",
-  );
+  process.stderr.write("[mana-dev] CHANGELOG.md not found -- skipping changelog section\n");
 }
 
 const repoDisplayName = data.repositoryName ?? pkg.name ?? "Extensions";
 const homepage = pkg.homepage ?? "";
-const sourcesUrl = homepage
-  ? homepage.replace(/\/?$/, "/main")
-  : "https://your-pages-url/main";
+const sourcesUrl = homepage ? homepage.replace(/\/?$/, "/main") : "https://your-pages-url/main";
 
 /**
  * Repo URL from package.json's `repository`, falling back to a GitHub Pages
@@ -170,9 +159,7 @@ const sourcesUrl = homepage
  */
 function repoUrlFrom(pkg, homepage) {
   const declared =
-    typeof pkg.repository === "string"
-      ? pkg.repository
-      : (pkg.repository?.url ?? "");
+    typeof pkg.repository === "string" ? pkg.repository : (pkg.repository?.url ?? "");
   if (declared) return declared.replace(/^git\+/, "").replace(/\.git$/, "");
   const pages = /^https?:\/\/([^.]+)\.github\.io\/([^/]+)/.exec(homepage);
   return pages ? `https://github.com/${pages[1]}/${pages[2]}` : "";
@@ -315,9 +302,7 @@ const cards = sources.map(sourceCard).join("\n");
 
 const brandIcon = (() => {
   const brand = pkg.mana?.brandSource;
-  const s = brand
-    ? sources.find(/** @param {any} s */ (s) => s.path === brand)
-    : sources[0];
+  const s = brand ? sources.find(/** @param {any} s */ (s) => s.path === brand) : sources[0];
   if (!s?.path) return "";
   const iconFile = s.thumbnail ?? "icon.png";
   return fs.existsSync(path.join(cwd, "src", s.path, iconFile))

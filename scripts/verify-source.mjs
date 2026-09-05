@@ -157,7 +157,10 @@ function checkChapters(chapters) {
   chapters.forEach((chapter, index) => {
     assert(typeof chapter.chapterId === "string" && chapter.chapterId, `chapter ${index}: no id`);
     assert(Number.isFinite(chapter.number), `chapter ${index}: number is not finite`);
-    assert(chapter.index === index, `chapter ${index}: index is ${chapter.index}, expected ${index}`);
+    assert(
+      chapter.index === index,
+      `chapter ${index}: index is ${chapter.index}, expected ${index}`,
+    );
     assert(isValidDate(chapter.date), `chapter ${index}: bad date`);
   });
   const dated = chapters.filter((c) => c.date.getTime() > 0).length;

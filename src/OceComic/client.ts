@@ -1,8 +1,4 @@
-import {
-  NetworkClientBuilder,
-  type NetworkRequest,
-  type NetworkResponse,
-} from "@mana-app/types";
+import { NetworkClientBuilder, type NetworkRequest, type NetworkResponse } from "@mana-app/types";
 
 export const HTML_ACCEPT =
   "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8";
@@ -51,8 +47,7 @@ function errorMessage(body: string, fallback: string): string {
 
   if (isRecord(parsed)) {
     const error = parsed["error"];
-    if (isRecord(error) && typeof error["message"] === "string")
-      return error["message"];
+    if (isRecord(error) && typeof error["message"] === "string") return error["message"];
     if (typeof parsed["message"] === "string") return parsed["message"];
   }
   return fallback;
@@ -72,9 +67,7 @@ export function buildClient(options: ClientOptions): NetworkClient {
     timeout,
   } = options;
 
-  const interceptRequest = async (
-    request: NetworkRequest,
-  ): Promise<NetworkRequest> => {
+  const interceptRequest = async (request: NetworkRequest): Promise<NetworkRequest> => {
     const origin = originFor?.(request.url) ?? baseUrl;
     return {
       ...request,
@@ -89,14 +82,8 @@ export function buildClient(options: ClientOptions): NetworkClient {
     };
   };
 
-  const interceptResponse = async (
-    response: NetworkResponse,
-  ): Promise<NetworkResponse> => {
-    if (
-      response.status === 403 ||
-      response.status === 503 ||
-      isChallengePage(response.data)
-    ) {
+  const interceptResponse = async (response: NetworkResponse): Promise<NetworkResponse> => {
+    if (response.status === 403 || response.status === 503 || isChallengePage(response.data)) {
       throw new CloudflareError(resolutionUrl);
     }
     if (json && response.status >= 400) {
@@ -118,8 +105,7 @@ export function buildClient(options: ClientOptions): NetworkClient {
   return builder.build();
 }
 
-const ENCODING_FAILURE =
-  /could not be serialized|unicode \(utf-8\)|invalid.{0,20}utf-?8/i;
+const ENCODING_FAILURE = /could not be serialized|unicode \(utf-8\)|invalid.{0,20}utf-?8/i;
 
 let webViewTurn: Promise<unknown> = Promise.resolve();
 
@@ -138,18 +124,13 @@ async function readThroughWebView(url: string): Promise<string> {
   const page = await WebViewPage.create();
   try {
     await page.goto(url, { waitUntil: "domcontentloaded" });
-    return await page.evaluateScript<string>(
-      "document.documentElement.outerHTML",
-    );
+    return await page.evaluateScript<string>("document.documentElement.outerHTML");
   } finally {
     await page.close();
   }
 }
 
-export async function getText(
-  client: NetworkClient,
-  url: string,
-): Promise<string> {
+export async function getText(client: NetworkClient, url: string): Promise<string> {
   try {
     return (await client.get(url)).data;
   } catch (error) {

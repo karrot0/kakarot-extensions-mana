@@ -26,13 +26,13 @@ type per field type, and `filters[id] as string` silently yields `undefined` for
 
 ```ts
 const filters = new FilterReader(request);
-filters.has(id);           // present and non-empty
-filters.text(id);          // string | Option -> its id
+filters.has(id); // present and non-empty
+filters.text(id); // string | Option -> its id
 filters.option(id, "all"); // text() with a fallback
-filters.options(id);       // Option[] -> ids
-filters.excludable(id);    // { included, excluded }
+filters.options(id); // Option[] -> ids
+filters.excludable(id); // { included, excluded }
 filters.toggle(id);
-filters.number(id);        // NaN when absent — guard with Number.isFinite
+filters.number(id); // NaN when absent — guard with Number.isFinite
 ```
 
 ### `forms/search.ts` — the search form
@@ -119,7 +119,18 @@ through these.
 ## `client.ts` — the network client
 
 ```ts
-buildClient({ baseUrl, requests, interval, accept, headers, resolutionUrl, originFor, json, maxRetries, timeout })
+buildClient({
+  baseUrl,
+  requests,
+  interval,
+  accept,
+  headers,
+  resolutionUrl,
+  originFor,
+  json,
+  maxRetries,
+  timeout,
+});
 ```
 
 Applies rate limiting, sets `origin`/`referer`/`accept`/`accept-language`, and installs a
@@ -138,14 +149,14 @@ Per-request `headers` passed to `http.request` win over the client defaults.
 
 Each source keeps only what it uses. The recurring shapes, from `src/Template/main.ts`:
 
-| Helper | Why it is not just cheerio |
-| --- | --- |
-| `text(node)` | `.text()` plus whitespace collapsing |
-| `imageSrc(node)` | comic sites lazy-load: tries `data-src`, `data-original`, `data-lazy-src`, `srcset`, `src`, and takes the first URL out of a `srcset` |
-| `absolute(raw)` | the runtime has no `URL` global; handles `//host`, `/path`, relative, and `\/`-escaped URLs from inline JSON |
-| `slug(value)` | tag ids |
-| `chapterNumber(title, fallback)` | `#12.5`, trailing numbers |
-| `ownText(node)` | `.contents().filter(text nodes)` — text excluding child elements |
+| Helper                           | Why it is not just cheerio                                                                                                            |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `text(node)`                     | `.text()` plus whitespace collapsing                                                                                                  |
+| `imageSrc(node)`                 | comic sites lazy-load: tries `data-src`, `data-original`, `data-lazy-src`, `srcset`, `src`, and takes the first URL out of a `srcset` |
+| `absolute(raw)`                  | the runtime has no `URL` global; handles `//host`, `/path`, relative, and `\/`-escaped URLs from inline JSON                          |
+| `slug(value)`                    | tag ids                                                                                                                               |
+| `chapterNumber(title, fallback)` | `#12.5`, trailing numbers                                                                                                             |
+| `ownText(node)`                  | `.contents().filter(text nodes)` — text excluding child elements                                                                      |
 
 Two more that only some sources need, both in `src/Batcave/main.ts`:
 

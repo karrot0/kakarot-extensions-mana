@@ -53,6 +53,7 @@ Bump `info.version` in `src/<Name>/main.ts`. Semantic:
 ## <Name> (current: v<X.Y.Z>)
 
 ### <YYYY-MM-DD>
+
 - What changed, in one sentence per bullet.
 ```
 

@@ -11,33 +11,33 @@ unchanged from `@mana-app/dev@0.1.13` — 0.1.14 is a rebuild with no change to 
 bit is set. Methods inherited from a base class or defined on a prototype are detected
 normally; a method that does not exist is a feature that does not exist.
 
-| Bit | Intent | Set when the instance has |
-| --- | --- | --- |
-| 0 | `preferenceMenuBuilder` | `getPreferenceMenu` |
-| 1 | `requiresSetup` | `getSetupMenu` **and** `validateSetupForm` **and** `isRunnerSetup` |
-| 2 | `imageRequestHandler` | `willRequestImage` |
-| 3 | `pageLinkResolver` | `getSectionsForPage` **and** `resolvePageSection` |
-| 4 | `libraryPageLinkProvider` | `getLibraryPageLinks` |
-| 5 | `authenticatable` | `getAuthenticatedUser` + `handleUserSignOut` **and** one flavour below |
-| 6 | `basicAuth` | `handleBasicAuth` |
-| 7 | `basicAuthUsesEmail` | `BasicAuthenticationUIIdentifier === EMAIL` |
-| 8 | `webviewAuth` | `getWebAuthRequestURL` + `didReceiveSessionCookieFromWebAuthResponse` |
-| 9 | `oauthAuth` | `getOAuthRequestURL` + `handleOAuthCallback` |
-| 10 | `providesSearch` | `search` |
-| 11 | `providesSearchForm` | `getSearchForm` |
-| 12 | `providesSearchSortOptions` | `getSortOptions` |
-| 13 | `chapterEventHandler` | `getContent` + `onChaptersMarked` + `onChapterRead` |
-| 14 | `contentEventHandler` | `getContent` + `onContentsAddedToLibrary` + `onContentsRemovedFromLibrary` |
-| 15 | `librarySyncHandler` | `getContent` + `syncUserLibrary` |
-| 16 | `pageReadHandler` | `getContent` + `onPageRead` |
-| 17 | `progressSyncHandler` | `getContent` + `getProgressState` |
-| 18 | `groupedUpdateFetcher` | `getContent` + `getGroupedUpdates` |
-| 19 | `redrawingHandler` | `getContent` + `shouldRedrawImage` + `redrawImageWithSize` |
-| 20 | `chaptersInContent` | `getChapterData` present **and `getChapters` absent** |
-| 21 | `providesChapters` | `getContent` + `getChapterData` |
-| 22 | `canHandleURL` | `handleURL` |
-| 23 | `allowsMultipleInstances` | `config.allowsMultipleInstances` |
-| 24 | `requiresAuthenticationToAccessContent` | `config.requiresAuthenticationToAccessContent` |
+| Bit | Intent                                  | Set when the instance has                                                  |
+| --- | --------------------------------------- | -------------------------------------------------------------------------- |
+| 0   | `preferenceMenuBuilder`                 | `getPreferenceMenu`                                                        |
+| 1   | `requiresSetup`                         | `getSetupMenu` **and** `validateSetupForm` **and** `isRunnerSetup`         |
+| 2   | `imageRequestHandler`                   | `willRequestImage`                                                         |
+| 3   | `pageLinkResolver`                      | `getSectionsForPage` **and** `resolvePageSection`                          |
+| 4   | `libraryPageLinkProvider`               | `getLibraryPageLinks`                                                      |
+| 5   | `authenticatable`                       | `getAuthenticatedUser` + `handleUserSignOut` **and** one flavour below     |
+| 6   | `basicAuth`                             | `handleBasicAuth`                                                          |
+| 7   | `basicAuthUsesEmail`                    | `BasicAuthenticationUIIdentifier === EMAIL`                                |
+| 8   | `webviewAuth`                           | `getWebAuthRequestURL` + `didReceiveSessionCookieFromWebAuthResponse`      |
+| 9   | `oauthAuth`                             | `getOAuthRequestURL` + `handleOAuthCallback`                               |
+| 10  | `providesSearch`                        | `search`                                                                   |
+| 11  | `providesSearchForm`                    | `getSearchForm`                                                            |
+| 12  | `providesSearchSortOptions`             | `getSortOptions`                                                           |
+| 13  | `chapterEventHandler`                   | `getContent` + `onChaptersMarked` + `onChapterRead`                        |
+| 14  | `contentEventHandler`                   | `getContent` + `onContentsAddedToLibrary` + `onContentsRemovedFromLibrary` |
+| 15  | `librarySyncHandler`                    | `getContent` + `syncUserLibrary`                                           |
+| 16  | `pageReadHandler`                       | `getContent` + `onPageRead`                                                |
+| 17  | `progressSyncHandler`                   | `getContent` + `getProgressState`                                          |
+| 18  | `groupedUpdateFetcher`                  | `getContent` + `getGroupedUpdates`                                         |
+| 19  | `redrawingHandler`                      | `getContent` + `shouldRedrawImage` + `redrawImageWithSize`                 |
+| 20  | `chaptersInContent`                     | `getChapterData` present **and `getChapters` absent**                      |
+| 21  | `providesChapters`                      | `getContent` + `getChapterData`                                            |
+| 22  | `canHandleURL`                          | `handleURL`                                                                |
+| 23  | `allowsMultipleInstances`               | `config.allowsMultipleInstances`                                           |
+| 24  | `requiresAuthenticationToAccessContent` | `config.requiresAuthenticationToAccessContent`                             |
 
 Check your own build with:
 
@@ -117,13 +117,13 @@ A `SearchForm` is `{ sections: SearchSection[] }`, built from three section buil
 **The builder picks the presentation.** There is no `presentation` property to set — as of
 0.0.25 `SearchPickerPresentation` is gone, and the choice is which function you call:
 
-| Builder | Renders as |
-| --- | --- |
-| `SearchPicker` | inline list, pushes a page |
-| `SearchMenuPicker` | tap-to-open menu |
-| `SearchPickerSheet` | modal sheet |
-| `SearchMultiPicker` / `SearchMultiPickerSheet` | multi-select, page / sheet |
-| `SearchExcludableMultiPicker` / `...Sheet` | include-exclude, page / sheet |
+| Builder                                        | Renders as                    |
+| ---------------------------------------------- | ----------------------------- |
+| `SearchPicker`                                 | inline list, pushes a page    |
+| `SearchMenuPicker`                             | tap-to-open menu              |
+| `SearchPickerSheet`                            | modal sheet                   |
+| `SearchMultiPicker` / `SearchMultiPickerSheet` | multi-select, page / sheet    |
+| `SearchExcludableMultiPicker` / `...Sheet`     | include-exclude, page / sheet |
 
 `SearchGroup({ id, title, children })` wraps sibling fields in a titled group **inside** a
 `SearchListSection` — it is a `SearchListItem`, so it goes in `children`, not in `sections`.
@@ -139,26 +139,26 @@ depends on the field type**, which is why `FilterReader` exists.
 
 ### Migrating from 0.0.24
 
-| Remove | Replace with |
-| --- | --- |
-| `implements ContentSource` on a source with `getChapterData` | `implements ChapterSource` |
-| `SearchSortStyle` / `SearchSortSection({ style })` | nothing — the enum and property were removed |
+| Remove                                                        | Replace with                                                      |
+| ------------------------------------------------------------- | ----------------------------------------------------------------- |
+| `implements ContentSource` on a source with `getChapterData`  | `implements ChapterSource`                                        |
+| `SearchSortStyle` / `SearchSortSection({ style })`            | nothing — the enum and property were removed                      |
 | `SearchPickerPresentation` / `SearchPicker({ presentation })` | the matching builder (`SearchMenuPicker`, `SearchPickerSheet`, …) |
-| `TrackStatus` enum, `TrackerCore`, `AdvancedTracker` | `getStatusOptions(): TrackerStatusOption[]` and a `string` status |
+| `TrackStatus` enum, `TrackerCore`, `AdvancedTracker`          | `getStatusOptions(): TrackerStatusOption[]` and a `string` status |
 
 Only the first two matter for a plain content source. `ChapterSource` is the one that will
 not fail `typecheck`, so it has to be checked by eye.
 
 ### Migrating a pre-0.0.24 source
 
-| Remove | Replace with |
-| --- | --- |
-| `getSearchFilters(): Promise<SearchFilter[]>` | `getSearchForm(): Promise<SearchForm>` via `buildSearchForm` |
-| `FILTERS: SearchFilter[]` in `model.ts` | `SearchListField[]` from the builders, plus an optional tags field |
-| `filters[FilterID.X] as string` | `new FilterReader(request).option(FilterID.X)` |
-| `Content.isNSFW: boolean` | `contentRating: ContentRating` (`SAFE`/`SUGGESTIVE`/`MATURE`/`EXPLICIT`) |
-| `SourceConfig.disableTagNavigation` | nothing — the key was removed |
-| `SourceInfo.rating` as NSFW enum | `CatalogRating` (`SAFE`/`MIXED`/`EXPLICIT`) |
+| Remove                                        | Replace with                                                             |
+| --------------------------------------------- | ------------------------------------------------------------------------ |
+| `getSearchFilters(): Promise<SearchFilter[]>` | `getSearchForm(): Promise<SearchForm>` via `buildSearchForm`             |
+| `FILTERS: SearchFilter[]` in `model.ts`       | `SearchListField[]` from the builders, plus an optional tags field       |
+| `filters[FilterID.X] as string`               | `new FilterReader(request).option(FilterID.X)`                           |
+| `Content.isNSFW: boolean`                     | `contentRating: ContentRating` (`SAFE`/`SUGGESTIVE`/`MATURE`/`EXPLICIT`) |
+| `SourceConfig.disableTagNavigation`           | nothing — the key was removed                                            |
+| `SourceInfo.rating` as NSFW enum              | `CatalogRating` (`SAFE`/`MIXED`/`EXPLICIT`)                              |
 
 Nothing warns you about any of these: `mana-dev` bundles with esbuild, which strips types
 without checking them. `bun run typecheck` is the gate that catches it.
