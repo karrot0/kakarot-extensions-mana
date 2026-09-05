@@ -9,8 +9,8 @@ import {
   type Chapter,
   type ChapterData,
   type ChapterPage,
+  type ChapterSource,
   type Content,
-  type ContentSource,
   type Highlight,
   type PageLink,
   type PageLinkResolver,
@@ -26,7 +26,7 @@ import {
   type Tag,
 } from "@mana-app/types";
 
-import { buildClient } from "./client.ts";
+import { buildClient, getText } from "./client.ts";
 import {
   FilterReader,
   buildSearchForm,
@@ -50,7 +50,7 @@ import {
 const info: SourceInfo = {
   id: "ocecomic",
   name: "OceComic",
-  version: "1.1.0",
+  version: "1.2.1",
   description: "Pulls comics from ocecomic.com",
   website: BASE_URL,
   rating: CatalogRating.MIXED,
@@ -64,7 +64,7 @@ const config: SourceConfig = {
   owningLinks: ["ocecomic.com", "www.ocecomic.com"],
 };
 
-class OceComicSource implements ContentSource, SearchProvider, PageLinkResolver {
+class OceComicSource implements ChapterSource, SearchProvider, PageLinkResolver {
   readonly info = info;
   readonly config = config;
 
@@ -76,8 +76,7 @@ class OceComicSource implements ContentSource, SearchProvider, PageLinkResolver 
   }
 
   private async fetchHtml(url: string): Promise<CheerioAPI> {
-    const response = await this.http.get(url);
-    return load(response.data);
+    return load(await getText(this.http, url));
   }
 
   private sections(): SectionSpec[] {
@@ -204,8 +203,17 @@ class OceComicSource implements ContentSource, SearchProvider, PageLinkResolver 
 
 const LAZY_ATTRS = ["data-src", "data-original", "data-lazy-src", "srcset", "src"];
 
+function normalize(value: string): string {
+  return value.replace(/\s+/g, " ").trim();
+}
+
 function text(node: Cheerio<AnyNode>): string {
-  return node.text().replace(/\s+/g, " ").trim();
+  return normalize(node.text());
+}
+
+function beforeCorruption(value: string): string {
+  const corruption = value.indexOf("�");
+  return corruption >= 0 ? value.slice(0, corruption) : value;
 }
 
 function imageSrc(node: Cheerio<AnyNode>): string {
@@ -281,19 +289,17 @@ function parseFields($: CheerioAPI): Record<string, string[]> {
 }
 
 /**
- * ocecomic.com truncates listing titles mid UTF-8 character before appending
- * "...", leaving an unencodable fragment. Cut from the corruption point rather
- * than ship an invalid string back to the app.
+ * ocecomic.com truncates the visible card title mid UTF-8 character, so prefer
+ * the untruncated `title` attribute. Either value can carry U+FFFD, because the
+ * WebView fallback substitutes it for the bytes the truncation corrupted, so
+ * both are cut at it. Only the visible text also sheds a trailing ellipsis.
  */
-function sanitizeTitle(raw: string): string {
-  let value = raw;
-  const replacementIndex = value.indexOf("�");
-  if (replacementIndex >= 0) {
-    value = value.slice(0, replacementIndex);
-  } else {
-    value = value.replace(/[Â-ô]\s*\.{2,}\s*$/, "");
-  }
-  return value.replace(/[.\s]+$/, "").trim();
+function cardTitle(item: Cheerio<AnyNode>, img: Cheerio<AnyNode>): string {
+  const link = item.find("h2 a").first();
+  const attribute = normalize(link.attr("title") ?? img.attr("alt") ?? "");
+  if (attribute) return normalize(beforeCorruption(attribute));
+
+  return normalize(beforeCorruption(text(link))).replace(/[.\s]+$/, "");
 }
 
 function parseCards($: CheerioAPI): Highlight[] {
@@ -306,12 +312,10 @@ function parseCards($: CheerioAPI): Highlight[] {
     if (!id) continue;
 
     const img = anchor.find("img").first();
-    const rawTitle =
-      text(item.find("h2 a").first()) || (img.attr("alt") ?? "").replace(/\s+/g, " ").trim() || id;
 
     results.push({
       id,
-      title: sanitizeTitle(rawTitle) || id,
+      title: cardTitle(item, img) || id,
       cover: absolute(imageSrc(img)),
       contentRating: ContentRating.SAFE,
       webUrl: contentUrl(id),

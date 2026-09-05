@@ -1,7 +1,8 @@
 # The `@mana-app/types` surface and the runtime that consumes it
 
-Verified against `@mana-app/types@0.0.24` and `@mana-app/dev@0.1.13` by reading the
-type declarations and the runtime embedded in `mana-dev`.
+Verified against `@mana-app/types@0.0.25` and `@mana-app/dev@0.1.14` by reading the
+type declarations and the runtime embedded in `mana-dev`. The intent table below is
+unchanged from `@mana-app/dev@0.1.13` — 0.1.14 is a rebuild with no change to detection.
 
 ## How the app decides what your source can do
 
@@ -53,6 +54,21 @@ Two traps worth calling out:
   `.d.ts` declares `isSourceSetup`. Implementing only the typed name produces a source that
   never reports as requiring setup. Define both if you need setup.
 
+## Which interface to implement
+
+As of 0.0.25 `ContentSource` is metadata only — `getContent` plus the optional
+`getAdditionalInfoSectionItems`. Chapters moved to a new interface:
+
+```ts
+interface ContentSource extends SourceCore, SearchProvider { getContent(...) }
+interface ChapterSource extends ContentSource { getChapters?(...); getChapterData(...) }
+```
+
+**A source that serves readable chapters implements `ChapterSource`.** `ContentSource`
+still type-checks — TypeScript allows extra members — so this is silent: nothing tells you
+the declaration is now too weak. The split exists so `ContentTracker` can extend
+`ContentSource` without inheriting chapter methods; trackers never implement `ChapterSource`.
+
 ## Runtime constraints
 
 The source runs in a bare V8 / JavaScriptCore context, not Node and not a browser.
@@ -98,9 +114,40 @@ A `SearchForm` is `{ sections: SearchSection[] }`, built from three section buil
 `SearchTextField`, `SearchStepper`, `SearchDatePicker`. All are exported from
 `@mana-app/types`. `buildSearchForm` in `forms/search.ts` assembles them.
 
+**The builder picks the presentation.** There is no `presentation` property to set — as of
+0.0.25 `SearchPickerPresentation` is gone, and the choice is which function you call:
+
+| Builder | Renders as |
+| --- | --- |
+| `SearchPicker` | inline list, pushes a page |
+| `SearchMenuPicker` | tap-to-open menu |
+| `SearchPickerSheet` | modal sheet |
+| `SearchMultiPicker` / `SearchMultiPickerSheet` | multi-select, page / sheet |
+| `SearchExcludableMultiPicker` / `...Sheet` | include-exclude, page / sheet |
+
+`SearchGroup({ id, title, children })` wraps sibling fields in a titled group **inside** a
+`SearchListSection` — it is a `SearchListItem`, so it goes in `children`, not in `sections`.
+Tags sections are always rendered inline by the host; there is nothing to opt into.
+
+`SearchSortSection` takes only `header` and `footer` — `SearchSortStyle` and its `style`
+property were removed in 0.0.25. `SortOption.defaultAscending?: boolean` sets the starting
+direction of an `isOrderable` sort.
+
 `SearchRequest.filters` values are `FilterPrimitives`:
 `string | boolean | number | Option | Option[] | ExcludableMultiSelectProp`. **The shape
 depends on the field type**, which is why `FilterReader` exists.
+
+### Migrating from 0.0.24
+
+| Remove | Replace with |
+| --- | --- |
+| `implements ContentSource` on a source with `getChapterData` | `implements ChapterSource` |
+| `SearchSortStyle` / `SearchSortSection({ style })` | nothing — the enum and property were removed |
+| `SearchPickerPresentation` / `SearchPicker({ presentation })` | the matching builder (`SearchMenuPicker`, `SearchPickerSheet`, …) |
+| `TrackStatus` enum, `TrackerCore`, `AdvancedTracker` | `getStatusOptions(): TrackerStatusOption[]` and a `string` status |
+
+Only the first two matter for a plain content source. `ChapterSource` is the one that will
+not fail `typecheck`, so it has to be checked by eye.
 
 ### Migrating a pre-0.0.24 source
 
@@ -117,6 +164,12 @@ Nothing warns you about any of these: `mana-dev` bundles with esbuild, which str
 without checking them. `bun run typecheck` is the gate that catches it.
 
 ## Content shapes
+
+`SourceContext` — the `context` bag carried on anything the app hands back to you — now
+has one typed key: `allowedContentRatings?: readonly ContentRating[]`, the ratings the host
+will accept for this request. It is **omitted** when the host has no rating policy, so treat
+`undefined` as "no restriction" rather than "allow nothing". A source that can tell a title's
+rating before fetching it can skip the ones the host would discard anyway.
 
 `Content` extends `BaseItem` (`title`, `cover`, `contentRating?`, `webUrl?`) with
 `status`, `summary`, `tags`, `contentType`, `recommendedPanelMode`, `additionalInfo`,

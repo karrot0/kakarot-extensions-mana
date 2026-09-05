@@ -8,8 +8,8 @@ import {
   additionalInfo,
   type Chapter,
   type ChapterData,
+  type ChapterSource,
   type Content,
-  type ContentSource,
   type Form,
   type Highlight,
   type Option,
@@ -72,7 +72,7 @@ import {
 const info: SourceInfo = {
   id: "kakarotcomics",
   name: "KakarotComics",
-  version: "1.2.0",
+  version: "1.2.1",
   description: "Kakarot Comics",
   website: DEFAULT_BASE_URL,
   rating: CatalogRating.MIXED,
@@ -87,7 +87,7 @@ const config: SourceConfig = {
 };
 
 class KakarotComicsSource
-  implements ContentSource, SearchProvider, PageLinkResolver, SourcePreferenceProvider
+  implements ChapterSource, SearchProvider, PageLinkResolver, SourcePreferenceProvider
 {
   readonly info = info;
   readonly config = config;
@@ -499,6 +499,7 @@ function chapterTitle(issue: ApiIssue): string {
 
 const PROVIDER_DISPLAY_NAMES: Record<string, string> = {
   getcomics: "GetComics",
+  comicscodes: "ComicsCodes",
 };
 
 function chapterProvider(issue: ApiIssue): Provider | undefined {

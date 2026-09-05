@@ -7,7 +7,6 @@ import {
   type SearchOptionField,
   type SearchRequest,
   type SearchSection,
-  type SearchSortStyle,
 } from "@mana-app/types";
 
 export type SearchFormSpec = {
@@ -17,7 +16,6 @@ export type SearchFormSpec = {
   tags?: SearchOptionField;
   tagsHeader?: string;
   sortHeader?: string;
-  sortStyle?: SearchSortStyle;
   includeSort?: boolean;
 };
 
@@ -46,10 +44,7 @@ export function buildSearchForm(spec: SearchFormSpec): SearchForm {
 
   if (spec.includeSort !== false) {
     sections.push(
-      SearchSortSection({
-        ...(spec.sortHeader === undefined ? {} : { header: spec.sortHeader }),
-        ...(spec.sortStyle === undefined ? {} : { style: spec.sortStyle }),
-      }),
+      SearchSortSection(spec.sortHeader === undefined ? {} : { header: spec.sortHeader }),
     );
   }
 

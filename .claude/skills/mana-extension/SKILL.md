@@ -119,3 +119,12 @@ the five targets broke.
 If a source still calls `getSearchFilters`, sets `Content.isNSFW`, or sets
 `SourceConfig.disableTagNavigation`, it is written against a removed API and its filters
 are dead. `references/api.md` has the migration recipe.
+
+Two removals from `@mana-app/types@0.0.25` are worth checking by hand, because `typecheck`
+catches the first and stays silent on the second:
+
+- `SearchSortStyle` and `SearchPickerPresentation` are gone. Presentation is now chosen by
+  which builder you call (`SearchMenuPicker`, `SearchPickerSheet`, …).
+- `getChapters`/`getChapterData` moved off `ContentSource` onto a new `ChapterSource`. A
+  source that declares `implements ContentSource` and defines them still compiles, so grep
+  for it rather than trusting a green gate.

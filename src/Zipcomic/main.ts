@@ -10,8 +10,8 @@ import {
   type Chapter,
   type ChapterData,
   type ChapterPage,
+  type ChapterSource,
   type Content,
-  type ContentSource,
   type Highlight,
   type PageLink,
   type PageLinkResolver,
@@ -25,7 +25,7 @@ import {
   type Tag,
 } from "@mana-app/types";
 
-import { buildClient } from "./client.ts";
+import { buildClient, getText } from "./client.ts";
 import {
   listResults,
   pageOf,
@@ -40,7 +40,7 @@ import { BASE_URL, ListID, MATURE_GENRE } from "./model.ts";
 const info: SourceInfo = {
   id: "zipcomic",
   name: "ZipComic",
-  version: "1.1.0",
+  version: "1.1.1",
   description: "Pulls comics from zipcomic.com",
   website: BASE_URL,
   rating: CatalogRating.MIXED,
@@ -55,7 +55,7 @@ const config: SourceConfig = {
   owningLinks: ["www.zipcomic.com", "zipcomic.com"],
 };
 
-class ZipComicSource implements ContentSource, SearchProvider, PageLinkResolver {
+class ZipComicSource implements ChapterSource, SearchProvider, PageLinkResolver {
   readonly info = info;
   readonly config = config;
 
@@ -67,8 +67,7 @@ class ZipComicSource implements ContentSource, SearchProvider, PageLinkResolver 
   }
 
   private async fetchHtml(url: string, params?: QueryParams): Promise<CheerioAPI> {
-    const response = await this.http.get(withQuery(url, params));
-    return load(response.data);
+    return load(await getText(this.http, withQuery(url, params)));
   }
 
   private sections(): SectionSpec[] {

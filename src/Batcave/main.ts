@@ -10,8 +10,8 @@ import {
   type Chapter,
   type ChapterData,
   type ChapterPage,
+  type ChapterSource,
   type Content,
-  type ContentSource,
   type Highlight,
   type ImageRequestHandler,
   type NetworkRequest,
@@ -28,7 +28,7 @@ import {
   type Tag,
 } from "@mana-app/types";
 
-import { buildClient } from "./client.ts";
+import { buildClient, getText } from "./client.ts";
 import {
   FilterReader,
   buildSearchForm,
@@ -52,7 +52,7 @@ import {
 const info: SourceInfo = {
   id: "batcave",
   name: "Batcave",
-  version: "1.7.0",
+  version: "1.7.1",
   description: "Pulls comics from batcave.biz",
   website: BASE_URL,
   rating: CatalogRating.SAFE,
@@ -78,7 +78,7 @@ function originFor(url: string): string {
 }
 
 class BatcaveSource
-  implements ContentSource, SearchProvider, PageLinkResolver, ImageRequestHandler
+  implements ChapterSource, SearchProvider, PageLinkResolver, ImageRequestHandler
 {
   readonly info = info;
   readonly config = config;
@@ -97,8 +97,7 @@ class BatcaveSource
   }
 
   private async fetchHtml(url: string): Promise<CheerioAPI> {
-    const response = await this.http.get(url);
-    return load(response.data);
+    return load(await getText(this.http, url));
   }
 
   private sections(): SectionSpec[] {

@@ -19,7 +19,12 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const TEMPLATE = path.join(ROOT, "src", "Template");
 
 function parseArgs(argv) {
-  const args = { name: undefined, id: undefined, url: undefined, description: undefined };
+  const args = {
+    name: undefined,
+    id: undefined,
+    url: undefined,
+    description: undefined,
+  };
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
     if (arg === "--id") args.id = argv[++i];
@@ -51,20 +56,26 @@ if (!args.name) {
   process.exit(2);
 }
 if (!/^[A-Z][A-Za-z0-9]*$/.test(args.name)) {
-  fail(`"${args.name}" must be PascalCase with no spaces — it becomes the directory name`);
+  fail(
+    `"${args.name}" must be PascalCase with no spaces — it becomes the directory name`,
+  );
 }
 
 const name = args.name;
 const id = (args.id ?? name.toLowerCase()).trim();
 const url = (args.url ?? "").replace(/\/+$/, "");
-const description = args.description ?? `Pulls comics from ${hostOf(url) || "the site"}`;
+const description =
+  args.description ?? `Pulls comics from ${hostOf(url) || "the site"}`;
 
-if (!url) fail("--url is required (the site's base URL, e.g. https://example.com)");
-if (!/^https?:\/\//i.test(url)) fail(`--url must start with http:// or https:// (got "${url}")`);
+if (!url)
+  fail("--url is required (the site's base URL, e.g. https://example.com)");
+if (!/^https?:\/\//i.test(url))
+  fail(`--url must start with http:// or https:// (got "${url}")`);
 
 const dest = path.join(ROOT, "src", name);
 if (fs.existsSync(dest)) fail(`src/${name} already exists`);
-if (!fs.existsSync(TEMPLATE)) fail("src/Template is missing — nothing to copy from");
+if (!fs.existsSync(TEMPLATE))
+  fail("src/Template is missing — nothing to copy from");
 
 // -- copy ------------------------------------------------------------------
 
@@ -87,7 +98,10 @@ main = main
   .replace(/id: "template",/, `id: "${id}",`)
   .replace(/name: "Template",/, `name: "${name}",`)
   .replace(/version: "[^"]*",/, 'version: "1.0.0",')
-  .replace(/description: "[^"]*",/, `description: "${description.replace(/"/g, '\\"')}",`)
+  .replace(
+    /description: "[^"]*",/,
+    `description: "${description.replace(/"/g, '\\"')}",`,
+  )
   .replace(/owningLinks: \[[^\]]*\],/, `owningLinks: ["${hostOf(url)}"],`);
 fs.writeFileSync(mainPath, main, "utf-8");
 
@@ -95,7 +109,10 @@ fs.writeFileSync(mainPath, main, "utf-8");
 
 const modelPath = path.join(dest, "model.ts");
 let model = fs.readFileSync(modelPath, "utf-8");
-model = model.replace(/export const BASE_URL = "[^"]*";/, `export const BASE_URL = "${url}";`);
+model = model.replace(
+  /export const BASE_URL = "[^"]*";/,
+  `export const BASE_URL = "${url}";`,
+);
 fs.writeFileSync(modelPath, model, "utf-8");
 
 // -- probe -----------------------------------------------------------------
@@ -130,24 +147,31 @@ if (fs.existsSync(changelogPath)) {
 const readmePath = path.join(ROOT, "README.md");
 if (fs.existsSync(readmePath)) {
   const readme = fs.readFileSync(readmePath, "utf-8");
-  const rowMarker = /\n\| (?!Name)(?!-)[^\n]*\|\n(?!\|)/;
-  const row = `| ${name.padEnd(13)} | 1.0.0   | English  | Safe   |\n`;
+  const row = `| <img src="src/${name}/assets/icon.png" width="28" height="28" alt=""> | ${name.padEnd(13)} | 1.0.0   | English  | Safe   |`;
   const lines = readme.split("\n");
   let lastRow = -1;
   for (let i = 0; i < lines.length; i++) {
-    if (/^\| \S/.test(lines[i]) && !/^\| Name/.test(lines[i]) && !/^\| -/.test(lines[i])) lastRow = i;
+    // Rows are column-aligned, so the leading pipe carries variable padding.
+    if (/^\|\s*<img /.test(lines[i])) lastRow = i;
   }
-  if (lastRow >= 0 && !readme.includes(`| ${name} `)) {
-    lines.splice(lastRow + 1, 0, row.trimEnd());
+  if (lastRow < 0) {
+    process.stderr.write(`warning: no source rows in README.md; add ${name} by hand\n`);
+  } else {
+    lines.splice(lastRow + 1, 0, row);
     fs.writeFileSync(readmePath, lines.join("\n"), "utf-8");
   }
-  void rowMarker;
 }
 
 console.log(`created src/${name}`);
 console.log("");
 console.log("next:");
 console.log(`  1. drop an icon at src/${name}/assets/icon.png`);
-console.log(`  2. fill in the selectors in src/${name}/main.ts and the filters in model.ts`);
-console.log(`  3. put a real contentId/chapterId in scripts/probes/${name}.json`);
-console.log(`  4. bun run typecheck && bun run build && bun run verify ${name}`);
+console.log(
+  `  2. fill in the selectors in src/${name}/main.ts and the filters in model.ts`,
+);
+console.log(
+  `  3. put a real contentId/chapterId in scripts/probes/${name}.json`,
+);
+console.log(
+  `  4. bun run typecheck && bun run build && bun run verify ${name}`,
+);

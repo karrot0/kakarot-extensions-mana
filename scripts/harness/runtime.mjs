@@ -36,7 +36,9 @@ export class NetworkError extends Error {
 
 export class CloudflareError extends Error {
   constructor(resolutionURL) {
-    super(`Cloudflare challenge encountered${resolutionURL ? ` (${resolutionURL})` : ""}`);
+    super(
+      `Cloudflare challenge encountered${resolutionURL ? ` (${resolutionURL})` : ""}`,
+    );
     this.name = "CloudflareError";
     this.resolutionURL = resolutionURL;
   }
@@ -49,7 +51,9 @@ function buildUrl(url, params) {
   );
   if (entries.length === 0) return url;
   const query = entries
-    .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(String(v))}`)
+    .map(
+      ([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(String(v))}`,
+    )
     .join("&");
   return `${url}${url.includes("?") ? "&" : "?"}${query}`;
 }
@@ -63,6 +67,16 @@ async function applyAll(value, transformers) {
 function asArray(value) {
   if (!value) return [];
   return Array.isArray(value) ? value : [value];
+}
+
+function decodeStrictUtf8(buffer) {
+  try {
+    return new TextDecoder("utf-8", { fatal: true }).decode(buffer);
+  } catch {
+    throw new Error(
+      "String could not be serialized with encoding: Unicode (UTF-8)",
+    );
+  }
 }
 
 /**
@@ -113,7 +127,10 @@ export class NetworkClient {
     }
 
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), prepared.timeout ?? this.timeout);
+    const timer = setTimeout(
+      () => controller.abort(),
+      prepared.timeout ?? this.timeout,
+    );
 
     let raw;
     try {
@@ -128,7 +145,7 @@ export class NetworkClient {
       clearTimeout(timer);
     }
 
-    const data = await raw.text();
+    const data = decodeStrictUtf8(await raw.arrayBuffer());
     const response = {
       data,
       status: raw.status,
@@ -137,7 +154,9 @@ export class NetworkClient {
     };
 
     const validate = prepared.validateStatus ?? this.statusValidator;
-    const ok = validate ? validate(raw.status) : raw.status >= 200 && raw.status < 300;
+    const ok = validate
+      ? validate(raw.status)
+      : raw.status >= 200 && raw.status < 300;
 
     const transformed = await applyAll(response, [
       ...this.responseTransformers,
@@ -147,7 +166,8 @@ export class NetworkClient {
     if (!ok) {
       throw new NetworkError(
         "NetworkError",
-        STATUS_MESSAGES[raw.status] ?? `Request failed with status ${raw.status}`,
+        STATUS_MESSAGES[raw.status] ??
+          `Request failed with status ${raw.status}`,
         prepared,
         transformed,
       );
@@ -164,6 +184,46 @@ export class NetworkClient {
     this.lastRequestAt = Date.now();
   }
 }
+
+class WebViewPageShim {
+  constructor(release) {
+    this.release = release;
+    this.html = "";
+    this.closed = false;
+  }
+
+  async goto(url) {
+    if (this.closed) throw new Error("WebView page is closed");
+    const raw = await fetch(url, { redirect: "follow" });
+    this.html = new TextDecoder("utf-8").decode(await raw.arrayBuffer());
+  }
+
+  async evaluateScript(script) {
+    if (this.closed) throw new Error("WebView page is closed");
+    if (!/document\.documentElement\.outerHTML/.test(script)) {
+      throw new Error(`WebView shim cannot evaluate: ${script}`);
+    }
+    return this.html;
+  }
+
+  async close() {
+    if (this.closed) return;
+    this.closed = true;
+    this.release();
+  }
+}
+
+export const WebViewPage = {
+  active: false,
+  async create() {
+    if (WebViewPage.active)
+      throw new Error("A WebView is already active for this source");
+    WebViewPage.active = true;
+    return new WebViewPageShim(() => {
+      WebViewPage.active = false;
+    });
+  },
+};
 
 /** In-memory stand-in for the app's key-value stores. */
 export class ManaStore {
@@ -207,7 +267,10 @@ export class ManaStore {
   async stringArray(k) {
     const value = this.values.get(k);
     if (value === undefined) return null;
-    if (!Array.isArray(value) || value.some((entry) => typeof entry !== "string")) {
+    if (
+      !Array.isArray(value) ||
+      value.some((entry) => typeof entry !== "string")
+    ) {
       throw new Error(`${k} is not a string array`);
     }
     return value;

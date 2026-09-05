@@ -21,11 +21,14 @@
     "out": "dist/",
     "target": "es2020",
     "minify": true,
-    "platform": "web"
+    "platform": "web",
+    "repositoryName": "Kakarot Extensions",
+    "brandSource": "KakarotComics",
+    "thumbnail": "https://raw.githubusercontent.com/karrot0/kakarot-extensions-mana/refs/heads/gh-pages/main/sources/KakarotComics/assets/icon.jpg"
   },
   "devDependencies": {
-    "@mana-app/dev": "^0.1.13",
-    "@mana-app/types": "^0.0.24",
+    "@mana-app/dev": "^0.1.14",
+    "@mana-app/types": "^0.0.25",
     "oxfmt": "^0.50.0",
     "oxlint": "^1.65.0",
     "typescript": "^7.0.2"

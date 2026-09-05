@@ -10,8 +10,8 @@ import {
   type Chapter,
   type ChapterData,
   type ChapterPage,
+  type ChapterSource,
   type Content,
-  type ContentSource,
   type Form,
   type Highlight,
   type PageLink,
@@ -29,7 +29,7 @@ import {
   type Tag,
 } from "@mana-app/types";
 
-import { buildClient } from "./client.ts";
+import { buildClient, getText } from "./client.ts";
 import {
   FilterReader,
   PreferenceStore,
@@ -61,7 +61,7 @@ import {
 const info: SourceInfo = {
   id: "template",
   name: "Template",
-  version: "2.0.0",
+  version: "2.0.1",
   description: "Starting point for a Mana content source",
   website: BASE_URL,
   rating: CatalogRating.SAFE,
@@ -77,7 +77,7 @@ const config: SourceConfig = {
 };
 
 class TemplateSource
-  implements ContentSource, SearchProvider, PageLinkResolver, SourcePreferenceProvider
+  implements ChapterSource, SearchProvider, PageLinkResolver, SourcePreferenceProvider
 {
   readonly info = info;
   readonly config = config;
@@ -91,8 +91,7 @@ class TemplateSource
   }
 
   private async fetchHtml(url: string, params?: QueryParams): Promise<CheerioAPI> {
-    const response = await this.http.get(withQuery(url, params));
-    return load(response.data);
+    return load(await getText(this.http, withQuery(url, params)));
   }
 
   private sections(): SectionSpec[] {
