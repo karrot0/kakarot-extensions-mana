@@ -1,6 +1,6 @@
 {
   "repositoryName": "Kakarot Extensions",
-  "thumbnail": "https://raw.githubusercontent.com/karrot0/kakarot-extensions-mana/refs/heads/gh-pages/main/sources/KakarotComics/assets/icon.jpg",
+  "thumbnail": "https://raw.githubusercontent.com/karrot0/kakarot-extensions-mana/refs/heads/gh-pages/main/assets/KakarotComics.jpg",
   "sources": [
     {
       "id": "batcave",
@@ -12,7 +12,7 @@
       "supportedLanguages": [
         "en_US"
       ],
-      "thumbnail": "assets/icon.png",
+      "thumbnail": "Batcave.png",
       "developers": [
         {
           "name": "Karrot"
@@ -21,7 +21,7 @@
       "path": "Batcave",
       "environment": "source",
       "intents": 2100236,
-      "hash": "39883d1c39883d1c39883d1c39883d1c39883d1c39883d1c39883d1c39883d1c"
+      "hash": "3cbc30bb3cbc30bb3cbc30bb3cbc30bb3cbc30bb3cbc30bb3cbc30bb3cbc30bb"
     },
     {
       "id": "kakarotcomics",
@@ -33,7 +33,7 @@
       "supportedLanguages": [
         "en_US"
       ],
-      "thumbnail": "assets/icon.jpg",
+      "thumbnail": "KakarotComics.jpg",
       "developers": [
         {
           "name": "Karrot"
@@ -42,7 +42,7 @@
       "path": "KakarotComics",
       "environment": "source",
       "intents": 10492937,
-      "hash": "12836e4012836e4012836e4012836e4012836e4012836e4012836e4012836e40"
+      "hash": "73b95cc073b95cc073b95cc073b95cc073b95cc073b95cc073b95cc073b95cc0"
     },
     {
       "id": "ocecomic",
@@ -54,7 +54,7 @@
       "supportedLanguages": [
         "en_US"
       ],
-      "thumbnail": "assets/icon.png",
+      "thumbnail": "OceComic.png",
       "developers": [
         {
           "name": "Karrot"
@@ -63,28 +63,28 @@
       "path": "OceComic",
       "environment": "source",
       "intents": 2104328,
-      "hash": "151a1b3e151a1b3e151a1b3e151a1b3e151a1b3e151a1b3e151a1b3e151a1b3e"
+      "hash": "2167b0a02167b0a02167b0a02167b0a02167b0a02167b0a02167b0a02167b0a0"
     },
     {
-      "id": "template",
-      "name": "Template",
-      "version": "2.0.1",
-      "description": "Starting point for a Mana content source",
-      "website": "https://example.com",
-      "rating": 0,
+      "id": "toonkotsu",
+      "name": "Toonkotsu",
+      "version": "1.0.0",
+      "description": "Pulls manga, manhwa and manhua from toonkotsu.com",
+      "website": "https://toonkotsu.com",
+      "rating": 1,
       "supportedLanguages": [
         "en_US"
       ],
-      "thumbnail": "assets/icon.png",
+      "thumbnail": "Toonkotsu.png",
       "developers": [
         {
-          "name": "Developer"
+          "name": "Karrot"
         }
       ],
-      "path": "Template",
+      "path": "Toonkotsu",
       "environment": "source",
-      "intents": 2104329,
-      "hash": "5612a7a05612a7a05612a7a05612a7a05612a7a05612a7a05612a7a05612a7a0"
+      "intents": 2104333,
+      "hash": "0645149006451490064514900645149006451490064514900645149006451490"
     },
     {
       "id": "zipcomic",
@@ -96,7 +96,7 @@
       "supportedLanguages": [
         "en_US"
       ],
-      "thumbnail": "assets/icon.png",
+      "thumbnail": "ZipComic.png",
       "developers": [
         {
           "name": "Karrot"
@@ -105,7 +105,7 @@
       "path": "ZipComic",
       "environment": "source",
       "intents": 2098184,
-      "hash": "749e0b90749e0b90749e0b90749e0b90749e0b90749e0b90749e0b90749e0b90"
+      "hash": "63d120a863d120a863d120a863d120a863d120a863d120a863d120a863d120a8"
     }
   ]
 }
