@@ -1,11 +1,8 @@
-import { load, type Cheerio, type CheerioAPI } from "cheerio";
-import type { AnyNode } from "domhandler";
 import {
   CatalogRating,
   ContentRating,
   ContentType,
   DefinedLanguages,
-  PublicationStatus,
   SectionStyle,
   type Chapter,
   type ChapterData,
@@ -16,10 +13,7 @@ import {
   type ImageRequestHandler,
   type NetworkRequest,
   type PageLink,
-  type PageLinkResolver,
-  type PageSection,
   type PagedSearchResult,
-  type ResolvedPageSection,
   type SearchForm,
   type SearchProvider,
   type SearchRequest,
@@ -27,18 +21,26 @@ import {
   type SourceInfo,
   type Tag,
 } from "@mana-app/types";
+import type { CheerioAPI } from "cheerio";
 
-import { buildClient, getText } from "./client.ts";
+import type { ClientOptions } from "../../lib/client.ts";
 import {
   FilterReader,
   buildSearchForm,
   encodeForm,
-  listResults,
   pageOf,
-  sectionById,
-  toPageSections,
   type SectionSpec,
-} from "./forms/index.ts";
+} from "../../lib/forms/index.ts";
+import {
+  absolute as absoluteFrom,
+  fetchHtml,
+  imageSrc,
+  ownText,
+  parseStatus,
+  slug,
+  text,
+} from "../../lib/html.ts";
+import { BaseSource } from "../../lib/source.ts";
 import {
   BASE_URL,
   CDN_ORIGINS,
@@ -57,7 +59,7 @@ const info: SourceInfo = {
   website: BASE_URL,
   rating: CatalogRating.SAFE,
   supportedLanguages: [DefinedLanguages.ENGLISH],
-  thumbnail: "assets/icon.png",
+  thumbnail: "Batcave.png",
   developers: [{ name: "Karrot" }],
 };
 
@@ -69,38 +71,24 @@ const config: SourceConfig = {
 
 const IMAGE_ACCEPT = "image/avif,image/webp,image/apng,image/*,*/*;q=0.8";
 
-function hostOf(origin: string): string {
-  return origin.replace(/^https?:\/\//i, "").replace(/\/.*$/, "");
-}
-
-function originFor(url: string): string {
-  return CDN_ORIGINS.find((origin) => url.includes(hostOf(origin))) ?? BASE_URL;
-}
-
 class BatcaveSource
-  implements ChapterSource, SearchProvider, PageLinkResolver, ImageRequestHandler
+  extends BaseSource
+  implements ChapterSource, SearchProvider, ImageRequestHandler
 {
   readonly info = info;
   readonly config = config;
 
-  private client: NetworkClient | undefined;
-
-  private get http(): NetworkClient {
-    this.client ??= buildClient({
+  protected clientOptions(): ClientOptions {
+    return {
       baseUrl: BASE_URL,
       requests: 10,
       interval: 1,
       originFor,
       headers: { "x-requested-with": "com.batcave.android" },
-    });
-    return this.client;
+    };
   }
 
-  private async fetchHtml(url: string): Promise<CheerioAPI> {
-    return load(await getText(this.http, url));
-  }
-
-  private sections(): SectionSpec[] {
+  protected sections(): SectionSpec[] {
     return [
       {
         id: ListID.Popular,
@@ -108,7 +96,7 @@ class BatcaveSource
         style: SectionStyle.SimpleHero,
         viewMore: false,
         load: async () => {
-          const $ = await this.fetchHtml(BASE_URL);
+          const $ = await fetchHtml(this.http, BASE_URL);
           return { results: parsePopularList($), isLastPage: true };
         },
       },
@@ -117,7 +105,7 @@ class BatcaveSource
         title: "Catalogue",
         style: SectionStyle.DetailedTripleRowPaged,
         load: async (page) => {
-          const $ = await this.fetchHtml(catalogueUrl(page));
+          const $ = await fetchHtml(this.http, catalogueUrl(page));
           return {
             results: parseReadedList($, "#dle-content .readed"),
             isLastPage: !hasPaginationNextPage($),
@@ -129,7 +117,10 @@ class BatcaveSource
         title: "New Comics",
         style: SectionStyle.DetailedVerticalListGrouped,
         load: async (page) => {
-          const $ = await this.fetchHtml(page > 1 ? `${BASE_URL}/page/${page}/` : `${BASE_URL}/`);
+          const $ = await fetchHtml(
+            this.http,
+            page > 1 ? `${BASE_URL}/page/${page}/` : `${BASE_URL}/`,
+          );
           return {
             results: parseLatestList($),
             isLastPage: $(".pagination__btn-loader a").length === 0,
@@ -143,35 +134,24 @@ class BatcaveSource
     return buildSearchForm({ tags: GENRE_FIELD, tagsHeader: "Genre", includeSort: false });
   }
 
-  async getSectionsForPage(_link: PageLink): Promise<PageSection[]> {
-    return toPageSections(this.sections());
-  }
-
   async willResolveSectionsForPage(_link: PageLink): Promise<void> {
-    await this.fetchHtml(BASE_URL);
-  }
-
-  async resolvePageSection(_link: PageLink, sectionID: string): Promise<ResolvedPageSection> {
-    const spec = sectionById(this.sections(), sectionID);
-    if (!spec) return { items: [] };
-    const { results } = await spec.load(1);
-    return { items: results };
+    await fetchHtml(this.http, BASE_URL);
   }
 
   async search(request: SearchRequest): Promise<PagedSearchResult> {
-    const list = listResults(this.sections(), request);
+    const list = this.listResults(request);
     if (list) return list;
 
     const page = pageOf(request);
     const query = request.query?.trim() ?? "";
 
     if (query) {
-      let $ = await this.fetchHtml(searchUrl(query, page));
+      let $ = await fetchHtml(this.http, searchUrl(query, page));
       let results = parseReadedList($);
       if (results.length === 0) {
         const relaxed = relaxSearchTitle(query);
         if (relaxed && relaxed !== query) {
-          $ = await this.fetchHtml(searchUrl(relaxed, page));
+          $ = await fetchHtml(this.http, searchUrl(relaxed, page));
           results = parseReadedList($);
         }
       }
@@ -180,11 +160,11 @@ class BatcaveSource
 
     const genre = new FilterReader(request).text(FilterID.Genre);
     if (genre) {
-      const $ = await this.fetchHtml(genreUrl(genre));
+      const $ = await fetchHtml(this.http, genreUrl(genre));
       return { results: parseReadedList($), isLastPage: !hasPaginationNextPage($) };
     }
 
-    const $ = await this.fetchHtml(catalogueUrl(page));
+    const $ = await fetchHtml(this.http, catalogueUrl(page));
     return {
       results: parseReadedList($, "#dle-content .readed"),
       isLastPage: !hasPaginationNextPage($),
@@ -193,49 +173,12 @@ class BatcaveSource
 
   async getContent(contentId: string): Promise<Content> {
     const url = contentUrl(contentId);
-    const $ = await this.fetchHtml(url);
-
-    const statusText = $(".page__list li")
-      .toArray()
-      .map((element) => text($(element)))
-      .find((value) => value.includes("Release type"))
-      ?.toLowerCase();
-
-    const tags: Tag[] = [];
-    for (const element of $(".page__tags a").toArray()) {
-      const title = text($(element));
-      if (title) tags.push({ id: slug(title), title });
-    }
-
-    return {
-      title: text($("h1").first()),
-      cover: absolute(imageSrc($(".page__poster img").first())),
-      summary: text($(".page__text").first()),
-      tags,
-      contentType: ContentType.COMIC,
-      contentRating: ContentRating.SAFE,
-      status: parseStatus(statusText ?? ""),
-      webUrl: url,
-    };
+    return parseContent(await fetchHtml(this.http, url), url);
   }
 
   async getChapters(contentId: string): Promise<Chapter[]> {
-    const $ = await this.fetchHtml(contentUrl(contentId));
-
-    const payload = scriptJson<ChapterPayload>($, "__DATA__");
-    const raw = (payload?.chapters ?? [])
-      .filter((entry) => typeof entry.id === "number")
-      .sort((a, b) => a.posi - b.posi);
-
-    return raw.map((entry, index) => ({
-      chapterId: String(entry.id),
-      number: entry.posi,
-      index,
-      date: parsePublishDate(entry.date) ?? new Date(0),
-      language: DefinedLanguages.ENGLISH,
-      title: entry.title?.trim() || `Chapter ${entry.posi}`,
-      webUrl: contentUrl(contentId),
-    }));
+    const url = contentUrl(contentId);
+    return parseChapters(await fetchHtml(this.http, url), url);
   }
 
   async getChapterData(contentId: string, chapterId: string): Promise<ChapterData> {
@@ -265,12 +208,7 @@ class BatcaveSource
       throw new Error(json.error ?? "Chapter data request was rejected");
     }
 
-    const pages: ChapterPage[] = [];
-    for (const src of json.data?.images ?? []) {
-      const url = absolute(src);
-      if (url) pages.push({ url });
-    }
-
+    const pages = parsePages(json.data?.images ?? []);
     if (pages.length === 0) {
       throw new Error(`No pages returned for chapter "${chapterId}".`);
     }
@@ -293,44 +231,46 @@ class BatcaveSource
   }
 }
 
-const LAZY_ATTRS = ["data-src", "data-original", "data-lazy-src", "srcset", "src"];
-
-function text(node: Cheerio<AnyNode>): string {
-  return node.text().replace(/\s+/g, " ").trim();
-}
-
-/** Text of the node itself, excluding any child elements. */
-function ownText(node: Cheerio<AnyNode>): string {
-  return node
-    .contents()
-    .filter((_, child) => child.type === "text")
-    .text()
-    .replace(/\s+/g, " ")
-    .trim();
-}
-
-function imageSrc(node: Cheerio<AnyNode>): string {
-  for (const name of LAZY_ATTRS) {
-    const raw = (node.attr(name) ?? "").trim();
-    const first = raw.split(",")[0]?.trim().split(/\s+/)[0];
-    if (first) return first;
-  }
-  return "";
-}
-
 function absolute(raw: string): string {
-  const value = raw.replace(/\\\//g, "/").trim();
-  if (!value) return "";
-  if (value.startsWith("//")) return `https:${value}`;
-  if (/^[a-z][a-z0-9+.-]*:/i.test(value)) return value;
-  return `${BASE_URL}/${value.replace(/^\/+/, "")}`;
+  return absoluteFrom(raw, BASE_URL);
 }
 
-function slug(value: string): string {
-  return value
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
+function hostOf(origin: string): string {
+  return origin.replace(/^https?:\/\//i, "").replace(/\/.*$/, "");
+}
+
+function originFor(url: string): string {
+  return CDN_ORIGINS.find((origin) => url.includes(hostOf(origin))) ?? BASE_URL;
+}
+
+function searchUrl(title: string, page: number): string {
+  const segments = ["search", encodeURIComponent(title)];
+  if (page > 1) segments.push("page", String(page));
+  return `${BASE_URL}/${segments.join("/")}`;
+}
+
+function catalogueUrl(page: number): string {
+  return page > 1 ? `${BASE_URL}/comix/page/${page}` : `${BASE_URL}/comix/`;
+}
+
+function genreUrl(genre: string): string {
+  return `${BASE_URL}/genres/${encodeURIComponent(genre)}`;
+}
+
+function contentUrl(contentId: string): string {
+  return `${BASE_URL}/${contentId.split("/").map(encodeURIComponent).join("/")}.html`;
+}
+
+function contentIdFrom(href: string | undefined): string {
+  return (href ?? "")
+    .trim()
+    .replace(/^https?:/i, "")
+    .replace(/^\/\/[^/]+/, "")
+    .replace(/[?#].*$/, "")
+    .replace(/^\/+/, "")
+    .replace(/\.html?$/i, "")
+    .replace(/\/+$/, "")
+    .trim();
 }
 
 /**
@@ -412,42 +352,6 @@ function parsePublishDate(raw: string | undefined): Date | undefined {
   return new Date(Date.UTC(year, month - 1, day));
 }
 
-function searchUrl(title: string, page: number): string {
-  const segments = ["search", encodeURIComponent(title)];
-  if (page > 1) segments.push("page", String(page));
-  return `${BASE_URL}/${segments.join("/")}`;
-}
-
-function catalogueUrl(page: number): string {
-  return page > 1 ? `${BASE_URL}/comix/page/${page}` : `${BASE_URL}/comix/`;
-}
-
-function genreUrl(genre: string): string {
-  return `${BASE_URL}/genres/${encodeURIComponent(genre)}`;
-}
-
-function contentUrl(contentId: string): string {
-  return `${BASE_URL}/${contentId.split("/").map(encodeURIComponent).join("/")}.html`;
-}
-
-function parseContentId(href: string | undefined): string {
-  return (href ?? "")
-    .trim()
-    .replace(/^https?:/i, "")
-    .replace(/^\/\/[^/]+/, "")
-    .replace(/[?#].*$/, "")
-    .replace(/^\/+/, "")
-    .replace(/\.html?$/i, "")
-    .replace(/\/+$/, "")
-    .trim();
-}
-
-function parseStatus(raw: string): PublicationStatus | undefined {
-  if (raw.includes("completed")) return PublicationStatus.COMPLETED;
-  if (raw.includes("ongoing")) return PublicationStatus.ONGOING;
-  return undefined;
-}
-
 function parseReadedList($: CheerioAPI, selector = ".readed"): Highlight[] {
   const results: Highlight[] = [];
 
@@ -455,7 +359,7 @@ function parseReadedList($: CheerioAPI, selector = ".readed"): Highlight[] {
     const unit = $(element);
     const infoLink = unit.find(".readed__title a");
     const title = text(infoLink);
-    const id = parseContentId(infoLink.attr("href"));
+    const id = contentIdFrom(infoLink.attr("href"));
     if (!id || !title) continue;
 
     const subtitle = text(unit.find(".readed__info li:last-child"))
@@ -481,7 +385,7 @@ function parsePopularList($: CheerioAPI): Highlight[] {
   for (const element of $(".poster.grid-item").toArray()) {
     const unit = $(element);
     const title = text(unit.find(".poster__title"));
-    const id = parseContentId(unit.attr("href"));
+    const id = contentIdFrom(unit.attr("href"));
     if (!id || !title) continue;
 
     const rating = text(unit.find(".poster__label--rate"));
@@ -506,7 +410,7 @@ function parseLatestList($: CheerioAPI): Highlight[] {
     const unit = $(element);
     const titleLink = unit.find(".latest__title a");
     const title = ownText(titleLink);
-    const id = parseContentId(titleLink.attr("href"));
+    const id = contentIdFrom(titleLink.attr("href"));
     if (!id || !title) continue;
 
     const subtitle = text(unit.find(".latest__chapter a"));
@@ -539,6 +443,57 @@ function relaxSearchTitle(title: string): string {
     .replace(/[^\p{L}\p{N}]+/gu, " ")
     .replace(/\s+/g, " ")
     .trim();
+}
+
+function parseContent($: CheerioAPI, webUrl: string): Content {
+  const statusText = $(".page__list li")
+    .toArray()
+    .map((element) => text($(element)))
+    .find((value) => value.includes("Release type"))
+    ?.toLowerCase();
+
+  const tags: Tag[] = [];
+  for (const element of $(".page__tags a").toArray()) {
+    const title = text($(element));
+    if (title) tags.push({ id: slug(title), title });
+  }
+
+  return {
+    title: text($("h1").first()),
+    cover: absolute(imageSrc($(".page__poster img").first())),
+    summary: text($(".page__text").first()),
+    tags,
+    contentType: ContentType.COMIC,
+    contentRating: ContentRating.SAFE,
+    status: parseStatus(statusText ?? ""),
+    webUrl,
+  };
+}
+
+function parseChapters($: CheerioAPI, webUrl: string): Chapter[] {
+  const payload = scriptJson<ChapterPayload>($, "__DATA__");
+  const raw = (payload?.chapters ?? [])
+    .filter((entry) => typeof entry.id === "number")
+    .sort((a, b) => a.posi - b.posi);
+
+  return raw.map((entry, index) => ({
+    chapterId: String(entry.id),
+    number: entry.posi,
+    index,
+    date: parsePublishDate(entry.date) ?? new Date(0),
+    language: DefinedLanguages.ENGLISH,
+    title: entry.title?.trim() || `Chapter ${entry.posi}`,
+    webUrl,
+  }));
+}
+
+function parsePages(images: string[]): ChapterPage[] {
+  const pages: ChapterPage[] = [];
+  for (const src of images) {
+    const url = absolute(src);
+    if (url) pages.push({ url });
+  }
+  return pages;
 }
 
 export class Target extends BatcaveSource {}

@@ -2,11 +2,11 @@
 "use strict";
 
 /**
- * Scaffolds a new source from src/Template.
+ * Scaffolds a new source from templates/source.
  *
  *   node scripts/new-source.mjs <Name> --id <id> --url <https://site> [--description "..."]
  *
- * Copies the Template directory, rewrites the class name and `info` block,
+ * Copies the template directory, rewrites the class name and `info` block,
  * seeds a CHANGELOG section in the exact format scripts/build-page.js parses,
  * and adds a README table row.
  */
@@ -16,7 +16,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const TEMPLATE = path.join(ROOT, "src", "Template");
+const TEMPLATE = path.join(ROOT, "templates", "source");
 
 function parseArgs(argv) {
   const args = {
@@ -69,7 +69,7 @@ if (!/^https?:\/\//i.test(url)) fail(`--url must start with http:// or https:// 
 
 const dest = path.join(ROOT, "src", name);
 if (fs.existsSync(dest)) fail(`src/${name} already exists`);
-if (!fs.existsSync(TEMPLATE)) fail("src/Template is missing — nothing to copy from");
+if (!fs.existsSync(TEMPLATE)) fail("templates/source is missing — nothing to copy from");
 
 // -- copy ------------------------------------------------------------------
 
@@ -80,7 +80,6 @@ for (const entry of fs.readdirSync(TEMPLATE, { withFileTypes: true })) {
   if (entry.isDirectory()) fs.cpSync(from, to, { recursive: true });
   else fs.copyFileSync(from, to);
 }
-fs.mkdirSync(path.join(dest, "assets"), { recursive: true });
 
 // -- rewrite main.ts -------------------------------------------------------
 
@@ -90,6 +89,7 @@ main = main
   .replace(/class TemplateSource\b/, `class ${name}Source`)
   .replace(/extends TemplateSource\b/, `extends ${name}Source`)
   .replace(/id: "template",/, `id: "${id}",`)
+  .replace(/thumbnail: "[^"]*",/, `thumbnail: "${name}.png",`)
   .replace(/name: "Template",/, `name: "${name}",`)
   .replace(/version: "[^"]*",/, 'version: "1.0.0",')
   .replace(/description: "[^"]*",/, `description: "${description.replace(/"/g, '\\"')}",`)
@@ -135,7 +135,7 @@ if (fs.existsSync(changelogPath)) {
 const readmePath = path.join(ROOT, "README.md");
 if (fs.existsSync(readmePath)) {
   const readme = fs.readFileSync(readmePath, "utf-8");
-  const row = `| <img src="src/${name}/assets/icon.png" width="28" height="28" alt=""> | ${name.padEnd(13)} | 1.0.0   | English  | Safe   |`;
+  const row = `| <img src="assets/${name}.png" width="28" height="28" alt=""> | ${name.padEnd(13)} | 1.0.0   | English  | Safe   |`;
   const lines = readme.split("\n");
   let lastRow = -1;
   for (let i = 0; i < lines.length; i++) {
@@ -153,7 +153,7 @@ if (fs.existsSync(readmePath)) {
 console.log(`created src/${name}`);
 console.log("");
 console.log("next:");
-console.log(`  1. drop an icon at src/${name}/assets/icon.png`);
+console.log(`  1. drop an icon at assets/${name}.png`);
 console.log(`  2. fill in the selectors in src/${name}/main.ts and the filters in model.ts`);
 console.log(`  3. put a real contentId/chapterId in scripts/probes/${name}.json`);
 console.log(`  4. bun run typecheck && bun run build && bun run verify ${name}`);

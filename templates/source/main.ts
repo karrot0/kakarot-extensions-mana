@@ -1,11 +1,8 @@
-import { load, type Cheerio, type CheerioAPI } from "cheerio";
-import type { AnyNode } from "domhandler";
 import {
   CatalogRating,
   ContentRating,
   ContentType,
   DefinedLanguages,
-  PublicationStatus,
   SectionStyle,
   type Chapter,
   type ChapterData,
@@ -14,11 +11,7 @@ import {
   type Content,
   type Form,
   type Highlight,
-  type PageLink,
-  type PageLinkResolver,
-  type PageSection,
   type PagedSearchResult,
-  type ResolvedPageSection,
   type SearchForm,
   type SearchProvider,
   type SearchRequest,
@@ -28,23 +21,31 @@ import {
   type SourcePreferenceProvider,
   type Tag,
 } from "@mana-app/types";
+import type { CheerioAPI } from "cheerio";
 
-import { buildClient, getText } from "./client.ts";
+import type { ClientOptions } from "../../lib/client.ts";
 import {
   FilterReader,
   PreferenceStore,
   buildPreferenceMenu,
   buildSearchForm,
-  listResults,
   pageOf,
   resolveSortId,
-  sectionById,
-  toPageSections,
-  withQuery,
   type PreferenceSection,
   type QueryParams,
   type SectionSpec,
-} from "./forms/index.ts";
+} from "../../lib/forms/index.ts";
+import {
+  absolute as absoluteFrom,
+  chapterNumber,
+  fetchHtml,
+  imageSrc,
+  parseDate,
+  parseStatus,
+  slug,
+  text,
+} from "../../lib/html.ts";
+import { BaseSource } from "../../lib/source.ts";
 import {
   BASE_URL,
   FilterID,
@@ -66,7 +67,7 @@ const info: SourceInfo = {
   website: BASE_URL,
   rating: CatalogRating.SAFE,
   supportedLanguages: [DefinedLanguages.ENGLISH],
-  thumbnail: "assets/icon.png",
+  thumbnail: "Template.png",
   developers: [{ name: "Developer" }],
 };
 
@@ -77,24 +78,19 @@ const config: SourceConfig = {
 };
 
 class TemplateSource
-  implements ChapterSource, SearchProvider, PageLinkResolver, SourcePreferenceProvider
+  extends BaseSource
+  implements ChapterSource, SearchProvider, SourcePreferenceProvider
 {
   readonly info = info;
   readonly config = config;
 
-  private client: NetworkClient | undefined;
   private readonly preferences = new PreferenceStore(info.id, PREFERENCE_DEFAULTS);
 
-  private get http(): NetworkClient {
-    this.client ??= buildClient({ baseUrl: BASE_URL, requests: 5, interval: 1 });
-    return this.client;
+  protected clientOptions(): ClientOptions {
+    return { baseUrl: BASE_URL, requests: 5, interval: 1 };
   }
 
-  private async fetchHtml(url: string, params?: QueryParams): Promise<CheerioAPI> {
-    return load(await getText(this.http, withQuery(url, params)));
-  }
-
-  private sections(): SectionSpec[] {
+  protected sections(): SectionSpec[] {
     return [
       {
         id: ListID.Popular,
@@ -146,24 +142,13 @@ class TemplateSource
     return buildPreferenceMenu(this.preferences, this.preferenceSections());
   }
 
-  async getSectionsForPage(_link: PageLink): Promise<PageSection[]> {
-    return toPageSections(this.sections());
-  }
-
-  async resolvePageSection(_link: PageLink, sectionID: string): Promise<ResolvedPageSection> {
-    const spec = sectionById(this.sections(), sectionID);
-    if (!spec) return { items: [] };
-    const { results } = await spec.load(1);
-    return { items: results };
-  }
-
   async search(request: SearchRequest): Promise<PagedSearchResult> {
-    const list = listResults(this.sections(), request);
+    const list = this.listResults(request);
     if (list) return list;
 
     const filters = new FilterReader(request);
 
-    const $ = await this.fetchHtml(`${BASE_URL}/search`, {
+    return this.results(`${BASE_URL}/search`, {
       q: request.query?.trim() ?? "",
       page: pageOf(request),
       sort: resolveSortId(SORT_OPTIONS, request, SortID.Latest),
@@ -173,119 +158,37 @@ class TemplateSource
       year: filters.has(FilterID.Year) ? filters.number(FilterID.Year) : undefined,
       adult: filters.toggle(FilterID.AdultContent) ? "1" : undefined,
     });
-
-    return { results: parseHighlights($), isLastPage: !hasNextPage($) };
   }
 
   async getContent(contentId: string): Promise<Content> {
     const url = contentUrl(contentId);
-    const $ = await this.fetchHtml(url);
-
-    const tags: Tag[] = $(".genres a")
-      .toArray()
-      .map((element) => text($(element)))
-      .filter(Boolean)
-      .map((title) => ({ id: slug(title), title }));
-
-    return {
-      title: text($("h1").first()),
-      cover: absolute(imageSrc($(".cover img").first())),
-      summary: text($(".summary").first()),
-      tags,
-      contentType: ContentType.COMIC,
-      contentRating: ContentRating.SAFE,
-      status: parseStatus(text($(".status").first())),
-      webUrl: url,
-    };
+    return parseContent(await fetchHtml(this.http, url), url);
   }
 
   async getChapters(contentId: string): Promise<Chapter[]> {
-    const $ = await this.fetchHtml(contentUrl(contentId));
-    const chapters: Chapter[] = [];
-
-    for (const element of $(".chapter-list a").toArray()) {
-      const link = $(element);
-      const href = link.attr("href") ?? "";
-      const chapterId = chapterIdFrom(href);
-      if (!chapterId) continue;
-
-      const title = text(link);
-      chapters.push({
-        chapterId,
-        number: chapterNumber(title, chapters.length + 1),
-        index: chapters.length,
-        date: parseDate(text(link.find(".date"))) ?? new Date(0),
-        language: DefinedLanguages.ENGLISH,
-        title,
-        webUrl: absolute(href),
-      });
-    }
-
-    return chapters;
+    return parseChapters(await fetchHtml(this.http, contentUrl(contentId)));
   }
 
   async getChapterData(contentId: string, chapterId: string): Promise<ChapterData> {
-    const $ = await this.fetchHtml(chapterUrl(contentId, chapterId));
-
-    const pages: ChapterPage[] = [];
-    for (const element of $(".reader img").toArray()) {
-      const url = absolute(imageSrc($(element)));
-      if (url) pages.push({ url });
-    }
-
+    const pages = parsePages(await fetchHtml(this.http, chapterUrl(contentId, chapterId)));
     if (pages.length === 0) {
       throw new Error(`No pages found for chapter ${chapterId} of "${contentId}"`);
     }
-
     return { pages };
   }
 
-  private async listing(sort: string, page: number): Promise<PagedSearchResult> {
-    const $ = await this.fetchHtml(`${BASE_URL}/browse`, { sort, page });
+  private listing(sort: string, page: number): Promise<PagedSearchResult> {
+    return this.results(`${BASE_URL}/browse`, { sort, page });
+  }
+
+  private async results(url: string, params: QueryParams): Promise<PagedSearchResult> {
+    const $ = await fetchHtml(this.http, url, params);
     return { results: parseHighlights($), isLastPage: !hasNextPage($) };
   }
 }
 
-const LAZY_ATTRS = ["data-src", "data-original", "data-lazy-src", "srcset", "src"];
-
-function text(node: Cheerio<AnyNode>): string {
-  return node.text().replace(/\s+/g, " ").trim();
-}
-
-function imageSrc(node: Cheerio<AnyNode>): string {
-  for (const name of LAZY_ATTRS) {
-    const raw = (node.attr(name) ?? "").trim();
-    const first = raw.split(",")[0]?.trim().split(/\s+/)[0];
-    if (first) return first;
-  }
-  return "";
-}
-
 function absolute(raw: string): string {
-  const value = raw.replace(/\\\//g, "/").trim();
-  if (!value) return "";
-  if (value.startsWith("//")) return `https:${value}`;
-  if (/^[a-z][a-z0-9+.-]*:/i.test(value)) return value;
-  return `${BASE_URL}/${value.replace(/^\/+/, "")}`;
-}
-
-function slug(value: string): string {
-  return value
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
-}
-
-function chapterNumber(title: string, fallback: number): number {
-  const match = /#\s*(\d+(?:\.\d+)?)/.exec(title) ?? /(\d+(?:\.\d+)?)\s*$/.exec(title);
-  const parsed = Number.parseFloat(match?.[1] ?? "");
-  return Number.isFinite(parsed) ? parsed : fallback;
-}
-
-function parseDate(raw: string): Date | undefined {
-  if (!raw) return undefined;
-  const parsed = Date.parse(raw);
-  return Number.isFinite(parsed) ? new Date(parsed) : undefined;
+  return absoluteFrom(raw, BASE_URL);
 }
 
 function contentUrl(contentId: string): string {
@@ -302,15 +205,6 @@ function contentIdFrom(href: string): string {
 
 function chapterIdFrom(href: string): string {
   return /\/title\/[^/?#]+\/([^/?#]+)/.exec(href)?.[1] ?? "";
-}
-
-function parseStatus(raw: string): PublicationStatus | undefined {
-  const value = raw.toLowerCase();
-  if (value.includes("ongoing")) return PublicationStatus.ONGOING;
-  if (value.includes("complet")) return PublicationStatus.COMPLETED;
-  if (value.includes("hiatus")) return PublicationStatus.HIATUS;
-  if (value.includes("cancel")) return PublicationStatus.CANCELLED;
-  return undefined;
 }
 
 function parseHighlights($: CheerioAPI): Highlight[] {
@@ -340,6 +234,58 @@ function parseHighlights($: CheerioAPI): Highlight[] {
 
 function hasNextPage($: CheerioAPI): boolean {
   return $(".pagination a[rel='next'], .pagination .next").length > 0;
+}
+
+function parseContent($: CheerioAPI, webUrl: string): Content {
+  const tags: Tag[] = $(".genres a")
+    .toArray()
+    .map((element) => text($(element)))
+    .filter(Boolean)
+    .map((title) => ({ id: slug(title), title }));
+
+  return {
+    title: text($("h1").first()),
+    cover: absolute(imageSrc($(".cover img").first())),
+    summary: text($(".summary").first()),
+    tags,
+    contentType: ContentType.COMIC,
+    contentRating: ContentRating.SAFE,
+    status: parseStatus(text($(".status").first())),
+    webUrl,
+  };
+}
+
+function parseChapters($: CheerioAPI): Chapter[] {
+  const chapters: Chapter[] = [];
+
+  for (const element of $(".chapter-list a").toArray()) {
+    const link = $(element);
+    const href = link.attr("href") ?? "";
+    const chapterId = chapterIdFrom(href);
+    if (!chapterId) continue;
+
+    const title = text(link);
+    chapters.push({
+      chapterId,
+      number: chapterNumber(title, chapters.length + 1),
+      index: chapters.length,
+      date: parseDate(text(link.find(".date"))) ?? new Date(0),
+      language: DefinedLanguages.ENGLISH,
+      title,
+      webUrl: absolute(href),
+    });
+  }
+
+  return chapters;
+}
+
+function parsePages($: CheerioAPI): ChapterPage[] {
+  const pages: ChapterPage[] = [];
+  for (const element of $(".reader img").toArray()) {
+    const url = absolute(imageSrc($(element)));
+    if (url) pages.push({ url });
+  }
+  return pages;
 }
 
 export class Target extends TemplateSource {}

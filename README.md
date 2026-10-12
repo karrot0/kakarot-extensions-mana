@@ -27,10 +27,11 @@
 
 |                                                                             | Name          | Version | Language | Rating |
 | :-------------------------------------------------------------------------: | ------------- | ------- | -------- | ------ |
-|    <img src="src/Batcave/assets/icon.png" width="28" height="28" alt="">    | Batcave       | 1.7.1   | English  | Safe   |
-| <img src="src/KakarotComics/assets/icon.jpg" width="28" height="28" alt=""> | KakarotComics | 1.2.1   | English  | Mixed  |
-|   <img src="src/OceComic/assets/icon.png" width="28" height="28" alt="">    | OceComic      | 1.2.1   | English  | Mixed  |
-|   <img src="src/Zipcomic/assets/icon.png" width="28" height="28" alt="">    | ZipComic      | 1.1.1   | English  | Mixed  |
+|    <img src="assets/Batcave.png" width="28" height="28" alt="">    | Batcave       | 1.7.1   | English  | Safe   |
+| <img src="assets/KakarotComics.jpg" width="28" height="28" alt=""> | KakarotComics | 1.2.1   | English  | Mixed  |
+|   <img src="assets/OceComic.png" width="28" height="28" alt="">    | OceComic      | 1.2.1   | English  | Mixed  |
+|   <img src="assets/ZipComic.png" width="28" height="28" alt="">    | ZipComic      | 1.1.1   | English  | Mixed  |
+|   <img src="assets/Toonkotsu.png" width="28" height="28" alt="">   | Toonkotsu     | 1.0.0   | English  | Mixed  |
 
 See [CHANGELOG.md](CHANGELOG.md) for what changed.
 
@@ -55,9 +56,9 @@ bun install
 bun run new-source <Name> --id <id> --url https://site
 ```
 
-Copies `src/Template/`, rewrites the class and `info` block, and seeds the
+Copies `templates/source/`, rewrites the class and `info` block, and seeds the
 CHANGELOG entry and README row. Then drop an icon at
-`src/<Name>/assets/icon.png` and fill in the selectors.
+`assets/<Name>.png` and fill in the selectors.
 
 Claude Code users: the `mana-extension` skill in `.claude/skills/` walks the
 whole flow (site recon, scaffold, implement, verify) and documents the

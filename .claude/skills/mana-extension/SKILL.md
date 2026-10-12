@@ -34,37 +34,40 @@ for every field, and the pagination signal.
 bun run new-source <Name> --id <id> --url <https://site>
 ```
 
-Copies `src/Template/` to `src/<Name>/`, rewrites the class and `info` block, seeds the
-CHANGELOG section and README row. Then drop an icon at `src/<Name>/assets/icon.png`.
+Copies `templates/source/` to `src/<Name>/`, rewrites the class and `info` block, seeds the
+CHANGELOG section and README row. Then drop an icon at `assets/<Name>.png`
+(repo root, not inside the source directory).
 
-Each source directory holds exactly three modules plus one folder:
+A source directory holds only what is specific to its site (the icon lives in the root
+`assets/` folder, named after the source). Everything sources have in common lives once
+in `lib/` and is inlined into each `.mana` bundle at build time:
 
 ```
 src/<Name>/
-  client.ts     network client + Cloudflare detection
   model.ts      site constants, filter/sort definitions, API types
-  main.ts       the source class and its own parsing helpers
+  main.ts       info, config, the source class, then its URL builders and parsers
+lib/
+  source.ts     BaseSource: lazy network client, home sections, "view more" listings
+  client.ts     network client + Cloudflare detection
+  html.ts       fetchHtml and the cheerio helpers (text, imageSrc, absolute, slug, ...)
   forms/        query.ts filters.ts search.ts sections.ts preferences.ts index.ts
-  assets/       icon.png
 ```
 
-`client.ts` and everything under `forms/` are copied per source, not shared. Fix bugs in
-`src/Template/` and copy back out, then confirm no drift:
-
-```bash
-for d in Batcave KakarotComics OceComic Zipcomic; do diff -q src/Template/client.ts src/$d/client.ts; for f in src/Template/forms/*.ts; do diff -q "$f" "src/$d/forms/$(basename $f)"; done; done
-```
+Never copy anything from `lib/` into a source. Fix shared code in `lib/` and every source
+picks it up on the next build.
 
 ## Phase 3 — Implement
 
 Read `references/api.md` for the type surface and the intent rules, and
-`references/toolkit.md` for what `forms/` already does — search forms, filter reading,
-home sections, preferences and query strings are all there, so do not hand-roll them.
+`references/toolkit.md` for what `lib/` already does — search forms, filter reading,
+home sections, preferences, query strings and the common cheerio helpers are all there,
+so do not hand-roll them.
 
-Parsing helpers live at the bottom of each `main.ts`, because they are site-specific:
-use cheerio directly for traversal, and keep only the small helpers that source actually
-needs (`text`, `imageSrc`, `absolute`, and so on). Copy the shape from
-`src/Template/main.ts` rather than inventing new ones.
+Site-specific parsers and URL builders go at the bottom of `main.ts`, below the class, and
+the class itself only fetches and orchestrates: use cheerio directly for traversal, import
+the small helpers from `lib/html.ts`, and only write a local helper when the site needs
+something `lib/html.ts` does not do. Copy the shape from `templates/source/` rather than
+inventing a new one.
 
 Three rules that are not obvious and cause silent breakage:
 
@@ -76,7 +79,8 @@ Three rules that are not obvious and cause silent breakage:
   object, not a string. `filters[id] as string` yields `undefined` and the filter
   silently does nothing. This exact bug shipped in every source in this repo.
 - **Never assign the network client in `onEnvironmentLoaded`.** It is not awaited before
-  the first method call. Use the lazy `private get http()` getter the Template uses.
+  the first method call. Extend `BaseSource` and return the options from
+  `clientOptions()`; its `http` getter builds the client lazily.
 
 House style: no comments in source files, everything typed, no `any`. The one exception
 is a comment that records a non-obvious runtime constraint someone would otherwise

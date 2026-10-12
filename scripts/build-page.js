@@ -237,8 +237,7 @@ function sourceCard(s) {
   const devNames = (s.developers ?? [])
     .map(/** @param {{name:string}} d */ (d) => d.name)
     .join(", ");
-  const iconFile = s.thumbnail ?? "icon.png";
-  const thumbSrc = s.path ? `sources/${s.path}/${iconFile}` : "";
+  const thumbSrc = s.thumbnail ? `assets/${s.thumbnail}` : "";
   const thumb = thumbSrc
     ? `<img src="${thumbSrc}" alt="${s.name}" class="w-full h-full object-cover rounded-lg" onerror="imgErr(this)" />`
     : BOOK_SVG;
@@ -286,28 +285,13 @@ function sourceCard(s) {
 
 // ── page ───────────────────────────────────────────────────────────────────
 
-// Copy source icons into dist/sources/<path>/ so they're reachable
-for (const s of sources) {
-  if (!s.path) continue;
-  const iconFile = s.thumbnail ?? "icon.png";
-  const srcIcon = path.join(cwd, "src", s.path, iconFile);
-  if (fs.existsSync(srcIcon)) {
-    const destPath = path.join(distDir, "sources", s.path, iconFile);
-    fs.mkdirSync(path.dirname(destPath), { recursive: true });
-    fs.copyFileSync(srcIcon, destPath);
-  }
-}
-
 const cards = sources.map(sourceCard).join("\n");
 
 const brandIcon = (() => {
   const brand = pkg.mana?.brandSource;
   const s = brand ? sources.find(/** @param {any} s */ (s) => s.path === brand) : sources[0];
-  if (!s?.path) return "";
-  const iconFile = s.thumbnail ?? "icon.png";
-  return fs.existsSync(path.join(cwd, "src", s.path, iconFile))
-    ? `sources/${s.path}/${iconFile}`
-    : "";
+  if (!s?.thumbnail) return "";
+  return fs.existsSync(path.join(cwd, "assets", s.thumbnail)) ? `assets/${s.thumbnail}` : "";
 })();
 
 const count = sources.length;

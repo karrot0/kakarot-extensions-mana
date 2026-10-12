@@ -2,23 +2,36 @@
 
 ```
 src/<Name>/
-  client.ts     network client + Cloudflare detection
   model.ts      site constants, filter/sort definitions, API response types
-  main.ts       the source class, plus its own parsing helpers at the bottom
-  forms/        the app-facing machinery, copied per source
-  assets/       icon.png
+  main.ts       info, config, the source class, then its URL builders and parsers
 ```
 
-`client.ts` and `forms/*` are identical copies across sources so each `.mana` bundle is
-self-contained. Fix them in `src/Template/` and copy outward.
+Everything else is shared and lives once in `lib/`: `source.ts`, `client.ts`, `html.ts`
+and `forms/`. The bundler inlines it, so each `.mana` bundle is still self-contained.
+Import it as `"../../lib/<file>.ts"`; never copy it into a source.
 
-Parsing is **not** in a shared module. Traversal is cheerio (`load`, `$(...)`, `.find()`,
-`.attr()`, `.toArray()`), and the few helpers around it live at the bottom of each
-`main.ts` because they are site-specific. Copy their shape from `src/Template/main.ts`.
+Traversal is cheerio (`load`, `$(...)`, `.find()`, `.attr()`, `.toArray()`) and belongs in
+parser functions below the class in `main.ts`. The helpers around it come from
+`lib/html.ts`. Copy the shape from `templates/source/`.
 
-## `forms/` — the app-facing machinery
+## `lib/source.ts` — `BaseSource`
 
-### `forms/filters.ts` — `FilterReader`
+Every source class extends it and supplies two methods:
+
+```ts
+protected clientOptions(): ClientOptions   // what buildClient receives
+protected sections(): SectionSpec[]        // the home page
+```
+
+In return it provides the lazy `this.http` client, `this.getJson<T>(path, params)` for
+JSON APIs (override `apiBase()` when the server URL is configurable), `getSectionsForPage`,
+`resolvePageSection`, and `this.listResults(request)` for the "view more" short-circuit at
+the top of `search`. Override `resolvePageSection` only when a source has list ids that
+are not home sections (see `src/KakarotComics/main.ts`).
+
+## `lib/forms/` — the app-facing machinery
+
+### `lib/forms/filters.ts` — `FilterReader`
 
 **Always read search filters through this.** The runtime hands back a different JavaScript
 type per field type, and `filters[id] as string` silently yields `undefined` for a
@@ -35,7 +48,7 @@ filters.toggle(id);
 filters.number(id); // NaN when absent — guard with Number.isFinite
 ```
 
-### `forms/search.ts` — the search form
+### `lib/forms/search.ts` — the search form
 
 `buildSearchForm({ fields?, header?, footer?, tags?, tagsHeader?, sortHeader?, includeSort? })`
 assembles a `SearchForm` from the field builders exported by `@mana-app/types`
@@ -50,7 +63,7 @@ an empty sort control.
 `resolveSortId(SORT_OPTIONS, request, fallback)` validates `request.sort.id` against your
 declared options and falls back to the one marked `isDefault`.
 
-### `forms/sections.ts` — home sections
+### `lib/forms/sections.ts` — home sections
 
 ```ts
 private sections(): SectionSpec[] {
@@ -78,7 +91,7 @@ listing cannot disagree. `viewMore: false` for a carousel with no paginated equi
 
 `pageOf(request)` clamps `SearchRequest.page` to at least 1.
 
-### `forms/preferences.ts` — the preference menu
+### `lib/forms/preferences.ts` — the preference menu
 
 ```ts
 private readonly preferences = new PreferenceStore(NAMESPACE, DEFAULTS);
@@ -109,14 +122,14 @@ Two further rules the store follows, both of which protect user data:
 
 **Keep the namespace stable** — changing it orphans every existing user setting.
 
-### `forms/query.ts` — query strings
+### `lib/forms/query.ts` — query strings
 
 `withQuery(url, params)` drops `undefined`/`null`/empty values and encodes the rest.
 `encodeForm(body)` does the same for `application/x-www-form-urlencoded` POST bodies but
 keeps empty values. There is no `URLSearchParams` in the runtime, so build query strings
 through these.
 
-## `client.ts` — the network client
+## `lib/client.ts` — the network client
 
 ```ts
 buildClient({
@@ -145,18 +158,24 @@ fingerprint (`challenges.cloudflare.com`, `cf-browser-verification`, `__cf_chl_`
 
 Per-request `headers` passed to `http.request` win over the client defaults.
 
-## Parsing helpers in `main.ts`
+## `lib/html.ts` — parsing helpers
 
-Each source keeps only what it uses. The recurring shapes, from `src/Template/main.ts`:
+Import what the source uses:
 
-| Helper                           | Why it is not just cheerio                                                                                                            |
-| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| `text(node)`                     | `.text()` plus whitespace collapsing                                                                                                  |
-| `imageSrc(node)`                 | comic sites lazy-load: tries `data-src`, `data-original`, `data-lazy-src`, `srcset`, `src`, and takes the first URL out of a `srcset` |
-| `absolute(raw)`                  | the runtime has no `URL` global; handles `//host`, `/path`, relative, and `\/`-escaped URLs from inline JSON                          |
-| `slug(value)`                    | tag ids                                                                                                                               |
-| `chapterNumber(title, fallback)` | `#12.5`, trailing numbers                                                                                                             |
-| `ownText(node)`                  | `.contents().filter(text nodes)` — text excluding child elements                                                                      |
+| Helper                            | Why it is not just cheerio                                                                                                            |
+| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `fetchHtml(client, url, params?)` | GET, query string and `load` in one call, with the non-UTF-8 WebView fallback from `getText`                                          |
+| `text(node)`                      | `.text()` plus whitespace collapsing                                                                                                  |
+| `ownText(node)`                   | `.contents().filter(text nodes)` — text excluding child elements                                                                      |
+| `imageSrc(node)`                  | comic sites lazy-load: tries `data-src`, `data-original`, `data-lazy-src`, `srcset`, `src`, and takes the first URL out of a `srcset` |
+| `absolute(raw, baseUrl)`          | the runtime has no `URL` global; handles `//host`, `/path`, relative, and `\/`-escaped URLs from inline JSON                          |
+| `slug(value)`                     | tag ids                                                                                                                               |
+| `chapterNumber(title, fallback)`  | `#12.5`, trailing numbers                                                                                                             |
+| `parseDate(raw)`                  | `Date.parse` that returns `undefined` instead of an invalid `Date`                                                                    |
+| `parseStatus(raw)`                | ongoing / completed / hiatus / cancelled, case-insensitive                                                                            |
+
+Each HTML source wraps `absolute` once with its own `BASE_URL`, so call sites stay
+`absolute(raw)`.
 
 Two more that only some sources need, both in `src/Batcave/main.ts`:
 

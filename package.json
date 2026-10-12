@@ -8,21 +8,23 @@
     "dev": "mana-dev serve --watch",
     "build": "mana-dev build",
     "postbuild": "node scripts/build-page.js",
-    "lint": "oxlint src/",
-    "lint:fix": "oxlint --fix src/",
+    "lint": "oxlint src/ lib/ templates/",
+    "lint:fix": "oxlint --fix src/ lib/ templates/",
     "typecheck": "tsc --noEmit",
     "verify": "node scripts/verify-source.mjs",
     "new-source": "node scripts/new-source.mjs",
-    "format": "oxfmt src/",
-    "format:check": "oxfmt --check src/"
+    "format": "oxfmt src/ lib/ templates/",
+    "format:check": "oxfmt --check src/ lib/ templates/"
   },
   "dependencies": {
+    "@noble/ciphers": "^2.4.0",
+    "@noble/hashes": "^2.4.0",
     "cheerio": "^1.2.0",
     "fflate": "^0.8.3"
   },
   "devDependencies": {
     "@mana-app/dev": "^0.1.14",
-    "@mana-app/types": "^0.0.25",
+    "@mana-app/types": "^0.0.27",
     "oxfmt": "^0.50.0",
     "oxlint": "^1.65.0",
     "typescript": "^7.0.2"
@@ -35,6 +37,6 @@
     "platform": "web",
     "repositoryName": "Kakarot Extensions",
     "brandSource": "KakarotComics",
-    "thumbnail": "https://raw.githubusercontent.com/karrot0/kakarot-extensions-mana/refs/heads/gh-pages/main/sources/KakarotComics/assets/icon.jpg"
+    "thumbnail": "https://raw.githubusercontent.com/karrot0/kakarot-extensions-mana/refs/heads/gh-pages/main/assets/KakarotComics.jpg"
   }
 }

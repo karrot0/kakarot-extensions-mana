@@ -19,14 +19,14 @@ always better than scraping the rendered result.
 **Cloudflare.** If you get a 403/503, a `<title>Just a moment`, `challenges.cloudflare.com`,
 or a `cf_chl` marker, the site is challenge-protected. Set `config.cloudflareResolutionURL`
 so the app can hand the user a WebView to solve it, throw `CloudflareError(BASE_URL)` from
-the response interceptor (`buildClient` in `client.ts` already does both), and expect
+the response interceptor (`buildClient` in `lib/client.ts` already does both), and expect
 `bun run verify` to report SKIP rather than PASS. After that, if you're controlling the
 browser do the challenge and continue or have your human do it for you.
 
 ## Target 1 — Home sections
 
 What the landing page offers, plus whatever "popular" / "latest" / category routes exist.
-Each becomes a `SectionSpec` (see `forms/sections.ts`):
+Each becomes a `SectionSpec` (see `lib/forms/sections.ts`):
 
 ```ts
 { id, title, subtitle?, style?, viewMore?, load(page) }
@@ -80,8 +80,8 @@ semantic class names — over positional selectors; never `nth-child`.
 
 `<meta property="og:image">` and `og:title` are usually the most robust cover/title source
 on WordPress-style sites. Covers are frequently lazy-loaded: read attributes in the order
-`data-src`, `data-original`, `data-lazy-src`, `srcset`, `src` — the `imageSrc()` helper at
-the bottom of each `main.ts` does this and takes the first URL out of a `srcset`.
+`data-src`, `data-original`, `data-lazy-src`, `srcset`, `src` — the `imageSrc()` helper in
+`lib/html.ts` does this and takes the first URL out of a `srcset`.
 
 Map the site's status wording onto `PublicationStatus`, and return `undefined` when it does
 not say — do not default to `ONGOING`. If the page exposes AniList/MAL ids, put them in

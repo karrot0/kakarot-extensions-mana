@@ -4,6 +4,12 @@ Notable changes to the extensions in this repository, grouped by extension —
 each one versions independently (see `info.version` in its `main.ts`). Dates
 are UTC. Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## Toonkotsu (current: v1.0.0)
+
+### 2026-10-12
+- Initial implementation: home sections, search with filters and sorting, title details, chapters.
+- Chapter pages are read over HTTP without a WebView. The source derives the site's HMAC session key from `/api/manga/key`, signs each chapter request, and AES-256-CTR decrypts the page images in pure TypeScript.
+
 ## Batcave (current: v1.7.1)
 
 ### 2026-09-05 — @mana-app/types 0.0.25

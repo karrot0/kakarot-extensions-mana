@@ -73,9 +73,11 @@ update the version on an existing one.
 
 ## Assets
 
-`info.thumbnail` must be `assets/icon.png` (or `.jpg`) and the file must exist at
-`src/<Name>/assets/`. `scripts/build-page.js` copies it into `dist/sources/<Name>/`; a
-missing or misnamed file renders a placeholder on the published page. A full URL also works.
+`info.thumbnail` is a bare file name — `<Name>.png` (or `.jpg`) — and the file must exist at
+`assets/<Name>.png` in the repo root. `mana-dev` copies that folder to `dist/assets/`, and the
+app loads the icon from `<repo>/assets/<thumbnail>`. A path such as `assets/icon.png` builds
+fine and shows the placeholder icon in the app, because it resolves to
+`<repo>/assets/assets/icon.png`. A full URL also works.
 
 ## Checklist
 
@@ -85,6 +87,6 @@ missing or misnamed file renders a placeholder on the published page. A full URL
 - [ ] `info.version` bumped
 - [ ] CHANGELOG entry, heading version matching `info.version`
 - [ ] README row current
-- [ ] `src/<Name>/assets/icon.*` exists and matches `info.thumbnail`
+- [ ] `assets/<Name>.*` exists and matches `info.thumbnail`
 - [ ] `scripts/probes/<Name>.json` has a real `contentId`
-- [ ] `client.ts` and `forms/*` match `src/Template/` if you changed them
+- [ ] shared code changed in `lib/` only, never copied into a source

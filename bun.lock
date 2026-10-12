@@ -5,12 +5,14 @@
     "": {
       "name": "kakarot_extensions_mana",
       "dependencies": {
+        "@noble/ciphers": "^2.4.0",
+        "@noble/hashes": "^2.4.0",
         "cheerio": "^1.2.0",
         "fflate": "^0.8.3",
       },
       "devDependencies": {
         "@mana-app/dev": "^0.1.14",
-        "@mana-app/types": "^0.0.25",
+        "@mana-app/types": "^0.0.27",
         "oxfmt": "^0.50.0",
         "oxlint": "^1.65.0",
         "typescript": "^7.0.2",
@@ -30,7 +32,11 @@
 
     "@mana-app/dev-win32-x64": ["@mana-app/dev-win32-x64@0.1.14", "", { "os": "win32", "cpu": "x64" }, "sha512-B0+Z0Y6ZKY5nIGv11PK0wEdvDQhgm9F4vRVIC4BZ9DOOHJXdcyENF/TEtgzBaD4u5mZw1t1977Mf7aapI6dYDg=="],
 
-    "@mana-app/types": ["@mana-app/types@0.0.25", "", {}, "sha512-HAMAVYq+bPCEHNU/XSXJBddOtChyDaxy32jyMjbopTznTEwP/v6d8TQKIqj3M0UDclwaQYHV5KjmPO0/DSLUIw=="],
+    "@mana-app/types": ["@mana-app/types@0.0.27", "", {}, "sha512-l9UbSWdvkGl2xOfbTPb0ZrqKYfAm6T7vc7hvv/8Y7f7IKqiSKUDjUz10vnc7vgwHifh3DJmGKfv8An0l+eG4SA=="],
+
+    "@noble/ciphers": ["@noble/ciphers@2.4.0", "", {}, "sha512-AnjFn0Jv92laAkvMrghlFZq4qQCIN/4DxFV/eooqtC2YTjB7kBeLMS2T9KJX4Dn+ZVXLOwK0lSgqDtx9gvxtiw=="],
+
+    "@noble/hashes": ["@noble/hashes@2.4.0", "", {}, "sha512-X5XaVWZIBCT7HHZGm5I7ZQXDwLG+bGXuSrMQAW+7Zvl87h1kmc1ZB1VSRJcpUfoUrGQp4Fkoxm5kZ+Ms+aW+eA=="],
 
     "@oxfmt/binding-android-arm-eabi": ["@oxfmt/binding-android-arm-eabi@0.50.0", "", { "os": "android", "cpu": "arm" }, "sha512-ICXQVKrDvsWUtfx6EiVJxfWrajKTwTfRV8vz2XiMkxZeuCKJLgD4YAj6dE3BWvpqDlkVkie4VSTAtMUWO9LDXg=="],
 

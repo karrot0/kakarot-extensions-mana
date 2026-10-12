@@ -14,8 +14,6 @@ import {
   type Highlight,
   type Option,
   type PageLink,
-  type PageLinkResolver,
-  type PageSection,
   type PagedSearchResult,
   type Provider,
   type ResolvedPageSection,
@@ -29,7 +27,20 @@ import {
   type Tag,
 } from "@mana-app/types";
 
-import { buildClient } from "./client.ts";
+import type { ClientOptions } from "../../lib/client.ts";
+import {
+  FilterReader,
+  PreferenceStore,
+  buildPreferenceMenu,
+  buildSearchForm,
+  pageOf,
+  resolveSortId,
+  type PreferenceSection,
+  type QueryParams,
+  type SectionSpec,
+} from "../../lib/forms/index.ts";
+import { BaseSource } from "../../lib/source.ts";
+import { parseDate } from "../../lib/text.ts";
 import {
   CHAPTER_FETCH_LIMIT,
   CHARACTER_PREFIX,
@@ -55,19 +66,6 @@ import {
   type ApiSeries,
   type ApiSeriesDetail,
 } from "./model.ts";
-import {
-  FilterReader,
-  PreferenceStore,
-  buildPreferenceMenu,
-  buildSearchForm,
-  pageOf,
-  resolveSortId,
-  toPageSections,
-  withQuery,
-  type PreferenceSection,
-  type QueryParams,
-  type SectionSpec,
-} from "./forms/index.ts";
 
 const info: SourceInfo = {
   id: "kakarotcomics",
@@ -77,7 +75,7 @@ const info: SourceInfo = {
   website: DEFAULT_BASE_URL,
   rating: CatalogRating.MIXED,
   supportedLanguages: [DefinedLanguages.ENGLISH],
-  thumbnail: "assets/icon.jpg",
+  thumbnail: "KakarotComics.jpg",
   developers: [{ name: "Karrot" }],
 };
 
@@ -87,25 +85,24 @@ const config: SourceConfig = {
 };
 
 class KakarotComicsSource
-  implements ChapterSource, SearchProvider, PageLinkResolver, SourcePreferenceProvider
+  extends BaseSource
+  implements ChapterSource, SearchProvider, SourcePreferenceProvider
 {
   readonly info = info;
   readonly config = config;
 
-  private client: NetworkClient | undefined;
   private readonly preferences = new PreferenceStore(PREFERENCE_NAMESPACE, PREFERENCE_DEFAULTS);
 
-  private get http(): NetworkClient {
-    this.client ??= buildClient({
+  protected clientOptions(): ClientOptions {
+    return {
       baseUrl: DEFAULT_BASE_URL,
       requests: 20,
       interval: 1,
       json: true,
-    });
-    return this.client;
+    };
   }
 
-  private async baseUrl(): Promise<string> {
+  protected override async apiBase(): Promise<string> {
     const stored = await this.preferences.get(PreferenceID.BaseUrl);
     return normalizeBaseUrl(stored) || DEFAULT_BASE_URL;
   }
@@ -114,18 +111,7 @@ class KakarotComicsSource
     return this.preferences.get(PreferenceID.PublisherAllowlist);
   }
 
-  private async getJson<T>(path: string, params?: QueryParams): Promise<T> {
-    const base = await this.baseUrl();
-    const target = withQuery(`${base}${path}`, params);
-    const response = await this.http.get(target);
-    try {
-      return JSON.parse(response.data) as T;
-    } catch {
-      throw new Error(`${base} did not return JSON — is it a comic-api server?`);
-    }
-  }
-
-  private sections(): SectionSpec[] {
+  protected sections(): SectionSpec[] {
     return [
       {
         id: ListID.PopularSeries,
@@ -198,17 +184,16 @@ class KakarotComicsSource
     return buildPreferenceMenu(this.preferences, this.preferenceSections());
   }
 
-  async getSectionsForPage(_link: PageLink): Promise<PageSection[]> {
-    return toPageSections(this.sections());
-  }
-
-  async resolvePageSection(_link: PageLink, sectionID: string): Promise<ResolvedPageSection> {
-    const { results } = await this.listResults(sectionID, 1);
+  override async resolvePageSection(
+    _link: PageLink,
+    sectionID: string,
+  ): Promise<ResolvedPageSection> {
+    const { results } = await this.listing(sectionID, 1);
     return { items: results };
   }
 
   async search(request: SearchRequest): Promise<PagedSearchResult> {
-    if (request.listId) return this.listResults(request.listId, pageOf(request));
+    if (request.listId) return this.listing(request.listId, pageOf(request));
 
     const page = pageOf(request);
     const filters = new FilterReader(request);
@@ -249,50 +234,7 @@ class KakarotComicsSource
     const { data } = await this.getJson<{ data: ApiSeriesDetail }>(
       `/api/series/${encodeURIComponent(contentId)}`,
     );
-
-    const tags: Tag[] = [];
-    if (data.publisher) {
-      tags.push({
-        id: `publisher:${data.publisher_slug ?? data.publisher}`,
-        title: data.publisher,
-        isNonInteractive: true,
-      });
-    }
-    if (data.series_type) {
-      tags.push({
-        id: `type:${data.series_type}`,
-        title: data.series_type,
-        isNonInteractive: true,
-      });
-    }
-
-    const people = data.characters ?? [];
-
-    return {
-      title: seriesTitle(data),
-      cover: data.cover_url ?? "",
-      summary: buildSummary(data),
-      tags,
-      contentType: ContentType.COMIC,
-      contentRating: ContentRating.SAFE,
-      status: data.end_year === null ? PublicationStatus.ONGOING : PublicationStatus.COMPLETED,
-      additionalInfo: people.length
-        ? [
-            additionalInfo.characters.section({
-              id: "characters",
-              title: "Characters",
-              hasMore: false,
-              items: people.slice(0, 10).map((character) =>
-                additionalInfo.characters.item({
-                  id: character.slug,
-                  title: character.name,
-                  subtitle: character.role,
-                }),
-              ),
-            }),
-          ]
-        : undefined,
-    };
+    return parseContent(data);
   }
 
   async getChapters(contentId: string): Promise<Chapter[]> {
@@ -312,20 +254,11 @@ class KakarotComicsSource
       if (!result.pagination.has_more) break;
     }
 
-    return issues.map((issue, index) => ({
-      chapterId: String(issue.id),
-      number: issueNumber(issue.issue_number, index + 1),
-      index,
-      date: parseReleaseDate(issue.release_date) ?? new Date(0),
-      language: DefinedLanguages.ENGLISH,
-      title: chapterTitle(issue),
-      thumbnail: issue.cover_url ?? undefined,
-      provider: chapterProvider(issue),
-    }));
+    return parseChapters(issues);
   }
 
   async getChapterData(_contentId: string, chapterId: string): Promise<ChapterData> {
-    const base = await this.baseUrl();
+    const base = await this.apiBase();
     const { data } = await this.getJson<ApiPageManifest>(
       `/api/issues/${encodeURIComponent(chapterId)}/pages`,
       { mode: "proxy" },
@@ -341,7 +274,7 @@ class KakarotComicsSource
     return { pages: data.pages.map((entry) => ({ url: pageUrl(entry, base) })) };
   }
 
-  private async listResults(listId: string, page: number): Promise<PagedSearchResult> {
+  private async listing(listId: string, page: number): Promise<PagedSearchResult> {
     if (listId === ListID.Characters) return this.characterList(page);
     if (listId.startsWith(CHARACTER_PREFIX)) {
       return this.characterSeries(listId.slice(CHARACTER_PREFIX.length), page);
@@ -409,22 +342,6 @@ function normalizeBaseUrl(raw: string): string {
   return raw.trim().replace(/\/+$/, "");
 }
 
-function issueNumber(raw: string, fallback: number): number {
-  const parsed = Number.parseFloat(raw.trim());
-  return /^\d+(\.\d+)?$/.test(raw.trim()) && Number.isFinite(parsed) ? parsed : fallback;
-}
-
-function parseReleaseDate(raw: string | null): Date | undefined {
-  if (!raw) return undefined;
-  const parsed = Date.parse(raw);
-  return Number.isFinite(parsed) ? new Date(parsed) : undefined;
-}
-
-function joinParts(values: readonly (string | null | undefined)[]): string | undefined {
-  const parts = values.map((value) => (value ?? "").trim()).filter(Boolean);
-  return parts.length > 0 ? parts.join(" · ") : undefined;
-}
-
 function pageUrl(entry: ApiManifestPage, base: string): string {
   if (entry.data) return entry.data;
 
@@ -439,10 +356,6 @@ function toPagedResult<T>(result: ApiPage<T>, items: Highlight[]): PagedSearchRe
     isLastPage: !result.pagination.has_more,
     totalResultCount: result.pagination.total ?? undefined,
   };
-}
-
-function seriesTitle(series: ApiSeries): string {
-  return series.volume > 1 ? `${series.title} (Vol. ${series.volume})` : series.title;
 }
 
 function seriesHighlight(series: ApiSeries): Highlight {
@@ -472,6 +385,79 @@ function characterHighlight(character: ApiCharacter): Highlight {
     contentRating: ContentRating.SAFE,
     link: { request: { page: 1, listId: `${CHARACTER_PREFIX}${character.slug}` } },
   };
+}
+
+function parseContent(data: ApiSeriesDetail): Content {
+  const tags: Tag[] = [];
+  if (data.publisher) {
+    tags.push({
+      id: `publisher:${data.publisher_slug ?? data.publisher}`,
+      title: data.publisher,
+      isNonInteractive: true,
+    });
+  }
+  if (data.series_type) {
+    tags.push({
+      id: `type:${data.series_type}`,
+      title: data.series_type,
+      isNonInteractive: true,
+    });
+  }
+
+  const people = data.characters ?? [];
+
+  return {
+    title: seriesTitle(data),
+    cover: data.cover_url ?? "",
+    summary: buildSummary(data),
+    tags,
+    contentType: ContentType.COMIC,
+    contentRating: ContentRating.SAFE,
+    status: data.end_year === null ? PublicationStatus.ONGOING : PublicationStatus.COMPLETED,
+    additionalInfo: people.length
+      ? [
+          additionalInfo.characters.section({
+            id: "characters",
+            title: "Characters",
+            hasMore: false,
+            items: people.slice(0, 10).map((character) =>
+              additionalInfo.characters.item({
+                id: character.slug,
+                title: character.name,
+                subtitle: character.role,
+              }),
+            ),
+          }),
+        ]
+      : undefined,
+  };
+}
+
+function parseChapters(issues: ApiIssue[]): Chapter[] {
+  return issues.map((issue, index) => ({
+    chapterId: String(issue.id),
+    number: issueNumber(issue.issue_number, index + 1),
+    index,
+    date: parseDate(issue.release_date ?? "") ?? new Date(0),
+    language: DefinedLanguages.ENGLISH,
+    title: chapterTitle(issue),
+    thumbnail: issue.cover_url ?? undefined,
+    provider: chapterProvider(issue),
+  }));
+}
+
+function issueNumber(raw: string, fallback: number): number {
+  const parsed = Number.parseFloat(raw.trim());
+  return /^\d+(\.\d+)?$/.test(raw.trim()) && Number.isFinite(parsed) ? parsed : fallback;
+}
+
+function joinParts(values: readonly (string | null | undefined)[]): string | undefined {
+  const parts = values.map((value) => (value ?? "").trim()).filter(Boolean);
+  return parts.length > 0 ? parts.join(" · ") : undefined;
+}
+
+function seriesTitle(series: ApiSeries): string {
+  return series.volume > 1 ? `${series.title} (Vol. ${series.volume})` : series.title;
 }
 
 function formatYears(series: ApiSeries): string {

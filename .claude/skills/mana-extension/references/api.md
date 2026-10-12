@@ -1,6 +1,6 @@
 # The `@mana-app/types` surface and the runtime that consumes it
 
-Verified against `@mana-app/types@0.0.25` and `@mana-app/dev@0.1.14` by reading the
+Verified against `@mana-app/types@0.0.27` and `@mana-app/dev@0.1.14` by reading the
 type declarations and the runtime embedded in `mana-dev`. The intent table below is
 unchanged from `@mana-app/dev@0.1.13` — 0.1.14 is a rebuild with no change to detection.
 
@@ -74,12 +74,14 @@ the declaration is now too weak. The split exists so `ContentTracker` can extend
 The source runs in a bare V8 / JavaScriptCore context, not Node and not a browser.
 
 - **No `fetch`, `URL`, `URLSearchParams`, `TextEncoder`/`TextDecoder`, `DOMParser`.** Build
-  query strings yourself — `withQuery` in `forms/query.ts` does it. `Buffer` exists only as a
+  query strings yourself — `withQuery` in `lib/forms/query.ts` does it. `Buffer` exists only as a
   bundler-injected shim.
 - **`console` may not exist.** Do not rely on logging. A thrown `Error` message is the only
   diagnostic channel guaranteed to reach the user, so put real detail in it.
-- **`NetworkResponse.data` is always a `string`.** There is no binary response mode; a
-  non-UTF-8 body may not survive the bridge at all.
+- **`NetworkResponse.data` is always a `string`.** It is UTF-8 text by default, and a
+  non-UTF-8 body may not survive the bridge at all. As of 0.0.27 a request can set
+  `responseEncoding: "base64"` to get the raw bytes back base64-encoded instead — use that
+  for images and archives. An app built before 0.0.27 ignores the field.
 - **`onEnvironmentLoaded` is not awaited.** The runtime calls
   `target.onEnvironmentLoaded?.().catch(...)` and moves on, so anything it assigns can still
   be undefined when the first real method runs. Build the client lazily instead.
@@ -112,7 +114,7 @@ A `SearchForm` is `{ sections: SearchSection[] }`, built from three section buil
 `SearchListSection`, `SearchTagsSection`, `SearchSortSection` — holding fields built from
 `SearchPicker`, `SearchMultiPicker`, `SearchExcludableMultiPicker`, `SearchToggle`,
 `SearchTextField`, `SearchStepper`, `SearchDatePicker`. All are exported from
-`@mana-app/types`. `buildSearchForm` in `forms/search.ts` assembles them.
+`@mana-app/types`. `buildSearchForm` in `lib/forms/search.ts` assembles them.
 
 **The builder picks the presentation.** There is no `presentation` property to set — as of
 0.0.25 `SearchPickerPresentation` is gone, and the choice is which function you call:
@@ -165,9 +167,11 @@ without checking them. `bun run typecheck` is the gate that catches it.
 
 ## Content shapes
 
-`SourceContext` — the `context` bag carried on anything the app hands back to you — now
-has one typed key: `allowedContentRatings?: readonly ContentRating[]`, the ratings the host
-will accept for this request. It is **omitted** when the host has no rating policy, so treat
+`SourceContext` — the `context` bag carried on anything the app hands back to you — is a
+closed type as of 0.0.27: the `[key: string]: any` index signature is gone, so a source can
+no longer stash its own values in it. It has two typed keys. `origin?: SourceContextOrigin`
+names the host flow behind the request (only `MIGRATION` so far). `allowedContentRatings?:
+readonly ContentRating[]` is the ratings the host will accept for this request. It is **omitted** when the host has no rating policy, so treat
 `undefined` as "no restriction" rather than "allow nothing". A source that can tell a title's
 rating before fetching it can skip the ones the host would discard anyway.
 
@@ -181,7 +185,11 @@ at 0 and be contiguous** — the first available chapter is index 0. `date` must
 
 `ChapterData` is `{ pages?: ChapterPage[] }` where each page has `url` or a base64 `raw`.
 
+`getContent(contentId, context?)` receives that same `SourceContext` as an optional second
+argument from 0.0.27.
+
 `Highlight` needs `id`, `title`, `cover`, and optionally `subtitle`, `badge`, `link`. A
+`badge` is `{ text: string }` — the 0.0.25 `{ count, color }` shape was removed in 0.0.27. A
 `link` carrying a `SearchRequest` makes the tile open a filtered list instead of a title —
 that is how KakarotComics makes a character tile show the character's series.
 

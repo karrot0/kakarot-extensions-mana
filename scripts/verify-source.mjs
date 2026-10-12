@@ -183,9 +183,14 @@ async function verify(name, probe, verbose) {
     assert(target.info?.id, "info.id missing");
     assert(target.info?.version, "info.version missing");
     const thumb = target.info.thumbnail ?? "";
+    // The app loads `<repo>/assets/<thumbnail>`, so the value is a bare file name in ./assets.
     assert(
-      !thumb || thumb.startsWith("http") || thumb.includes("/"),
-      `thumbnail "${thumb}" is not under assets/ — the repo page will show a placeholder`,
+      !thumb || thumb.startsWith("http") || !thumb.includes("/"),
+      `thumbnail "${thumb}" must be a bare file name — the app resolves it under assets/`,
+    );
+    assert(
+      !thumb || thumb.startsWith("http") || fs.existsSync(path.join(ROOT, "assets", thumb)),
+      `assets/${thumb} does not exist — the app will show a placeholder`,
     );
     return `${target.info.id} v${target.info.version}`;
   });
@@ -323,7 +328,7 @@ function sourceDirs() {
   const manifestPath = path.join(ROOT, "dist", "sources.json");
   if (!fs.existsSync(manifestPath)) return [];
   const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf-8"));
-  return (manifest.sources ?? []).map((s) => s.name).filter((n) => n !== "Template");
+  return (manifest.sources ?? []).map((s) => s.name);
 }
 
 async function main() {
