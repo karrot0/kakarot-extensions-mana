@@ -5,18 +5,13 @@ import {
   DefinedLanguages,
   PublicationStatus,
   SectionStyle,
-  additionalInfo,
   type Chapter,
   type ChapterData,
   type ChapterSource,
   type Content,
   type Form,
   type Highlight,
-  type Option,
-  type PageLink,
   type PagedSearchResult,
-  type Provider,
-  type ResolvedPageSection,
   type SearchForm,
   type SearchProvider,
   type SearchRequest,
@@ -36,33 +31,24 @@ import {
   pageOf,
   resolveSortId,
   type PreferenceSection,
-  type QueryParams,
   type SectionSpec,
 } from "../../lib/forms/index.ts";
 import { BaseSource } from "../../lib/source.ts";
-import { parseDate } from "../../lib/text.ts";
 import {
-  CHAPTER_FETCH_LIMIT,
-  CHARACTER_PREFIX,
   DEFAULT_BASE_URL,
   FilterID,
+  GENRE_FIELD,
   ListID,
-  MAX_CHAPTER_REQUESTS,
-  PAGE_SIZE,
   PREFERENCE_DEFAULTS,
   PREFERENCE_NAMESPACE,
-  PUBLISHER_OPTIONS_LIMIT,
   PreferenceID,
-  SEARCH_FIELDS,
-  SERIES_LANGUAGE,
   SORT_OPTIONS,
-  SeriesSort,
-  type ApiCharacter,
+  SOURCE_FIELD,
+  SOURCE_OPTIONS,
+  SortID,
   type ApiIssue,
-  type ApiManifestPage,
   type ApiPage,
-  type ApiPageManifest,
-  type ApiPublisher,
+  type ApiPages,
   type ApiSeries,
   type ApiSeriesDetail,
 } from "./model.ts";
@@ -70,8 +56,8 @@ import {
 const info: SourceInfo = {
   id: "kakarotcomics",
   name: "KakarotComics",
-  version: "1.2.1",
-  description: "Kakarot Comics",
+  version: "2.0.2",
+  description: "Batcave and OceComic through one lightweight proxy",
   website: DEFAULT_BASE_URL,
   rating: CatalogRating.MIXED,
   supportedLanguages: [DefinedLanguages.ENGLISH],
@@ -94,44 +80,47 @@ class KakarotComicsSource
   private readonly preferences = new PreferenceStore(PREFERENCE_NAMESPACE, PREFERENCE_DEFAULTS);
 
   protected clientOptions(): ClientOptions {
-    return {
-      baseUrl: DEFAULT_BASE_URL,
-      requests: 20,
-      interval: 1,
-      json: true,
-    };
+    return { baseUrl: DEFAULT_BASE_URL, requests: 20, interval: 1, json: true };
   }
 
+  // The settings screen doesn't apply in the app, so the proxy address is
+  // fixed to the hosted instance rather than a preference.
   protected override async apiBase(): Promise<string> {
-    const stored = await this.preferences.get(PreferenceID.BaseUrl);
-    return normalizeBaseUrl(stored) || DEFAULT_BASE_URL;
-  }
-
-  private async publisherAllowlist(): Promise<string[]> {
-    return this.preferences.get(PreferenceID.PublisherAllowlist);
+    return DEFAULT_BASE_URL;
   }
 
   protected sections(): SectionSpec[] {
     return [
       {
-        id: ListID.PopularSeries,
-        title: "Longest Running",
-        subtitle: "Series with the most issues on record",
+        id: ListID.BatcavePopular,
+        title: "Popular on Batcave",
         style: SectionStyle.SimpleHero,
-        load: (page) => this.seriesList(SeriesSort.Popular, page),
+        viewMore: false,
+        load: (page) => this.list(ListID.BatcavePopular, page),
       },
       {
-        id: ListID.Characters,
-        title: "Popular Characters",
-        subtitle: "Tap for the series they appear in",
-        style: SectionStyle.DetailedTripleRowPaged,
-        load: (page) => this.characterList(page),
-      },
-      {
-        id: ListID.RecentSeries,
-        title: "Newest Series",
+        id: ListID.BatcaveNew,
+        title: "New on Batcave",
         style: SectionStyle.DetailedVerticalListGrouped,
-        load: (page) => this.seriesList(SeriesSort.Recent, page),
+        load: (page) => this.list(ListID.BatcaveNew, page),
+      },
+      {
+        id: ListID.OceComicNew,
+        title: "New on OceComic",
+        style: SectionStyle.SimpleSingleRow,
+        load: (page) => this.list(ListID.OceComicNew, page),
+      },
+      {
+        id: ListID.OceComicPopular,
+        title: "Popular on OceComic",
+        style: SectionStyle.SimpleSingleRow,
+        load: (page) => this.list(ListID.OceComicPopular, page),
+      },
+      {
+        id: ListID.BatcaveCatalogue,
+        title: "Batcave Catalogue",
+        style: SectionStyle.DetailedTripleRowPaged,
+        load: (page) => this.list(ListID.BatcaveCatalogue, page),
       },
     ];
   }
@@ -139,33 +128,14 @@ class KakarotComicsSource
   private preferenceSections(): PreferenceSection[] {
     return [
       {
-        header: "Server",
-        footer:
-          `Which comic-api instance to read from. Defaults to ${DEFAULT_BASE_URL}, ` +
-          `the hosted one — leave it alone unless you run your own. If you do, use a ` +
-          `LAN address or hostname rather than localhost: on a phone, localhost is the phone.`,
-        fields: [
-          {
-            type: "text",
-            key: PreferenceID.BaseUrl,
-            title: "API Base URL",
-            placeholder: DEFAULT_BASE_URL,
-            keyboard: "alphanumeric",
-          },
-        ],
-      },
-      {
-        header: "Publishers",
-        footer:
-          `Only show series from the selected publishers, in both search and browsing. ` +
-          `Leave empty to show everything. Lists the ${PUBLISHER_OPTIONS_LIMIT} publishers ` +
-          `with the most series in the catalogue.`,
+        header: "Sources",
+        footer: "Which sources search covers. Leave empty to search both.",
         fields: [
           {
             type: "multiselect",
-            key: PreferenceID.PublisherAllowlist,
-            title: "Publisher Allowlist",
-            options: () => this.publisherOptions(),
+            key: PreferenceID.Sources,
+            title: "Search Sources",
+            options: SOURCE_OPTIONS,
           },
         ],
       },
@@ -173,7 +143,12 @@ class KakarotComicsSource
   }
 
   async getSearchForm(): Promise<SearchForm> {
-    return buildSearchForm({ fields: SEARCH_FIELDS, header: "Filters" });
+    return buildSearchForm({
+      fields: [SOURCE_FIELD],
+      header: "Filters",
+      tags: GENRE_FIELD,
+      tagsHeader: "Genre",
+    });
   }
 
   async getSortOptions(): Promise<SortOption[]> {
@@ -184,316 +159,118 @@ class KakarotComicsSource
     return buildPreferenceMenu(this.preferences, this.preferenceSections());
   }
 
-  override async resolvePageSection(
-    _link: PageLink,
-    sectionID: string,
-  ): Promise<ResolvedPageSection> {
-    const { results } = await this.listing(sectionID, 1);
-    return { items: results };
-  }
-
   async search(request: SearchRequest): Promise<PagedSearchResult> {
-    if (request.listId) return this.listing(request.listId, pageOf(request));
+    const list = this.listResults(request);
+    if (list) return list;
 
-    const page = pageOf(request);
     const filters = new FilterReader(request);
-
-    const params: QueryParams = {
-      sort: resolveSortId(SORT_OPTIONS, request, SeriesSort.Title),
-      limit: PAGE_SIZE,
-      offset: (page - 1) * PAGE_SIZE,
-      language: SERIES_LANGUAGE,
-      search: request.query?.trim() || undefined,
-      type: filters.text(FilterID.Type) || undefined,
-      character: filters.text(FilterID.Character) || undefined,
-    };
-
-    const year = filters.number(FilterID.Year);
-    if (Number.isFinite(year)) params.year = Math.trunc(year);
-
-    const publisher = filters.text(FilterID.Publisher);
-    if (publisher) {
-      params.publisher = publisher;
-    } else {
-      const allowlist = await this.publisherAllowlist();
-      if (allowlist.length > 0) params.publisher = allowlist.join(",");
-    }
-
-    const result = await this.getJson<ApiPage<ApiSeries>>("/api/series", params);
-    return toPagedResult(result, result.data.map(seriesHighlight));
+    const base = await this.apiBase();
+    const result = await this.getJson<ApiPage<ApiSeries>>("/api/search", {
+      q: request.query?.trim() || undefined,
+      source: filters.text(FilterID.Source) || (await this.defaultSource()),
+      genre: filters.text(FilterID.Genre) || undefined,
+      sort: resolveSortId(SORT_OPTIONS, request, SortID.Latest),
+      page: pageOf(request),
+    });
+    return toPagedResult(result, base);
   }
 
   async getContent(contentId: string): Promise<Content> {
-    if (contentId.startsWith(CHARACTER_PREFIX)) {
-      throw new Error(
-        `"${contentId.slice(CHARACTER_PREFIX.length)}" is a character, not a series. ` +
-          `Open it from the home page to see the series they appear in.`,
-      );
-    }
-
+    const base = await this.apiBase();
     const { data } = await this.getJson<{ data: ApiSeriesDetail }>(
       `/api/series/${encodeURIComponent(contentId)}`,
     );
-    return parseContent(data);
+    return parseContent(data, base);
   }
 
   async getChapters(contentId: string): Promise<Chapter[]> {
-    const issues: ApiIssue[] = [];
-
-    for (let request = 0; request < MAX_CHAPTER_REQUESTS; request++) {
-      const result = await this.getJson<ApiPage<ApiIssue>>(
-        `/api/series/${encodeURIComponent(contentId)}/issues`,
-        {
-          order: "asc",
-          limit: CHAPTER_FETCH_LIMIT,
-          offset: request * CHAPTER_FETCH_LIMIT,
-        },
-      );
-
-      issues.push(...result.data);
-      if (!result.pagination.has_more) break;
-    }
-
-    return parseChapters(issues);
+    const { data } = await this.getJson<{ data: ApiIssue[] }>(
+      `/api/series/${encodeURIComponent(contentId)}/issues`,
+    );
+    return data.map((issue, index) => ({
+      chapterId: issue.id,
+      number: issue.number,
+      index,
+      date: issue.date ? new Date(`${issue.date}T00:00:00Z`) : new Date(0),
+      language: DefinedLanguages.ENGLISH,
+      title: issue.title,
+      webUrl: issue.web_url,
+    }));
   }
 
   async getChapterData(_contentId: string, chapterId: string): Promise<ChapterData> {
     const base = await this.apiBase();
-    const { data } = await this.getJson<ApiPageManifest>(
+    const { data } = await this.getJson<ApiPages>(
       `/api/issues/${encodeURIComponent(chapterId)}/pages`,
-      { mode: "proxy" },
     );
-
-    if (data.source === "none" || data.pages.length === 0) {
-      throw new Error(
-        `No pages available for ${data.series.title} #${data.issue.issue_number}` +
-          (data.reason ? ` — ${data.reason}.` : "."),
-      );
-    }
-
-    return { pages: data.pages.map((entry) => ({ url: pageUrl(entry, base) })) };
+    if (data.pages.length === 0) throw new Error("No pages available for this issue.");
+    return { pages: data.pages.map((page) => ({ url: resolveUrl(page.url, base) })) };
   }
 
-  private async listing(listId: string, page: number): Promise<PagedSearchResult> {
-    if (listId === ListID.Characters) return this.characterList(page);
-    if (listId.startsWith(CHARACTER_PREFIX)) {
-      return this.characterSeries(listId.slice(CHARACTER_PREFIX.length), page);
-    }
-    return this.seriesList(
-      listId === ListID.RecentSeries ? SeriesSort.Recent : SeriesSort.Popular,
-      page,
-    );
+  private async list(listId: string, page: number): Promise<PagedSearchResult> {
+    const [source, name] = listId.split(":");
+    const base = await this.apiBase();
+    const result = await this.getJson<ApiPage<ApiSeries>>(`/api/list/${source}/${name}`, { page });
+    return toPagedResult(result, base);
   }
 
-  private async seriesParams(page: number): Promise<QueryParams> {
-    const allowlist = await this.publisherAllowlist();
-    return {
-      limit: PAGE_SIZE,
-      offset: (page - 1) * PAGE_SIZE,
-      language: SERIES_LANGUAGE,
-      publisher: allowlist.length > 0 ? allowlist.join(",") : undefined,
-    };
-  }
-
-  private async seriesList(sort: string, page: number): Promise<PagedSearchResult> {
-    const result = await this.getJson<ApiPage<ApiSeries>>("/api/series", {
-      sort,
-      ...(await this.seriesParams(page)),
-    });
-    return toPagedResult(result, result.data.map(seriesHighlight));
-  }
-
-  private async characterSeries(slug: string, page: number): Promise<PagedSearchResult> {
-    const result = await this.getJson<ApiPage<ApiSeries>>(
-      `/api/characters/${encodeURIComponent(slug)}/series`,
-      await this.seriesParams(page),
-    );
-    return toPagedResult(result, result.data.map(seriesHighlight));
-  }
-
-  private async characterList(page: number): Promise<PagedSearchResult> {
-    const result = await this.getJson<ApiPage<ApiCharacter>>("/api/characters", {
-      sort: "popular",
-      limit: PAGE_SIZE,
-      offset: (page - 1) * PAGE_SIZE,
-    });
-    return toPagedResult(result, result.data.map(characterHighlight));
-  }
-
-  private async publisherOptions(): Promise<Option[]> {
-    try {
-      const result = await this.getJson<ApiPage<ApiPublisher>>("/api/publishers", {
-        sort: "popular",
-        limit: PUBLISHER_OPTIONS_LIMIT,
-      });
-      return result.data.map((publisher) => ({
-        id: publisher.slug,
-        title: publisher.series_count
-          ? `${publisher.name} (${publisher.series_count})`
-          : publisher.name,
-      }));
-    } catch {
-      return [];
-    }
+  /** `all`, or the one source the preference narrows search to. */
+  private async defaultSource(): Promise<string> {
+    const chosen = await this.preferences.get(PreferenceID.Sources);
+    return chosen.length === 1 ? (chosen[0] ?? "all") : "all";
   }
 }
 
-function normalizeBaseUrl(raw: string): string {
-  return raw.trim().replace(/\/+$/, "");
+
+/** Proxied images come back server-relative; anything absolute is used as is. */
+function resolveUrl(url: string | undefined, base: string): string {
+  const value = url ?? "";
+  if (!value || /^[a-z][a-z0-9+.-]*:/i.test(value)) return value;
+  return `${base}${value.startsWith("/") ? "" : "/"}${value}`;
 }
 
-function pageUrl(entry: ApiManifestPage, base: string): string {
-  if (entry.data) return entry.data;
-
-  const url = entry.url ?? "";
-  if (/^[a-z][a-z0-9+.-]*:/i.test(url)) return url;
-  return `${base.replace(/\/+$/, "")}${url.startsWith("/") ? "" : "/"}${url}`;
-}
-
-function toPagedResult<T>(result: ApiPage<T>, items: Highlight[]): PagedSearchResult {
+function toPagedResult(result: ApiPage<ApiSeries>, base: string): PagedSearchResult {
   return {
-    results: items,
-    isLastPage: !result.pagination.has_more,
-    totalResultCount: result.pagination.total ?? undefined,
+    results: result.data.map((series) => seriesHighlight(series, base)),
+    isLastPage: !result.has_more,
   };
 }
 
-function seriesHighlight(series: ApiSeries): Highlight {
+function seriesHighlight(series: ApiSeries, base: string): Highlight {
   return {
     id: series.slug,
-    title: seriesTitle(series),
-    cover: series.cover_url ?? "",
-    subtitle: joinParts([
-      series.publisher,
-      formatYears(series),
-      series.issue_count ? `${series.issue_count} issues` : "",
-    ]),
+    title: series.title,
+    cover: resolveUrl(series.cover_url, base),
+    subtitle: series.subtitle,
     contentRating: ContentRating.SAFE,
   };
 }
 
-function characterHighlight(character: ApiCharacter): Highlight {
-  return {
-    id: `${CHARACTER_PREFIX}${character.slug}`,
-    title: character.name,
-    cover: character.image_url ?? "",
-    subtitle: joinParts([
-      character.real_name,
-      character.publisher,
-      character.appearance_count ? `${character.appearance_count} appearances` : "",
-    ]),
-    contentRating: ContentRating.SAFE,
-    link: { request: { page: 1, listId: `${CHARACTER_PREFIX}${character.slug}` } },
-  };
-}
-
-function parseContent(data: ApiSeriesDetail): Content {
-  const tags: Tag[] = [];
-  if (data.publisher) {
-    tags.push({
-      id: `publisher:${data.publisher_slug ?? data.publisher}`,
-      title: data.publisher,
-      isNonInteractive: true,
-    });
-  }
-  if (data.series_type) {
-    tags.push({
-      id: `type:${data.series_type}`,
-      title: data.series_type,
-      isNonInteractive: true,
-    });
-  }
-
-  const people = data.characters ?? [];
-
-  return {
-    title: seriesTitle(data),
-    cover: data.cover_url ?? "",
-    summary: buildSummary(data),
-    tags,
-    contentType: ContentType.COMIC,
-    contentRating: ContentRating.SAFE,
-    status: data.end_year === null ? PublicationStatus.ONGOING : PublicationStatus.COMPLETED,
-    additionalInfo: people.length
-      ? [
-          additionalInfo.characters.section({
-            id: "characters",
-            title: "Characters",
-            hasMore: false,
-            items: people.slice(0, 10).map((character) =>
-              additionalInfo.characters.item({
-                id: character.slug,
-                title: character.name,
-                subtitle: character.role,
-              }),
-            ),
-          }),
-        ]
-      : undefined,
-  };
-}
-
-function parseChapters(issues: ApiIssue[]): Chapter[] {
-  return issues.map((issue, index) => ({
-    chapterId: String(issue.id),
-    number: issueNumber(issue.issue_number, index + 1),
-    index,
-    date: parseDate(issue.release_date ?? "") ?? new Date(0),
-    language: DefinedLanguages.ENGLISH,
-    title: chapterTitle(issue),
-    thumbnail: issue.cover_url ?? undefined,
-    provider: chapterProvider(issue),
-  }));
-}
-
-function issueNumber(raw: string, fallback: number): number {
-  const parsed = Number.parseFloat(raw.trim());
-  return /^\d+(\.\d+)?$/.test(raw.trim()) && Number.isFinite(parsed) ? parsed : fallback;
-}
-
-function joinParts(values: readonly (string | null | undefined)[]): string | undefined {
-  const parts = values.map((value) => (value ?? "").trim()).filter(Boolean);
-  return parts.length > 0 ? parts.join(" · ") : undefined;
-}
-
-function seriesTitle(series: ApiSeries): string {
-  return series.volume > 1 ? `${series.title} (Vol. ${series.volume})` : series.title;
-}
-
-function formatYears(series: ApiSeries): string {
-  if (!series.start_year) return "";
-  if (series.end_year === null) return `${series.start_year}–`;
-  if (series.end_year === series.start_year) return String(series.start_year);
-  return `${series.start_year}–${series.end_year}`;
-}
-
-function buildSummary(series: ApiSeriesDetail): string {
-  const facts = [
-    series.publisher ? `Publisher: ${series.publisher}` : "",
-    formatYears(series) ? `Published: ${formatYears(series)}` : "",
-    series.issue_count ? `Issues: ${series.issue_count}` : "",
-  ].filter(Boolean);
-
-  const description = (series.description ?? "").replace(/\s+/g, " ").trim();
-  return [description, facts.join("\n")].filter(Boolean).join("\n\n");
-}
-
-function chapterTitle(issue: ApiIssue): string {
-  const label = `#${issue.issue_number}`;
-  return issue.title ? `${label} — ${issue.title}` : label;
-}
-
-const PROVIDER_DISPLAY_NAMES: Record<string, string> = {
-  getcomics: "GetComics",
-  comicscodes: "ComicsCodes",
+const STATUS: Record<string, PublicationStatus> = {
+  ongoing: PublicationStatus.ONGOING,
+  completed: PublicationStatus.COMPLETED,
+  hiatus: PublicationStatus.HIATUS,
+  cancelled: PublicationStatus.CANCELLED,
 };
 
-function chapterProvider(issue: ApiIssue): Provider | undefined {
-  if (!issue.provider) return undefined;
-  const name =
-    PROVIDER_DISPLAY_NAMES[issue.provider] ??
-    issue.provider.charAt(0).toUpperCase() + issue.provider.slice(1);
-  return { id: issue.provider, name };
+function parseContent(data: ApiSeriesDetail, base: string): Content {
+  const tags: Tag[] = data.tags.map((tag) => ({ id: tag.id, title: tag.title }));
+  const facts = [
+    data.writer ? `Writer: ${data.writer}` : "",
+    data.publisher ? `Publisher: ${data.publisher}` : "",
+    `Source: ${data.source}`,
+  ].filter(Boolean);
+
+  return {
+    title: data.title,
+    cover: resolveUrl(data.cover_url, base),
+    summary: [data.description.trim(), facts.join("\n")].filter(Boolean).join("\n\n"),
+    tags,
+    contentType: ContentType.COMIC,
+    contentRating: data.mature ? ContentRating.MATURE : ContentRating.SAFE,
+    status: data.status ? STATUS[data.status] : undefined,
+    webUrl: data.web_url,
+  };
 }
 
 export class Target extends KakarotComicsSource {}

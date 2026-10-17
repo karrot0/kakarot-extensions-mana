@@ -51,7 +51,8 @@ function parseArgs(argv) {
 
 function loadTarget(bundlePath) {
   const code = fs.readFileSync(bundlePath, "utf-8");
-  const store = new ManaStore();
+  // MANA_STORE='{"ns.key":"value"}' seeds preferences, e.g. a local proxy URL.
+  const store = new ManaStore(JSON.parse(process.env.MANA_STORE ?? "{}"));
 
   const sandbox = {
     NetworkClient,
