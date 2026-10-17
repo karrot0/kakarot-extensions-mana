@@ -21,13 +21,13 @@
       "path": "Batcave",
       "environment": "source",
       "intents": 2100236,
-      "hash": "3cbc30bb3cbc30bb3cbc30bb3cbc30bb3cbc30bb3cbc30bb3cbc30bb3cbc30bb"
+      "hash": "69ee256469ee256469ee256469ee256469ee256469ee256469ee256469ee2564"
     },
     {
       "id": "kakarotcomics",
       "name": "KakarotComics",
-      "version": "1.2.1",
-      "description": "Kakarot Comics",
+      "version": "2.0.2",
+      "description": "Batcave and OceComic through one lightweight proxy",
       "website": "https://comics.karrot.dev",
       "rating": 1,
       "supportedLanguages": [
@@ -42,7 +42,7 @@
       "path": "KakarotComics",
       "environment": "source",
       "intents": 10492937,
-      "hash": "73b95cc073b95cc073b95cc073b95cc073b95cc073b95cc073b95cc073b95cc0"
+      "hash": "2717765327177653271776532717765327177653271776532717765327177653"
     },
     {
       "id": "ocecomic",
@@ -63,7 +63,7 @@
       "path": "OceComic",
       "environment": "source",
       "intents": 2104328,
-      "hash": "2167b0a02167b0a02167b0a02167b0a02167b0a02167b0a02167b0a02167b0a0"
+      "hash": "7abd5ad87abd5ad87abd5ad87abd5ad87abd5ad87abd5ad87abd5ad87abd5ad8"
     },
     {
       "id": "toonkotsu",
@@ -84,7 +84,7 @@
       "path": "Toonkotsu",
       "environment": "source",
       "intents": 2104333,
-      "hash": "0645149006451490064514900645149006451490064514900645149006451490"
+      "hash": "5f9abec85f9abec85f9abec85f9abec85f9abec85f9abec85f9abec85f9abec8"
     },
     {
       "id": "zipcomic",
@@ -105,7 +105,7 @@
       "path": "ZipComic",
       "environment": "source",
       "intents": 2098184,
-      "hash": "63d120a863d120a863d120a863d120a863d120a863d120a863d120a863d120a8"
+      "hash": "42d9359c42d9359c42d9359c42d9359c42d9359c42d9359c42d9359c42d9359c"
     }
   ]
 }
