@@ -53,7 +53,7 @@ import {
 const info: SourceInfo = {
   id: "ocecomic",
   name: "OceComic",
-  version: "1.2.1",
+  version: "1.3.0",
   description: "Pulls comics from ocecomic.com",
   website: BASE_URL,
   rating: CatalogRating.MIXED,
@@ -72,7 +72,7 @@ class OceComicSource extends BaseSource implements ChapterSource, SearchProvider
   readonly config = config;
 
   protected clientOptions(): ClientOptions {
-    return { baseUrl: BASE_URL, requests: 5, interval: 1 };
+    return { baseUrl: BASE_URL, requests: 5, intervalMs: 1_000 };
   }
 
   protected sections(): SectionSpec[] {

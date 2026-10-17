@@ -56,7 +56,7 @@ import {
 const info: SourceInfo = {
   id: "kakarotcomics",
   name: "KakarotComics",
-  version: "2.0.2",
+  version: "2.1.0",
   description: "Batcave and OceComic through one lightweight proxy",
   website: DEFAULT_BASE_URL,
   rating: CatalogRating.MIXED,
@@ -72,19 +72,16 @@ const config: SourceConfig = {
 
 class KakarotComicsSource
   extends BaseSource
-  implements ChapterSource, SearchProvider, SourcePreferenceProvider
-{
+  implements ChapterSource, SearchProvider, SourcePreferenceProvider {
   readonly info = info;
   readonly config = config;
 
   private readonly preferences = new PreferenceStore(PREFERENCE_NAMESPACE, PREFERENCE_DEFAULTS);
 
   protected clientOptions(): ClientOptions {
-    return { baseUrl: DEFAULT_BASE_URL, requests: 20, interval: 1, json: true };
+    return { baseUrl: DEFAULT_BASE_URL, requests: 20, intervalMs: 1_000, json: true };
   }
 
-  // The settings screen doesn't apply in the app, so the proxy address is
-  // fixed to the hosted instance rather than a preference.
   protected override async apiBase(): Promise<string> {
     return DEFAULT_BASE_URL;
   }
@@ -214,14 +211,12 @@ class KakarotComicsSource
     return toPagedResult(result, base);
   }
 
-  /** `all`, or the one source the preference narrows search to. */
   private async defaultSource(): Promise<string> {
     const chosen = await this.preferences.get(PreferenceID.Sources);
     return chosen.length === 1 ? (chosen[0] ?? "all") : "all";
   }
 }
 
-/** Proxied images come back server-relative; anything absolute is used as is. */
 function resolveUrl(url: string | undefined, base: string): string {
   const value = url ?? "";
   if (!value || /^[a-z][a-z0-9+.-]*:/i.test(value)) return value;
@@ -272,4 +267,4 @@ function parseContent(data: ApiSeriesDetail, base: string): Content {
   };
 }
 
-export class Target extends KakarotComicsSource {}
+export class Target extends KakarotComicsSource { }

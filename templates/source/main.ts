@@ -87,7 +87,7 @@ class TemplateSource
   private readonly preferences = new PreferenceStore(info.id, PREFERENCE_DEFAULTS);
 
   protected clientOptions(): ClientOptions {
-    return { baseUrl: BASE_URL, requests: 5, interval: 1 };
+    return { baseUrl: BASE_URL, requests: 5, intervalMs: 1_000 };
   }
 
   protected sections(): SectionSpec[] {

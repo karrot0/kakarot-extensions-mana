@@ -1,8 +1,16 @@
-import { NetworkClientBuilder, type NetworkRequest, type NetworkResponse } from "@mana-app/types";
+import {
+  CloudflareError,
+  HttpClient,
+  RequestOrigin,
+  type HttpRequest,
+  type HttpResponse,
+  type RequestContext,
+} from "@mana-app/types";
 
 export const HTML_ACCEPT =
   "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8";
 export const JSON_ACCEPT = "application/json, text/javascript, */*; q=0.01";
+export const IMAGE_ACCEPT = "image/avif,image/webp,image/apng,image/*,*/*;q=0.8";
 export const ACCEPT_LANGUAGE = "en-US,en;q=0.9";
 
 const CHALLENGE_PATTERNS: readonly RegExp[] = [
@@ -23,14 +31,15 @@ export function isChallengePage(html: string): boolean {
 export type ClientOptions = {
   baseUrl: string;
   requests?: number;
-  interval?: number;
+  intervalMs?: number;
   accept?: string;
   headers?: Record<string, string>;
+  imageHeaders?: Record<string, string>;
   resolutionUrl?: string;
   originFor?: (url: string) => string;
   json?: boolean;
-  maxRetries?: number;
-  timeout?: number;
+  retry?: number;
+  timeoutMs?: number;
 };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -53,56 +62,62 @@ function errorMessage(body: string, fallback: string): string {
   return fallback;
 }
 
-export function buildClient(options: ClientOptions): NetworkClient {
+function setMissing(request: HttpRequest, headers: Record<string, string>): void {
+  for (const [name, value] of Object.entries(headers)) {
+    if (!request.headers.has(name)) request.headers.set(name, value);
+  }
+}
+
+export function buildClient(options: ClientOptions): HttpClient {
   const {
     baseUrl,
     requests = 5,
-    interval = 1,
+    intervalMs = 1_000,
     accept = options.json ? JSON_ACCEPT : HTML_ACCEPT,
     headers = {},
+    imageHeaders = { accept: IMAGE_ACCEPT },
     resolutionUrl = baseUrl,
     originFor,
     json = false,
-    maxRetries,
-    timeout,
+    retry,
+    timeoutMs,
   } = options;
 
-  const interceptRequest = async (request: NetworkRequest): Promise<NetworkRequest> => {
+  const interceptRequest = (request: HttpRequest, context: RequestContext): HttpRequest => {
     const origin = originFor?.(request.url) ?? baseUrl;
-    return {
-      ...request,
-      headers: {
-        origin,
-        referer: `${origin}/`,
-        accept,
-        "accept-language": ACCEPT_LANGUAGE,
-        ...headers,
-        ...request.headers,
-      },
-    };
+    setMissing(request, { origin, referer: `${origin}/`, "accept-language": ACCEPT_LANGUAGE });
+    if (context.origin === RequestOrigin.General) setMissing(request, { accept, ...headers });
+    else setMissing(request, imageHeaders);
+    return request;
   };
 
-  const interceptResponse = async (response: NetworkResponse): Promise<NetworkResponse> => {
-    if (response.status === 403 || response.status === 503 || isChallengePage(response.data)) {
+  const interceptResponse = async (
+    response: HttpResponse,
+    context: RequestContext,
+  ): Promise<HttpResponse> => {
+    if (context.origin !== RequestOrigin.General) return response;
+    if (response.status === 403 || response.status === 503) {
       throw new CloudflareError(resolutionUrl);
     }
+    const body = await response.text();
+    if (isChallengePage(body)) throw new CloudflareError(resolutionUrl);
     if (json && response.status >= 400) {
       throw new Error(
-        `${errorMessage(response.data, "The server rejected the request")} (HTTP ${response.status})`,
+        `${errorMessage(body, "The server rejected the request")} (HTTP ${response.status})`,
       );
     }
     return response;
   };
 
-  const builder = new NetworkClientBuilder()
-    .setRateLimit(requests, interval)
+  const client = new HttpClient()
     .addRequestInterceptor(interceptRequest)
     .addResponseInterceptor(interceptResponse);
 
-  if (maxRetries !== undefined) builder.setMaxRetries(maxRetries);
-  if (timeout !== undefined) builder.setTimeout(timeout);
+  if (requests > 0) client.setRateLimit(requests, intervalMs);
+  if (retry !== undefined) client.setRetry(retry);
+  if (timeoutMs !== undefined) client.setTimeoutMs(timeoutMs);
 
-  return builder.build();
+  return client;
 }
 
 const ENCODING_FAILURE = /could not be serialized|unicode \(utf-8\)|invalid.{0,20}utf-?8/i;
@@ -130,9 +145,10 @@ async function readThroughWebView(url: string): Promise<string> {
   }
 }
 
-export async function getText(client: NetworkClient, url: string): Promise<string> {
+export async function getText(client: HttpClient, url: string): Promise<string> {
   try {
-    return (await client.get(url)).data;
+    const response = await client.get(url);
+    return await response.requireOk().text();
   } catch (error) {
     if (!isEncodingFailure(error)) throw error;
 

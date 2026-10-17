@@ -1,3 +1,4 @@
+import type { HttpClient } from "@mana-app/types";
 import { load, type Cheerio, type CheerioAPI } from "cheerio";
 import type { AnyNode } from "domhandler";
 
@@ -10,7 +11,7 @@ export * from "./text.ts";
 const LAZY_ATTRS = ["data-src", "data-original", "data-lazy-src", "srcset", "src"];
 
 export async function fetchHtml(
-  client: NetworkClient,
+  client: HttpClient,
   url: string,
   params?: QueryParams,
 ): Promise<CheerioAPI> {
@@ -21,7 +22,6 @@ export function text(node: Cheerio<AnyNode>): string {
   return normalize(node.text());
 }
 
-/** Text of the node itself, excluding any child elements. */
 export function ownText(node: Cheerio<AnyNode>): string {
   return normalize(
     node

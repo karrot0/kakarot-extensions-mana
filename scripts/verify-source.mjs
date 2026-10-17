@@ -17,14 +17,7 @@ import fs from "node:fs";
 import path from "node:path";
 import vm from "node:vm";
 import { fileURLToPath } from "node:url";
-import {
-  CloudflareError,
-  ManaStore,
-  NetworkClient,
-  NetworkError,
-  WebViewPage,
-  decodeIntents,
-} from "./harness/runtime.mjs";
+import { ManaStore, WebViewPage, createHttpBridge, decodeIntents } from "./harness/runtime.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const DIST_SOURCES = path.join(ROOT, "dist", "sources");
@@ -55,9 +48,7 @@ function loadTarget(bundlePath) {
   const store = new ManaStore(JSON.parse(process.env.MANA_STORE ?? "{}"));
 
   const sandbox = {
-    NetworkClient,
-    NetworkError,
-    CloudflareError,
+    __manaHTTPBridge: createHttpBridge(),
     ObjectStore: store,
     SecureStore: new ManaStore(),
     WebViewPage,
