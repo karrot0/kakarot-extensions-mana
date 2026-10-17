@@ -221,7 +221,6 @@ class KakarotComicsSource
   }
 }
 
-
 /** Proxied images come back server-relative; anything absolute is used as is. */
 function resolveUrl(url: string | undefined, base: string): string {
   const value = url ?? "";
