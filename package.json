@@ -24,7 +24,7 @@
   },
   "devDependencies": {
     "@mana-app/dev": "0.2.0",
-    "@mana-app/types": "0.1.0",
+    "@mana-app/types": "0.1.1",
     "oxfmt": "^0.50.0",
     "oxlint": "^1.65.0",
     "typescript": "^7.0.2"

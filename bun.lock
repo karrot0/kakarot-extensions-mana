@@ -12,7 +12,7 @@
       },
       "devDependencies": {
         "@mana-app/dev": "0.2.0",
-        "@mana-app/types": "0.1.0",
+        "@mana-app/types": "0.1.1",
         "oxfmt": "^0.50.0",
         "oxlint": "^1.65.0",
         "typescript": "^7.0.2",
@@ -32,7 +32,7 @@
 
     "@mana-app/dev-win32-x64": ["@mana-app/dev-win32-x64@0.2.0", "", { "os": "win32", "cpu": "x64" }, "sha512-Sy6etltOE8XqHPy8hojVT/8qiKIM3kS5r26FRQDo3JfaprszKSQNgsIE2xS87WYOrXd+9yQx9rRE0QiP9QQ14Q=="],
 
-    "@mana-app/types": ["@mana-app/types@0.1.0", "", { "bin": { "mana-sync-http": "scripts/sync-http-runtime.cjs" } }, "sha512-+BQOKHgJLdHXPr4xPMmb6rPUyJ02qljwAYpZDXuEbYXR+5zxkBap1H8SgFlbhAUaYjpVPhPJSFWJ9aHpBi+2dQ=="],
+    "@mana-app/types": ["@mana-app/types@0.1.1", "", { "bin": { "mana-sync-http": "scripts/sync-http-runtime.cjs" } }, "sha512-0fOC9X40chUSTQMDDtPCfR9wxHOEywWXnGxySX2Mec/nPbBqqblwbdSPk/LrDICuDVdVvCs3grY5tw8W6rl7YA=="],
 
     "@noble/ciphers": ["@noble/ciphers@2.4.0", "", {}, "sha512-AnjFn0Jv92laAkvMrghlFZq4qQCIN/4DxFV/eooqtC2YTjB7kBeLMS2T9KJX4Dn+ZVXLOwK0lSgqDtx9gvxtiw=="],
 
