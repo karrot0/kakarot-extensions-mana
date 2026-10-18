@@ -1,0 +1,90 @@
+{
+  "repositoryName": "Kakarot Extensions",
+  "thumbnail": "https://raw.githubusercontent.com/karrot0/kakarot-extensions-mana/refs/heads/gh-pages/main/assets/KakarotComics.jpg",
+  "sources": [
+    {
+      "id": "batcave",
+      "name": "Batcave",
+      "version": "1.8.0",
+      "description": "Pulls comics from batcave.biz",
+      "website": "https://batcave.biz",
+      "rating": 0,
+      "supportedLanguages": [
+        "en_US"
+      ],
+      "thumbnail": "Batcave.png",
+      "developers": [
+        {
+          "name": "Karrot"
+        }
+      ],
+      "path": "Batcave",
+      "environment": "source",
+      "intents": 102763528,
+      "hash": "4e5745734e5745734e5745734e5745734e5745734e5745734e5745734e574573"
+    },
+    {
+      "id": "kakarotcomics",
+      "name": "KakarotComics",
+      "version": "2.1.0",
+      "description": "Batcave and OceComic through one lightweight proxy",
+      "website": "https://comics.karrot.dev",
+      "rating": 1,
+      "supportedLanguages": [
+        "en_US"
+      ],
+      "thumbnail": "KakarotComics.jpg",
+      "developers": [
+        {
+          "name": "Karrot"
+        }
+      ],
+      "path": "KakarotComics",
+      "environment": "source",
+      "intents": 10492937,
+      "hash": "302de928302de928302de928302de928302de928302de928302de928302de928"
+    },
+    {
+      "id": "ocecomic",
+      "name": "OceComic",
+      "version": "1.3.0",
+      "description": "Pulls comics from ocecomic.com",
+      "website": "https://ocecomic.com",
+      "rating": 1,
+      "supportedLanguages": [
+        "en_US"
+      ],
+      "thumbnail": "OceComic.png",
+      "developers": [
+        {
+          "name": "Karrot"
+        }
+      ],
+      "path": "OceComic",
+      "environment": "source",
+      "intents": 2104328,
+      "hash": "6701fa2d6701fa2d6701fa2d6701fa2d6701fa2d6701fa2d6701fa2d6701fa2d"
+    },
+    {
+      "id": "zipcomic",
+      "name": "ZipComic",
+      "version": "1.2.0",
+      "description": "Pulls comics from zipcomic.com",
+      "website": "https://www.zipcomic.com",
+      "rating": 1,
+      "supportedLanguages": [
+        "en_US"
+      ],
+      "thumbnail": "ZipComic.png",
+      "developers": [
+        {
+          "name": "Karrot"
+        }
+      ],
+      "path": "ZipComic",
+      "environment": "source",
+      "intents": 2098184,
+      "hash": "692f89dc692f89dc692f89dc692f89dc692f89dc692f89dc692f89dc692f89dc"
+    }
+  ]
+}
