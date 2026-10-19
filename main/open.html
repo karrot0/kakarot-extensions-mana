@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Add Kakarot Extensions to Mana</title>
+  <meta name="description" content="4 extensions: Batcave, KakarotComics, OceComic, ZipComic. Tap to open Mana and add the repository." />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Kakarot Extensions" />
+  <meta property="og:title" content="Add Kakarot Extensions to Mana" />
+  <meta property="og:description" content="4 extensions: Batcave, KakarotComics, OceComic, ZipComic. Tap to open Mana and add the repository." />
+  <meta property="og:url" content="https://karrot0.github.io/kakarot-extensions-mana/main/open.html" />
+  <meta property="og:image" content="https://karrot0.github.io/kakarot-extensions-mana/main/assets/KakarotComics.jpg" />
+  <meta name="twitter:card" content="summary" />
+  <!-- Discord uses this as the embed's accent color. -->
+  <meta name="theme-color" content="#dc2626" />
+  <link rel="icon" href="assets/KakarotComics.jpg" />
+  <!-- Without scripts, open the repository; the script at the end of the page handles ?source=. -->
+  <noscript><meta http-equiv="refresh" content="0;url=mana://add-repo?url=https%3A%2F%2Fkarrot0.github.io%2Fkakarot-extensions-mana%2Fmain&amp;name=Kakarot%20Extensions" /></noscript>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; display: grid; place-items: center; padding: 16px;
+           font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+           color: #f4f4f5; background: linear-gradient(135deg, #0a0a0a 0%, #160707 100%); }
+    .card { width: 100%; max-width: 380px; padding: 28px 24px; text-align: center;
+            border: 1px solid #261414; border-radius: 16px; background: rgba(22, 7, 7, .7); }
+    .icon { width: 64px; height: 64px; border-radius: 14px; object-fit: cover;
+            box-shadow: 0 0 0 1px rgba(220, 38, 38, .7); }
+    h1 { margin: 16px 0 6px; font-size: 18px; font-weight: 600; }
+    p { margin: 0; font-size: 13px; line-height: 1.5; color: #a1a1aa; }
+    .btn { display: block; margin: 20px 0 16px; padding: 11px 16px; border-radius: 10px;
+           background: #dc2626; color: #fff; font-size: 14px; font-weight: 600; text-decoration: none; }
+    .btn:hover { background: #ef4444; }
+    code { display: block; margin-top: 8px; padding: 8px 10px; border-radius: 8px; overflow-wrap: anywhere;
+           font: 12px ui-monospace, Consolas, monospace; color: #d4d4d8; background: #0a0a0a; border: 1px solid #261414; }
+    .back { display: inline-block; margin-top: 18px; font-size: 12px; color: #71717a; }
+    .back:hover { color: #f87171; }
+    .spinner { width: 22px; height: 22px; margin: 18px auto 0; border-radius: 50%;
+               border: 2px solid #3a2222; border-top-color: #dc2626; animation: spin .8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    /* The manual way in only shows once the redirect has had time to hand off to Mana. */
+    #fallback { display: none; }
+    .failed #fallback { display: block; }
+    .failed .spinner { display: none; }
+  </style>
+</head>
+<body>
+  <main class="card">
+    <img class="icon" src="assets/KakarotComics.jpg" alt="" />
+    <h1 id="title">Add Kakarot Extensions to Mana</h1>
+    <p id="status">Opening Mana…</p>
+    <div class="spinner" aria-hidden="true"></div>
+    <div id="fallback">
+      <a id="open" class="btn" href="mana://add-repo?url=https%3A%2F%2Fkarrot0.github.io%2Fkakarot-extensions-mana%2Fmain&amp;name=Kakarot%20Extensions">Open in Mana</a>
+      <p>Still nothing? Update Mana to the latest version, or add this repository URL by hand:</p>
+      <code>https://karrot0.github.io/kakarot-extensions-mana/main</code>
+      <a class="back" href="./">View all extensions</a>
+    </div>
+  </main>
+  <!-- Runs once the page has rendered: navigating to mana:// from <head> stops Chromium parsing the
+       rest, which would leave a blank page with no fallback when Mana isn't installed. -->
+  <script>
+    (function () {
+      var repo = "https://karrot0.github.io/kakarot-extensions-mana/main";
+      var name = "Kakarot Extensions";
+      var sources = {"batcave":"Batcave","kakarotcomics":"KakarotComics","ocecomic":"OceComic","zipcomic":"ZipComic"};
+      var id = new URLSearchParams(location.search).get("source");
+      var source = id && Object.prototype.hasOwnProperty.call(sources, id) ? sources[id] : null;
+      var link = source
+        ? "mana://install-source?repo=" + encodeURIComponent(repo) + "&id=" + encodeURIComponent(id)
+        : "mana://add-repo?url=" + encodeURIComponent(repo) + "&name=" + encodeURIComponent(name);
+
+      if (source) {
+        document.title = "Install " + source + " in Mana";
+        document.getElementById("title").textContent = document.title;
+      }
+      document.getElementById("open").href = link;
+      location.replace(link);
+
+      // Mana coming to the front hides this page; if that never happens, the redirect was blocked.
+      var timer = setTimeout(function () {
+        document.body.classList.add("failed");
+        document.getElementById("status").textContent = "Mana didn't open.";
+      }, 2500);
+      document.addEventListener("visibilitychange", function () {
+        if (document.hidden) clearTimeout(timer);
+      });
+    })();
+  </script>
+</body>
+</html>
