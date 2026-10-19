@@ -34,32 +34,25 @@
   <style>
     body { font-family: "Inter", ui-sans-serif, system-ui, sans-serif; background-color: #0a0a0a; }
 
-    /* Ambient background: three soft red blobs drifting on slow, offset loops over the
-       banner's #0a0a0a -> #160707 base. Motion is on transform only, so it composites on
-       the GPU and never repaints the page. Blurring is done on the blob, not the layer. */
-    .bg { position: fixed; inset: 0; z-index: -1; overflow: hidden; pointer-events: none;
-          background: linear-gradient(135deg, #0a0a0a 0%, #160707 100%); }
-    .bg::after { content: ""; position: absolute; inset: 0;
-          background: radial-gradient(ellipse at center, transparent 55%, rgba(10,10,10,.4) 100%); }
-    .blob { position: absolute; width: 60vmax; height: 60vmax; border-radius: 50%;
-            filter: blur(70px); opacity: .8; will-change: transform; }
-    .blob-1 { top: -30vmax; right: -20vmax;
-              background: radial-gradient(circle, rgba(220,38,38,.75), rgba(220,38,38,0) 70%);
-              animation: drift-1 16s ease-in-out infinite; }
-    .blob-2 { bottom: -35vmax; left: -25vmax;
-              background: radial-gradient(circle, rgba(153,27,27,.7), rgba(153,27,27,0) 70%);
-              animation: drift-2 20s ease-in-out infinite; }
-    .blob-3 { top: 30%; left: 35%; width: 45vmax; height: 45vmax; opacity: .5;
-              background: radial-gradient(circle, rgba(239,68,68,.6), rgba(239,68,68,0) 70%);
-              animation: drift-3 24s ease-in-out infinite; }
-    @keyframes drift-1 { 0%,100% { transform: translate(0,0) scale(1); }
-                          50%     { transform: translate(-18vw, 22vh) scale(1.15); } }
-    @keyframes drift-2 { 0%,100% { transform: translate(0,0) scale(1); }
-                          50%     { transform: translate(22vw, -20vh) scale(1.1); } }
-    @keyframes drift-3 { 0%,100% { transform: translate(0,0) scale(1); }
-                          33%     { transform: translate(-16vw, -14vh) scale(1.2); }
-                          66%     { transform: translate(14vw, 12vh) scale(.9); } }
-    @media (prefers-reduced-motion: reduce) { .blob { animation: none; } }
+    .bg { position: fixed; inset: 0; z-index: 1; overflow: hidden; pointer-events: none; }
+    /* Each cat is about a third of the viewport wide (96 columns at 0.6em each). The script
+       below moves them around the screen, so their position is set with transform. */
+    .ascii { position: absolute; left: 0; top: 0; will-change: transform;
+             margin: 0; font-family: ui-monospace, Consolas, "Courier New", monospace;
+             font-size: calc(34vw / 57.6); line-height: 1; white-space: pre;
+             opacity: .7; user-select: none; }
+    @media (max-width: 900px) { .ascii { display: none; } }
+    .ascii-left { opacity: 1; }
+    /* Eyes: each cell is one character cell with the open glyph and the lid stacked on top.
+       Hovering the cat (.lidded) fades the open glyphs out from the outside rows inward while
+       the fur-colored lid fades in, so the eyes close from top and bottom into a lash line. */
+    .ascii .ec { display: inline-grid; vertical-align: top; }
+    .ascii .ec > span { grid-area: 1 / 1; transition: opacity .12s linear; }
+    .ascii .ec .o { opacity: 1; transition-delay: calc(var(--r) * 45ms); }
+    .ascii .ec .l { opacity: 0; transition-delay: calc(var(--r) * 45ms); }
+    .ascii.lidded .ec .o { opacity: 0; transition-delay: calc(var(--c) * 45ms); }
+    .ascii.lidded .ec .l { opacity: 1; transition-delay: calc(var(--c) * 45ms); }
+    @media (prefers-reduced-motion: reduce) { .ascii .ec > span { transition: none; } }
     ::selection { background: #dc2626; color: #fff; }
     .line-clamp-2 { display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden; }
     .truncate { overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
@@ -67,7 +60,7 @@
   </style>
 </head>
 <body class="bg-ink-950 text-ink-50 min-h-screen antialiased pt-[4.25rem] sm:pt-[4.5rem]">
-  <div class="bg" aria-hidden="true"><div class="blob blob-1"></div><div class="blob blob-2"></div><div class="blob blob-3"></div></div>
+  <div class="bg" aria-hidden="true"><pre class="ascii ascii-right" aria-hidden="true"></pre><pre class="ascii ascii-left" aria-hidden="true"></pre></div>
 
   <!-- floating header -->
   <header class="fixed inset-x-0 top-3 sm:top-4 z-20 px-3 sm:px-6">
@@ -80,7 +73,7 @@
         </span>
       </div>
       <div class="flex items-center gap-2.5">
-        <span class="text-[11px] text-ink-600 hidden md:block">Built 2026-10-19 03:54 UTC</span>
+        <span class="text-[11px] text-ink-600 hidden md:block">Built 2026-10-19 13:44 UTC</span>
         <a href="https://github.com/karrot0/kakarot-extensions-mana" target="_blank" rel="noopener" aria-label="View source on GitHub"
            class="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-lg bg-ink-900 hover:bg-red-950/40 border border-ink-800 hover:border-red-700 text-ink-400 hover:text-white transition-colors">
           <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5C5.37.5 0 5.87 0 12.5c0 5.3 3.44 9.8 8.21 11.39.6.11.82-.26.82-.58l-.01-2.05c-3.34.73-4.04-1.61-4.04-1.61-.55-1.39-1.34-1.76-1.34-1.76-1.09-.75.08-.73.08-.73 1.21.08 1.84 1.24 1.84 1.24 1.07 1.83 2.81 1.3 3.5.99.11-.78.42-1.31.76-1.61-2.67-.3-5.47-1.33-5.47-5.93 0-1.31.47-2.38 1.24-3.22-.13-.3-.54-1.52.11-3.18 0 0 1.01-.32 3.3 1.23a11.5 11.5 0 016.01 0c2.29-1.55 3.3-1.23 3.3-1.23.65 1.66.24 2.88.12 3.18.77.84 1.23 1.91 1.23 3.22 0 4.61-2.8 5.62-5.48 5.92.43.37.81 1.1.81 2.22l-.01 3.29c0 .32.22.7.83.58A12 12 0 0024 12.5C24 5.87 18.63.5 12 .5z"/></svg>
@@ -516,9 +509,122 @@
           GitHub Pages
         </a>
       </div>
-      <span class="text-xs text-ink-600">Built 2026-10-19 03:54 UTC</span>
+      <span class="text-xs text-ink-600">Built 2026-10-19 13:44 UTC</span>
     </div>
   </footer>
 
+  <script>
+    (function () {
+      var SPEED = 80; // px per second
+      var reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      var pointer = null;
+      var state = [].slice.call(document.querySelectorAll(".ascii")).map(function (el) {
+        return { el: el, x: 0, y: 0, vx: 0, vy: 0, w: el.offsetWidth, h: el.offsetHeight };
+      });
+
+      // Each cat starts on its own side, moving on a random diagonal.
+      state.forEach(function (s) {
+        s.x = s.el.classList.contains("ascii-left") ? 16 : innerWidth - s.w - 16;
+        s.y = (innerHeight - s.h) / 2;
+        var angle = Math.PI / 6 + (Math.random() * Math.PI) / 3;
+        s.vx = (Math.random() < 0.5 ? -1 : 1) * SPEED * Math.cos(angle);
+        s.vy = (Math.random() < 0.5 ? -1 : 1) * SPEED * Math.sin(angle);
+      });
+
+      function inside(el, x, y) {
+        var b = el.getBoundingClientRect();
+        return x >= b.left && x <= b.right && y >= b.top && y <= b.bottom;
+      }
+      function hover() {
+        state.forEach(function (s) {
+          s.el.classList.toggle("lidded", !!pointer && inside(s.el, pointer.x, pointer.y));
+        });
+      }
+      function draw() {
+        state.forEach(function (s) {
+          s.el.style.transform = "translate3d(" + s.x + "px," + s.y + "px,0)";
+        });
+      }
+
+      // A cat's collision box is its art's silhouette, a little inside its full box.
+      function box(s) {
+        return { x: s.x + s.w * 0.08, y: s.y + s.h * 0.08, w: s.w * 0.84, h: s.h * 0.84 };
+      }
+      // Touching cats trade their velocity along the axis they hit on, like equal-mass balls.
+      function collide(a, b) {
+        var A = box(a);
+        var B = box(b);
+        var ox = Math.min(A.x + A.w - B.x, B.x + B.w - A.x);
+        var oy = Math.min(A.y + A.h - B.y, B.y + B.h - A.y);
+        if (ox <= 0 || oy <= 0) return;
+        if (ox < oy) {
+          var nx = A.x + A.w / 2 < B.x + B.w / 2 ? -1 : 1;
+          if ((a.vx - b.vx) * nx < 0) {
+            var tx = a.vx;
+            a.vx = b.vx;
+            b.vx = tx;
+          }
+          a.x += (nx * ox) / 2;
+          b.x -= (nx * ox) / 2;
+        } else {
+          var ny = A.y + A.h / 2 < B.y + B.h / 2 ? -1 : 1;
+          if ((a.vy - b.vy) * ny < 0) {
+            var ty = a.vy;
+            a.vy = b.vy;
+            b.vy = ty;
+          }
+          a.y += (ny * oy) / 2;
+          b.y -= (ny * oy) / 2;
+        }
+      }
+
+      var last = 0;
+      function step(now) {
+        var dt = last ? Math.min((now - last) / 1000, 0.05) : 0;
+        last = now;
+        var vw = innerWidth;
+        var vh = innerHeight;
+        state.forEach(function (s) {
+          s.w = s.el.offsetWidth;
+          s.h = s.el.offsetHeight;
+          s.x += s.vx * dt;
+          s.y += s.vy * dt;
+          // Bounce off each edge; a cat that hits two edges at once bounces off a corner.
+          if (s.x < 0) {
+            s.x = 0;
+            s.vx = Math.abs(s.vx);
+          }
+          if (s.x + s.w > vw) {
+            s.x = Math.max(0, vw - s.w);
+            s.vx = -Math.abs(s.vx);
+          }
+          if (s.y < 0) {
+            s.y = 0;
+            s.vy = Math.abs(s.vy);
+          }
+          if (s.y + s.h > vh) {
+            s.y = Math.max(0, vh - s.h);
+            s.vy = -Math.abs(s.vy);
+          }
+        });
+        if (state.length === 2) collide(state[0], state[1]);
+        draw();
+        hover();
+        requestAnimationFrame(step);
+      }
+
+      draw();
+      if (!reduceMotion) requestAnimationFrame(step);
+
+      document.addEventListener("pointermove", function (e) {
+        pointer = { x: e.clientX, y: e.clientY };
+        hover();
+      });
+      document.documentElement.addEventListener("pointerleave", function () {
+        pointer = null;
+        hover();
+      });
+    })();
+  </script>
 </body>
 </html>
