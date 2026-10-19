@@ -5,7 +5,7 @@
     {
       "id": "batcave",
       "name": "Batcave",
-      "version": "1.7.1",
+      "version": "1.8.0",
       "description": "Pulls comics from batcave.biz",
       "website": "https://batcave.biz",
       "rating": 0,
@@ -20,13 +20,13 @@
       ],
       "path": "Batcave",
       "environment": "source",
-      "intents": 2100236,
-      "hash": "3ab87add3ab87add3ab87add3ab87add3ab87add3ab87add3ab87add3ab87add"
+      "intents": 102763528,
+      "hash": "1257bbce1257bbce1257bbce1257bbce1257bbce1257bbce1257bbce1257bbce"
     },
     {
       "id": "kakarotcomics",
       "name": "KakarotComics",
-      "version": "2.0.2",
+      "version": "2.1.0",
       "description": "Batcave and OceComic through one lightweight proxy",
       "website": "https://comics.karrot.dev",
       "rating": 1,
@@ -42,12 +42,12 @@
       "path": "KakarotComics",
       "environment": "source",
       "intents": 10492937,
-      "hash": "081e33fe081e33fe081e33fe081e33fe081e33fe081e33fe081e33fe081e33fe"
+      "hash": "6c2dc4656c2dc4656c2dc4656c2dc4656c2dc4656c2dc4656c2dc4656c2dc465"
     },
     {
       "id": "ocecomic",
       "name": "OceComic",
-      "version": "1.2.1",
+      "version": "1.3.0",
       "description": "Pulls comics from ocecomic.com",
       "website": "https://ocecomic.com",
       "rating": 1,
@@ -63,33 +63,12 @@
       "path": "OceComic",
       "environment": "source",
       "intents": 2104328,
-      "hash": "560cfa9e560cfa9e560cfa9e560cfa9e560cfa9e560cfa9e560cfa9e560cfa9e"
-    },
-    {
-      "id": "toonkotsu",
-      "name": "Toonkotsu",
-      "version": "1.0.0",
-      "description": "Pulls manga, manhwa and manhua from toonkotsu.com",
-      "website": "https://toonkotsu.com",
-      "rating": 1,
-      "supportedLanguages": [
-        "en_US"
-      ],
-      "thumbnail": "Toonkotsu.png",
-      "developers": [
-        {
-          "name": "Karrot"
-        }
-      ],
-      "path": "Toonkotsu",
-      "environment": "source",
-      "intents": 2104333,
-      "hash": "712f96e9712f96e9712f96e9712f96e9712f96e9712f96e9712f96e9712f96e9"
+      "hash": "5cfe7c495cfe7c495cfe7c495cfe7c495cfe7c495cfe7c495cfe7c495cfe7c49"
     },
     {
       "id": "zipcomic",
       "name": "ZipComic",
-      "version": "1.1.1",
+      "version": "1.2.0",
       "description": "Pulls comics from zipcomic.com",
       "website": "https://www.zipcomic.com",
       "rating": 1,
@@ -105,7 +84,7 @@
       "path": "ZipComic",
       "environment": "source",
       "intents": 2098184,
-      "hash": "13a38ad113a38ad113a38ad113a38ad113a38ad113a38ad113a38ad113a38ad1"
+      "hash": "5ad0ec655ad0ec655ad0ec655ad0ec655ad0ec655ad0ec655ad0ec655ad0ec65"
     }
   ]
 }
