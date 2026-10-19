@@ -661,7 +661,8 @@ const html = `<!DOCTYPE html>
              margin: 0; font-family: ui-monospace, Consolas, "Courier New", monospace;
              font-size: calc(34vw / 57.6); line-height: 1; white-space: pre;
              opacity: .7; user-select: none; }
-    @media (max-width: 900px) { .ascii { display: none; } }
+    /* Phones: the two cats share the screen width instead of a third of it each. */
+    @media (max-width: 899px) { .ascii { font-size: calc(50vw / 57.6); } }
     .ascii-left { opacity: 1; }
     /* Eyes: each cell is one character cell with the open glyph and the lid stacked on top.
        Hovering the cat (.lidded) fades the open glyphs out from the outside rows inward while
@@ -903,6 +904,18 @@ ${changelogSection(changelogExtensions)}
       document.documentElement.addEventListener("pointerleave", function () {
         pointer = null;
         hover();
+      });
+      document.addEventListener("pointerdown", function (e) {
+        if (e.pointerType !== "touch") return;
+        pointer = { x: e.clientX, y: e.clientY };
+        hover();
+      });
+      ["pointerup", "pointercancel"].forEach(function (type) {
+        document.addEventListener(type, function (e) {
+          if (e.pointerType !== "touch") return;
+          pointer = null;
+          hover();
+        });
       });
     })();
   </script>
