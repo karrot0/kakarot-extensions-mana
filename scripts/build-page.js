@@ -3,6 +3,7 @@
 
 const fs = require("fs");
 const path = require("path");
+const zlib = require("zlib");
 
 const cwd = process.cwd();
 const distDir = path.join(cwd, "dist");
@@ -285,6 +286,320 @@ function sourceCard(s) {
 </div>`;
 }
 
+// ── background ─────────────────────────────────────────────────────────────
+
+// The cats are rendered as colored ASCII for the empty gutters beside the content column.
+// Each character takes the average color of the photo under it; its shape comes from brightness.
+/**
+ * One eye cell: how far it sits from the eye's middle row, the eye's half height, and the
+ * lid look (fur color, fur glyph, lash-line color) taken from the fur around the eye.
+ * @typedef {{ dy: number; half: number; fur: string; furCh: string; lash: string }} EyeCell
+ */
+
+// eyeTint says which colors are an eye for that photo: the first cat has a yellow-green and a
+// blue eye, the gray cat has two olive rings. Anything else (fur, nose) is not an eye. peakEyes
+// tests each cell's most eye-like pixel instead of its average, for the thin rings of the gray cat.
+const ASCII_CATS = [
+  {
+    file: "assets/6c226d9a-9c2f-43d9-a89c-fecf0b97fd86.png",
+    side: "right",
+    peakEyes: false,
+    eyeTint: (/** @type {number} */ r, /** @type {number} */ g, /** @type {number} */ b) =>
+      g - b > 25 && r - b > 25 ? "green" : b - r > 15 && b - g > 8 ? "blue" : null,
+  },
+  {
+    file: "assets/gray-cat.png",
+    side: "left",
+    peakEyes: true,
+    eyeTint: (/** @type {number} */ r, /** @type {number} */ g, /** @type {number} */ b) =>
+      g - b > 22 && r - b > 40 ? "green" : null,
+  },
+];
+const ASCII_COLS = 96;
+// No backtick, backslash, $, <, >, & here, so characters go into HTML unescaped.
+const ASCII_RAMP = " .'^,:;Il!i~+_-?][1)(|tfjrxnuvczXYUJCLQ0OZmwqpdbkhao*#MW8%B@";
+
+/**
+ * Decodes an 8-bit RGB or RGBA PNG (no interlacing) into RGBA bytes.
+ * @param {Buffer} buf
+ */
+function decodePng(buf) {
+  let width = 0;
+  let height = 0;
+  let channels = 0;
+  /** @type {Buffer[]} */
+  const idat = [];
+  for (let pos = 8; pos < buf.length; ) {
+    const len = buf.readUInt32BE(pos);
+    const type = buf.toString("ascii", pos + 4, pos + 8);
+    const data = buf.subarray(pos + 8, pos + 8 + len);
+    if (type === "IHDR") {
+      width = data.readUInt32BE(0);
+      height = data.readUInt32BE(4);
+      if (data[8] !== 8 || data[12] !== 0) throw new Error("only non-interlaced 8-bit PNGs are supported");
+      channels = data[9] === 6 ? 4 : data[9] === 2 ? 3 : 0;
+      if (!channels) throw new Error("only RGB and RGBA PNGs are supported");
+    } else if (type === "IDAT") {
+      idat.push(data);
+    }
+    pos += 12 + len;
+  }
+
+  const raw = zlib.inflateSync(Buffer.concat(idat));
+  const stride = width * channels;
+  const out = Buffer.alloc(width * height * 4);
+  let prev = Buffer.alloc(stride);
+  for (let y = 0; y < height; y++) {
+    const filter = raw[y * (stride + 1)];
+    const cur = Buffer.from(raw.subarray(y * (stride + 1) + 1, (y + 1) * (stride + 1)));
+    for (let i = 0; i < stride; i++) {
+      const a = i >= channels ? cur[i - channels] : 0;
+      const b = prev[i];
+      const c = i >= channels ? prev[i - channels] : 0;
+      let pred = 0;
+      if (filter === 1) pred = a;
+      else if (filter === 2) pred = b;
+      else if (filter === 3) pred = (a + b) >> 1;
+      else if (filter === 4) {
+        const p = a + b - c;
+        const pa = Math.abs(p - a);
+        const pb = Math.abs(p - b);
+        const pc = Math.abs(p - c);
+        pred = pa <= pb && pa <= pc ? a : pb <= pc ? b : c;
+      }
+      cur[i] = (cur[i] + pred) & 0xff;
+    }
+    for (let x = 0; x < width; x++) {
+      const o = (y * width + x) * 4;
+      const s = x * channels;
+      out[o] = cur[s];
+      out[o + 1] = cur[s + 1];
+      out[o + 2] = cur[s + 2];
+      out[o + 3] = channels === 4 ? cur[s + 3] : 255;
+    }
+    prev = cur;
+  }
+  return { width, height, rgba: out };
+}
+
+/**
+ * Groups [row, col] cells that touch each other, where cells within `gap` rows or columns
+ * count as touching. Returns the groups largest first.
+ * @param {[number, number][]} cells @param {number} gap
+ * @returns {[number, number][][]}
+ */
+function touchingGroups(cells, gap) {
+  const seen = new Set();
+  /** @type {[number, number][][]} */
+  const groups = [];
+  for (const start of cells) {
+    if (seen.has(start.join(","))) continue;
+    seen.add(start.join(","));
+    /** @type {[number, number][]} */
+    const group = [start];
+    for (let i = 0; i < group.length; i++) {
+      for (const other of cells) {
+        const key = other.join(",");
+        if (seen.has(key)) continue;
+        if (Math.max(Math.abs(other[0] - group[i][0]), Math.abs(other[1] - group[i][1])) <= gap) {
+          seen.add(key);
+          group.push(other);
+        }
+      }
+    }
+    groups.push(group);
+  }
+  return groups.sort((a, b) => b.length - a.length);
+}
+
+/** Renders the cat as colored ASCII (one <pre>-ready string), or "" if the image can't be read. */
+function buildAsciiArt(cat) {
+  let img;
+  try {
+    img = decodePng(fs.readFileSync(path.join(cwd, cat.file)));
+  } catch (err) {
+    process.stderr.write(`[mana-dev] ASCII art skipped: ${/** @type {Error} */ (err).message}\n`);
+    return "";
+  }
+
+  const { width: W, rgba } = img;
+  // Crop to the cutout so the empty transparent margin doesn't waste columns.
+  let x0 = img.width;
+  let y0 = img.height;
+  let x1 = -1;
+  let y1 = -1;
+  for (let y = 0; y < img.height; y++) {
+    for (let x = 0; x < W; x++) {
+      if (rgba[(y * W + x) * 4 + 3] <= 16) continue;
+      x0 = Math.min(x0, x);
+      x1 = Math.max(x1, x);
+      y0 = Math.min(y0, y);
+      y1 = Math.max(y1, y);
+    }
+  }
+  const cellW = (x1 - x0 + 1) / ASCII_COLS;
+  const cellH = cellW * 2; // terminal cells are about twice as tall as they are wide
+  const rows = Math.floor((y1 - y0 + 1) / cellH);
+
+  /** @type {{ ch: string; hex: string | null; tint: string | null; eye: EyeCell | null; rgb: number[] | null }[][]} */
+  const grid = [];
+  for (let r = 0; r < rows; r++) {
+    /** @type {{ ch: string; hex: string | null; tint: string | null; eye: EyeCell | null; rgb: number[] | null }[]} */
+    const line = [];
+    for (let c = 0; c < ASCII_COLS; c++) {
+      const sx0 = Math.floor(x0 + c * cellW);
+      const sx1 = Math.min(x1 + 1, Math.floor(x0 + (c + 1) * cellW));
+      const sy0 = Math.floor(y0 + r * cellH);
+      const sy1 = Math.min(y1 + 1, Math.floor(y0 + (r + 1) * cellH));
+      let R = 0;
+      let G = 0;
+      let B = 0;
+      let A = 0;
+      let n = 0;
+      // The most eye-like opaque pixel: an iris ring is too thin to survive averaging.
+      let peak = null;
+      let peakScore = -Infinity;
+      for (let y = sy0; y < sy1; y++) {
+        for (let x = sx0; x < sx1; x++) {
+          const i = (y * W + x) * 4;
+          const a = rgba[i + 3];
+          R += rgba[i] * a;
+          G += rgba[i + 1] * a;
+          B += rgba[i + 2] * a;
+          A += a;
+          n++;
+          const score = rgba[i + 1] - rgba[i + 2] + (rgba[i] - rgba[i + 2]);
+          if (a > 128 && score > peakScore) {
+            peakScore = score;
+            peak = [rgba[i], rgba[i + 1], rgba[i + 2]];
+          }
+        }
+      }
+      const coverage = n ? A / (n * 255) : 0;
+      if (coverage < 0.2) {
+        line.push({ ch: " ", hex: null, tint: null, eye: null, rgb: null });
+        continue;
+      }
+      // Alpha-weighted average color of the cat under this cell.
+      const cr = R / A;
+      const cg = G / A;
+      const cb = B / A;
+      const luma = (0.299 * cr + 0.587 * cg + 0.114 * cb) / 255;
+      const t = Math.min(1, Math.max(0, (luma * coverage - 0.08) / 0.92));
+      const ch = ASCII_RAMP[Math.round(t * (ASCII_RAMP.length - 1))];
+      // Quantize to 16 levels per channel so neighbouring cells merge into longer runs.
+      const hex = [cr, cg, cb].map((v) => Math.round(v / 17).toString(16)).join("");
+            const tint = cat.peakEyes
+        ? peak && cat.eyeTint(peak[0], peak[1], peak[2])
+        : cat.eyeTint(cr, cg, cb);
+      line.push({ ch, hex, tint, eye: null, rgb: [cr, cg, cb] });
+    }
+    grid.push(line);
+  }
+
+  // Each eye is a box around its tinted cells, with an odd height so the middle row can
+  // stand in for the closed lid. Every cell in the box can be covered by the lid.
+  for (const tint of ["green", "blue"]) {
+    /** @type {[number, number][]} */
+    const found = [];
+    grid.forEach((line, r) =>
+      line.forEach((cell, c) => {
+        if (cell.tint === tint) found.push([r, c]);
+      }),
+    );
+    for (const cells of touchingGroups(found, 2).filter((group) => group.length >= 3).slice(0, 2)) {
+      const top = Math.min(...cells.map(([r]) => r)) - 1;
+      let bottom = Math.max(...cells.map(([r]) => r)) + 1;
+      if ((bottom - top + 1) % 2 === 0) bottom++;
+      const left = Math.min(...cells.map(([, c]) => c)) - 1;
+      const right = Math.max(...cells.map(([, c]) => c)) + 1;
+      const mid = (top + bottom) / 2;
+      const half = (bottom - top) / 2;
+    // The fur ring two cells around the box sets the lid's color and glyph, so it blends in.
+    let fr = 0;
+    let fg = 0;
+    let fb = 0;
+    let fn = 0;
+    for (let r = Math.max(0, top - 2); r <= Math.min(grid.length - 1, bottom + 2); r++) {
+      for (let c = Math.max(0, left - 2); c <= Math.min(grid[r].length - 1, right + 2); c++) {
+        const inside = r >= top && r <= bottom && c >= left && c <= right;
+        const rgb = grid[r][c].rgb;
+        if (inside || !rgb || grid[r][c].tint) continue;
+        fr += rgb[0];
+        fg += rgb[1];
+        fb += rgb[2];
+        fn++;
+      }
+    }
+    const furRgb = fn ? [fr / fn, fg / fn, fb / fn] : [200, 200, 200];
+    const furLuma = (0.299 * furRgb[0] + 0.587 * furRgb[1] + 0.114 * furRgb[2]) / 255;
+    const furT = Math.min(1, Math.max(0, (furLuma - 0.08) / 0.92));
+    const look = {
+      fur: `rgb(${furRgb.map(Math.round).join(",")})`,
+      furCh: ASCII_RAMP[Math.round(furT * (ASCII_RAMP.length - 1))],
+      // the lash line is the fur's own shadow, so it reads as a crease on the lid
+      lash: `rgb(${furRgb.map((v) => Math.round(v * 0.3)).join(",")})`,
+    };
+      for (let r = Math.max(0, top); r <= Math.min(grid.length - 1, bottom); r++) {
+        for (let c = Math.max(0, left); c <= Math.min(grid[r].length - 1, right); c++) {
+          grid[r][c].eye = { dy: Math.abs(r - mid), half, ...look };
+        }
+      }
+    }
+  }
+
+  // Blank rows at the top and bottom are dropped.
+  const isBlank = (/** @type {{ ch: string; eye: unknown }[]} */ line) =>
+    line.every((cell) => cell.ch === " " && !cell.eye);
+  while (grid.length && isBlank(grid[0])) grid.shift();
+  while (grid.length && isBlank(grid[grid.length - 1])) grid.pop();
+
+  // The lid is fur-colored; the middle row of each eye is a dark lash line.
+  /** @param {{ ch: string; hex: string | null; eye: EyeCell | null; rgb: number[] | null }} cell */
+  const eyeCell = (cell) => {
+    const { dy, half, fur, furCh, lash } = /** @type {EyeCell} */ (cell.eye);
+    const open = cell.hex
+      ? `<span class="o" style="color:#${cell.hex}">${cell.ch}</span>`
+      : `<span class="o">${cell.ch}</span>`;
+    const lid =
+      dy === 0
+        ? `<span class="l" style="color:${lash}">-</span>`
+        : `<span class="l" style="color:${fur}">${furCh}</span>`;
+    // --c: delay when the lid closes (outer rows first); --r: delay when it opens (middle first).
+    return `<span class="ec" style="--c:${half - dy};--r:${dy}">${open}${lid}</span>`;
+  };
+
+  return grid
+    .map((line) => {
+      // Consecutive cells with the same color share one <span>.
+      let html = "";
+      let run = "";
+      let runHex = null;
+      const flush = () => {
+        if (!run) return;
+        html += runHex ? `<span style="color:#${runHex}">${run}</span>` : run;
+        run = "";
+      };
+      for (const cell of line) {
+        if (cell.eye) {
+          flush();
+          html += eyeCell(cell);
+          continue;
+        }
+        if (cell.hex !== runHex) {
+          flush();
+          runHex = cell.hex;
+        }
+        run += cell.ch;
+      }
+      flush();
+      return html;
+    })
+    .join("\n");
+}
+
+const asciiCats = ASCII_CATS.map((cat) => ({ side: cat.side, html: buildAsciiArt(cat) }));
+
 // ── page ───────────────────────────────────────────────────────────────────
 
 const cards = sources.map(sourceCard).join("\n");
@@ -339,32 +654,25 @@ const html = `<!DOCTYPE html>
   <style>
     body { font-family: "Inter", ui-sans-serif, system-ui, sans-serif; background-color: #0a0a0a; }
 
-    /* Ambient background: three soft red blobs drifting on slow, offset loops over the
-       banner's #0a0a0a -> #160707 base. Motion is on transform only, so it composites on
-       the GPU and never repaints the page. Blurring is done on the blob, not the layer. */
-    .bg { position: fixed; inset: 0; z-index: -1; overflow: hidden; pointer-events: none;
-          background: linear-gradient(135deg, #0a0a0a 0%, #160707 100%); }
-    .bg::after { content: ""; position: absolute; inset: 0;
-          background: radial-gradient(ellipse at center, transparent 55%, rgba(10,10,10,.4) 100%); }
-    .blob { position: absolute; width: 60vmax; height: 60vmax; border-radius: 50%;
-            filter: blur(70px); opacity: .8; will-change: transform; }
-    .blob-1 { top: -30vmax; right: -20vmax;
-              background: radial-gradient(circle, rgba(220,38,38,.75), rgba(220,38,38,0) 70%);
-              animation: drift-1 16s ease-in-out infinite; }
-    .blob-2 { bottom: -35vmax; left: -25vmax;
-              background: radial-gradient(circle, rgba(153,27,27,.7), rgba(153,27,27,0) 70%);
-              animation: drift-2 20s ease-in-out infinite; }
-    .blob-3 { top: 30%; left: 35%; width: 45vmax; height: 45vmax; opacity: .5;
-              background: radial-gradient(circle, rgba(239,68,68,.6), rgba(239,68,68,0) 70%);
-              animation: drift-3 24s ease-in-out infinite; }
-    @keyframes drift-1 { 0%,100% { transform: translate(0,0) scale(1); }
-                          50%     { transform: translate(-18vw, 22vh) scale(1.15); } }
-    @keyframes drift-2 { 0%,100% { transform: translate(0,0) scale(1); }
-                          50%     { transform: translate(22vw, -20vh) scale(1.1); } }
-    @keyframes drift-3 { 0%,100% { transform: translate(0,0) scale(1); }
-                          33%     { transform: translate(-16vw, -14vh) scale(1.2); }
-                          66%     { transform: translate(14vw, 12vh) scale(.9); } }
-    @media (prefers-reduced-motion: reduce) { .blob { animation: none; } }
+    .bg { position: fixed; inset: 0; z-index: 1; overflow: hidden; pointer-events: none; }
+    /* Each cat is about a third of the viewport wide (96 columns at 0.6em each). The script
+       below moves them around the screen, so their position is set with transform. */
+    .ascii { position: absolute; left: 0; top: 0; will-change: transform;
+             margin: 0; font-family: ui-monospace, Consolas, "Courier New", monospace;
+             font-size: calc(34vw / 57.6); line-height: 1; white-space: pre;
+             opacity: .7; user-select: none; }
+    @media (max-width: 900px) { .ascii { display: none; } }
+    .ascii-left { opacity: 1; }
+    /* Eyes: each cell is one character cell with the open glyph and the lid stacked on top.
+       Hovering the cat (.lidded) fades the open glyphs out from the outside rows inward while
+       the fur-colored lid fades in, so the eyes close from top and bottom into a lash line. */
+    .ascii .ec { display: inline-grid; vertical-align: top; }
+    .ascii .ec > span { grid-area: 1 / 1; transition: opacity .12s linear; }
+    .ascii .ec .o { opacity: 1; transition-delay: calc(var(--r) * 45ms); }
+    .ascii .ec .l { opacity: 0; transition-delay: calc(var(--r) * 45ms); }
+    .ascii.lidded .ec .o { opacity: 0; transition-delay: calc(var(--c) * 45ms); }
+    .ascii.lidded .ec .l { opacity: 1; transition-delay: calc(var(--c) * 45ms); }
+    @media (prefers-reduced-motion: reduce) { .ascii .ec > span { transition: none; } }
     ::selection { background: #dc2626; color: #fff; }
     .line-clamp-2 { display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden; }
     .truncate { overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
@@ -372,7 +680,7 @@ const html = `<!DOCTYPE html>
   </style>
 </head>
 <body class="bg-ink-950 text-ink-50 min-h-screen antialiased pt-[4.25rem] sm:pt-[4.5rem]">
-  <div class="bg" aria-hidden="true"><div class="blob blob-1"></div><div class="blob blob-2"></div><div class="blob blob-3"></div></div>
+  <div class="bg" aria-hidden="true">${asciiCats.map((cat) => `<pre class="ascii ascii-${cat.side}" aria-hidden="true">${cat.html}</pre>`).join("")}</div>
 
   <!-- floating header -->
   <header class="fixed inset-x-0 top-3 sm:top-4 z-20 px-3 sm:px-6">
@@ -485,6 +793,119 @@ ${changelogSection(changelogExtensions)}
     </div>
   </footer>
 
+  <script>
+    (function () {
+      var SPEED = 80; // px per second
+      var reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      var pointer = null;
+      var state = [].slice.call(document.querySelectorAll(".ascii")).map(function (el) {
+        return { el: el, x: 0, y: 0, vx: 0, vy: 0, w: el.offsetWidth, h: el.offsetHeight };
+      });
+
+      // Each cat starts on its own side, moving on a random diagonal.
+      state.forEach(function (s) {
+        s.x = s.el.classList.contains("ascii-left") ? 16 : innerWidth - s.w - 16;
+        s.y = (innerHeight - s.h) / 2;
+        var angle = Math.PI / 6 + (Math.random() * Math.PI) / 3;
+        s.vx = (Math.random() < 0.5 ? -1 : 1) * SPEED * Math.cos(angle);
+        s.vy = (Math.random() < 0.5 ? -1 : 1) * SPEED * Math.sin(angle);
+      });
+
+      function inside(el, x, y) {
+        var b = el.getBoundingClientRect();
+        return x >= b.left && x <= b.right && y >= b.top && y <= b.bottom;
+      }
+      function hover() {
+        state.forEach(function (s) {
+          s.el.classList.toggle("lidded", !!pointer && inside(s.el, pointer.x, pointer.y));
+        });
+      }
+      function draw() {
+        state.forEach(function (s) {
+          s.el.style.transform = "translate3d(" + s.x + "px," + s.y + "px,0)";
+        });
+      }
+
+      // A cat's collision box is its art's silhouette, a little inside its full box.
+      function box(s) {
+        return { x: s.x + s.w * 0.08, y: s.y + s.h * 0.08, w: s.w * 0.84, h: s.h * 0.84 };
+      }
+      // Touching cats trade their velocity along the axis they hit on, like equal-mass balls.
+      function collide(a, b) {
+        var A = box(a);
+        var B = box(b);
+        var ox = Math.min(A.x + A.w - B.x, B.x + B.w - A.x);
+        var oy = Math.min(A.y + A.h - B.y, B.y + B.h - A.y);
+        if (ox <= 0 || oy <= 0) return;
+        if (ox < oy) {
+          var nx = A.x + A.w / 2 < B.x + B.w / 2 ? -1 : 1;
+          if ((a.vx - b.vx) * nx < 0) {
+            var tx = a.vx;
+            a.vx = b.vx;
+            b.vx = tx;
+          }
+          a.x += (nx * ox) / 2;
+          b.x -= (nx * ox) / 2;
+        } else {
+          var ny = A.y + A.h / 2 < B.y + B.h / 2 ? -1 : 1;
+          if ((a.vy - b.vy) * ny < 0) {
+            var ty = a.vy;
+            a.vy = b.vy;
+            b.vy = ty;
+          }
+          a.y += (ny * oy) / 2;
+          b.y -= (ny * oy) / 2;
+        }
+      }
+
+      var last = 0;
+      function step(now) {
+        var dt = last ? Math.min((now - last) / 1000, 0.05) : 0;
+        last = now;
+        var vw = innerWidth;
+        var vh = innerHeight;
+        state.forEach(function (s) {
+          s.w = s.el.offsetWidth;
+          s.h = s.el.offsetHeight;
+          s.x += s.vx * dt;
+          s.y += s.vy * dt;
+          // Bounce off each edge; a cat that hits two edges at once bounces off a corner.
+          if (s.x < 0) {
+            s.x = 0;
+            s.vx = Math.abs(s.vx);
+          }
+          if (s.x + s.w > vw) {
+            s.x = Math.max(0, vw - s.w);
+            s.vx = -Math.abs(s.vx);
+          }
+          if (s.y < 0) {
+            s.y = 0;
+            s.vy = Math.abs(s.vy);
+          }
+          if (s.y + s.h > vh) {
+            s.y = Math.max(0, vh - s.h);
+            s.vy = -Math.abs(s.vy);
+          }
+        });
+        if (state.length === 2) collide(state[0], state[1]);
+        draw();
+        hover();
+        requestAnimationFrame(step);
+      }
+
+      draw();
+      if (!reduceMotion) requestAnimationFrame(step);
+
+      document.addEventListener("pointermove", function (e) {
+        pointer = { x: e.clientX, y: e.clientY };
+        hover();
+      });
+      document.documentElement.addEventListener("pointerleave", function () {
+        pointer = null;
+        hover();
+      });
+    })();
+  </script>
 </body>
 </html>`;
 
