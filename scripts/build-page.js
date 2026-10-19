@@ -797,7 +797,6 @@ ${changelogSection(changelogExtensions)}
   <script>
     (function () {
       var SPEED = 80; // px per second
-      var reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
       var pointer = null;
       var state = [].slice.call(document.querySelectorAll(".ascii")).map(function (el) {
         return { el: el, x: 0, y: 0, vx: 0, vy: 0, w: el.offsetWidth, h: el.offsetHeight };
@@ -895,7 +894,7 @@ ${changelogSection(changelogExtensions)}
       }
 
       draw();
-      if (!reduceMotion) requestAnimationFrame(step);
+      requestAnimationFrame(step);
 
       document.addEventListener("pointermove", function (e) {
         pointer = { x: e.clientX, y: e.clientY };
