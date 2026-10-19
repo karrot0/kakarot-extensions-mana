@@ -151,6 +151,8 @@ try {
 const repoDisplayName = data.repositoryName ?? pkg.name ?? "Extensions";
 const homepage = pkg.homepage ?? "";
 const sourcesUrl = homepage ? homepage.replace(/\/?$/, "/main") : "https://your-pages-url/main";
+// Mana opens a preview card for this link; nothing is added until the user accepts.
+const addRepoLink = `mana://add-repo?url=${encodeURIComponent(sourcesUrl)}&name=${encodeURIComponent(repoDisplayName)}`;
 
 /**
  * Repo URL from package.json's `repository`, falling back to a GitHub Pages
@@ -414,7 +416,7 @@ const html = `<!DOCTYPE html>
         <div class="flex-1 min-w-0 space-y-2">
           <div>
             <p class="text-sm font-medium text-ink-100">Add Repository to Mana</p>
-            <p class="text-xs text-ink-500 mt-0.5 flex items-center gap-1 flex-wrap">Copy the URL below and paste it in
+            <p class="text-xs text-ink-500 mt-0.5 flex items-center gap-1 flex-wrap">Tap Open in Mana, or copy the URL below and paste it in
               <span class="inline-flex items-center gap-0.5 text-ink-400 font-medium">Mana
                 <svg class="w-3 h-3 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
                 Discover
@@ -435,6 +437,13 @@ const html = `<!DOCTYPE html>
               </svg>
               <span>Copy</span>
             </button>
+            <a href="${addRepoLink.replace(/&/g, "&amp;")}"
+              class="shrink-0 inline-flex items-center gap-1.5 text-xs font-medium px-3 py-2 rounded-lg bg-ink-900 hover:bg-red-950/40 border border-ink-800 hover:border-red-700 text-ink-300 hover:text-white transition-colors">
+              <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>
+              </svg>
+              <span class="hidden sm:inline">Open in Mana</span><span class="sm:hidden">Open</span>
+            </a>
           </div>
         </div>
       </div>

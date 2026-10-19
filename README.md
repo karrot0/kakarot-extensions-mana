@@ -27,11 +27,11 @@
 
 |                                                                             | Name          | Version | Language | Rating |
 | :-------------------------------------------------------------------------: | ------------- | ------- | -------- | ------ |
-|    <img src="assets/Batcave.png" width="28" height="28" alt="">    | Batcave       | 1.7.1   | English  | Safe   |
-| <img src="assets/KakarotComics.jpg" width="28" height="28" alt=""> | KakarotComics | 1.2.1   | English  | Mixed  |
-|   <img src="assets/OceComic.png" width="28" height="28" alt="">    | OceComic      | 1.2.1   | English  | Mixed  |
-|   <img src="assets/ZipComic.png" width="28" height="28" alt="">    | ZipComic      | 1.1.1   | English  | Mixed  |
-|   <img src="assets/Toonkotsu.png" width="28" height="28" alt="">   | Toonkotsu     | 1.0.0   | English  | Mixed  |
+|    <img src="assets/Batcave.png" width="28" height="28" alt="">    | Batcave       | 1.8.0   | English  | Safe   |
+| <img src="assets/KakarotComics.jpg" width="28" height="28" alt=""> | KakarotComics | 2.1.0   | English  | Mixed  |
+|   <img src="assets/OceComic.png" width="28" height="28" alt="">    | OceComic      | 1.3.0   | English  | Mixed  |
+|   <img src="assets/ZipComic.png" width="28" height="28" alt="">    | ZipComic      | 1.2.0   | English  | Mixed  |
+|   <img src="assets/Toonkotsu.png" width="28" height="28" alt="">   | Toonkotsu     | 1.1.0   | English  | Mixed  |
 
 See [CHANGELOG.md](CHANGELOG.md) for what changed.
 

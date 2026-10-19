@@ -121,8 +121,8 @@ Throw with a useful message when you find zero pages. A silent empty array shows
 blank reader with nothing to act on; the throw is your only diagnostic channel.
 
 If images 403 when the reader loads them, the CDN wants a referer. Implement
-`willRequestImage` and return a `NetworkRequest` with `origin` and `referer` set to the
-host the image belongs to — Batcave maps CDN hosts to their own origin because its images
+`getCoverTransport`/`getPageTransport` returning `this.imageHttp`; the shared request
+interceptor sets `origin` and `referer` to the host the image belongs to (via `originFor`) — Batcave maps CDN hosts to their own origin because its images
 come from a different domain than its pages.
 
 ## Before you write code

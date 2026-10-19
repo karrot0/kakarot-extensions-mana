@@ -38,7 +38,7 @@ import { BASE_URL, ListID, MATURE_GENRE } from "./model.ts";
 const info: SourceInfo = {
   id: "zipcomic",
   name: "ZipComic",
-  version: "1.1.1",
+  version: "1.2.0",
   description: "Pulls comics from zipcomic.com",
   website: BASE_URL,
   rating: CatalogRating.MIXED,
@@ -58,7 +58,7 @@ class ZipComicSource extends BaseSource implements ChapterSource, SearchProvider
   readonly config = config;
 
   protected clientOptions(): ClientOptions {
-    return { baseUrl: BASE_URL, requests: 4, interval: 1 };
+    return { baseUrl: BASE_URL, requests: 4, intervalMs: 1_000 };
   }
 
   protected sections(): SectionSpec[] {

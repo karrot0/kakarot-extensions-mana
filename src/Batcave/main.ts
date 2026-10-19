@@ -1,4 +1,5 @@
 import {
+  Body,
   CatalogRating,
   ContentRating,
   ContentType,
@@ -9,10 +10,11 @@ import {
   type ChapterPage,
   type ChapterSource,
   type Content,
+  type CoverRequestHandler,
   type Highlight,
-  type ImageRequestHandler,
-  type NetworkRequest,
+  type HttpClient,
   type PageLink,
+  type PageRequestHandler,
   type PagedSearchResult,
   type SearchForm,
   type SearchProvider,
@@ -23,14 +25,8 @@ import {
 } from "@mana-app/types";
 import type { CheerioAPI } from "cheerio";
 
-import type { ClientOptions } from "../../lib/client.ts";
-import {
-  FilterReader,
-  buildSearchForm,
-  encodeForm,
-  pageOf,
-  type SectionSpec,
-} from "../../lib/forms/index.ts";
+import { JSON_ACCEPT, type ClientOptions } from "../../lib/client.ts";
+import { FilterReader, buildSearchForm, pageOf, type SectionSpec } from "../../lib/forms/index.ts";
 import {
   absolute as absoluteFrom,
   fetchHtml,
@@ -54,7 +50,7 @@ import {
 const info: SourceInfo = {
   id: "batcave",
   name: "Batcave",
-  version: "1.7.1",
+  version: "1.8.0",
   description: "Pulls comics from batcave.biz",
   website: BASE_URL,
   rating: CatalogRating.SAFE,
@@ -69,11 +65,9 @@ const config: SourceConfig = {
   owningLinks: ["batcave.biz"],
 };
 
-const IMAGE_ACCEPT = "image/avif,image/webp,image/apng,image/*,*/*;q=0.8";
-
 class BatcaveSource
   extends BaseSource
-  implements ChapterSource, SearchProvider, ImageRequestHandler
+  implements ChapterSource, SearchProvider, CoverRequestHandler, PageRequestHandler
 {
   readonly info = info;
   readonly config = config;
@@ -82,7 +76,7 @@ class BatcaveSource
     return {
       baseUrl: BASE_URL,
       requests: 10,
-      interval: 1,
+      intervalMs: 1_000,
       originFor,
       headers: { "x-requested-with": "com.batcave.android" },
     };
@@ -187,20 +181,16 @@ class BatcaveSource
       throw new Error(`Could not derive a news id from contentId "${contentId}"`);
     }
 
-    const response = await this.http.request({
-      url: `${BASE_URL}/engine/ajax/controller.php?mod=api&action=reader/getChapterData`,
-      method: "POST",
-      headers: {
-        "content-type": "application/x-www-form-urlencoded",
-        referer: contentUrl(contentId),
-        accept: "application/json, text/javascript, */*; q=0.01",
-      },
-      body: encodeForm({ news_id: newsId, chapter_id: chapterId }),
-    });
+    const response = await this.http.post(
+      `${BASE_URL}/engine/ajax/controller.php?mod=api&action=reader/getChapterData`,
+      Body.form({ news_id: newsId, chapter_id: chapterId }),
+      { headers: { referer: contentUrl(contentId), accept: JSON_ACCEPT } },
+    );
 
+    response.requireOk();
     let json: ChapterDataResponse | undefined;
     try {
-      json = JSON.parse(response.data) as ChapterDataResponse;
+      json = await response.json<ChapterDataResponse>();
     } catch {
       throw new Error(`Chapter data for "${chapterId}" was not JSON (HTTP ${response.status})`);
     }
@@ -216,18 +206,12 @@ class BatcaveSource
     return { pages };
   }
 
-  async willRequestImage(imageURL: string): Promise<NetworkRequest> {
-    const origin = originFor(imageURL);
-    return {
-      url: imageURL,
-      method: "GET",
-      headers: {
-        origin,
-        referer: `${origin}/`,
-        accept: IMAGE_ACCEPT,
-        "accept-language": "en-US,en;q=0.5",
-      },
-    };
+  getCoverTransport(): HttpClient {
+    return this.imageHttp;
+  }
+
+  getPageTransport(): HttpClient {
+    return this.imageHttp;
   }
 }
 

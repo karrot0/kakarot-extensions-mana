@@ -4,13 +4,14 @@ Notable changes to the extensions in this repository, grouped by extension —
 each one versions independently (see `info.version` in its `main.ts`). Dates
 are UTC. Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## Toonkotsu (current: v1.0.0)
+## Batcave (current: v1.8.0)
 
-### 2026-10-12
-- Initial implementation: home sections, search with filters and sorting, title details, chapters.
-- Chapter pages are read over HTTP without a WebView. The source derives the site's HMAC session key from `/api/manga/key`, signs each chapter request, and AES-256-CTR decrypts the page images in pure TypeScript.
+### 2026-10-17 — @mana-app/types 0.1.0
 
-## Batcave (current: v1.7.1)
+- Migrated to `@mana-app/types` 0.1.0 and `@mana-app/dev` 0.2.0. Requests go through the
+  new `HttpClient`; HTTP error statuses are now checked explicitly with `requireOk()`.
+- Images load through `getCoverTransport`/`getPageTransport` instead of `willRequestImage`,
+  keeping the per-CDN origin and referer. The chapter-data POST uses `Body.form`.
 
 ### 2026-09-05 — @mana-app/types 0.0.25
 
@@ -36,7 +37,12 @@ are UTC. Format loosely follows [Keep a Changelog](https://keepachangelog.com/en
 - Removed `config.disableTagNavigation`, which was dropped from `SourceConfig`.
 - Network client, image referer rules and parsing moved onto the shared toolkit.
 
-## KakarotComics (current: v1.2.1)
+## KakarotComics (current: v2.1.0)
+
+### 2026-10-17 — @mana-app/types 0.1.0
+
+- Migrated to `@mana-app/types` 0.1.0 and `@mana-app/dev` 0.2.0. Requests go through the
+  new `HttpClient`; HTTP error statuses are now checked explicitly with `requireOk()`.
 
 ### 2026-09-05 — @mana-app/types 0.0.25
 
@@ -85,7 +91,12 @@ are UTC. Format loosely follows [Keep a Changelog](https://keepachangelog.com/en
   and issues, with search, a publisher-allowlist preference, and page
   reading proxied through the server.
 
-## OceComic (current: v1.2.1)
+## OceComic (current: v1.3.0)
+
+### 2026-10-17 — @mana-app/types 0.1.0
+
+- Migrated to `@mana-app/types` 0.1.0 and `@mana-app/dev` 0.2.0. Requests go through the
+  new `HttpClient`; HTTP error statuses are now checked explicitly with `requireOk()`.
 
 ### 2026-09-05 — @mana-app/types 0.0.25
 
@@ -119,7 +130,12 @@ are UTC. Format loosely follows [Keep a Changelog](https://keepachangelog.com/en
   maps to `ContentRating.MATURE`.
 - Removed `config.disableTagNavigation`.
 
-## ZipComic (current: v1.1.1)
+## ZipComic (current: v1.2.0)
+
+### 2026-10-17 — @mana-app/types 0.1.0
+
+- Migrated to `@mana-app/types` 0.1.0 and `@mana-app/dev` 0.2.0. Requests go through the
+  new `HttpClient`; HTTP error statuses are now checked explicitly with `requireOk()`.
 
 ### 2026-09-05 — @mana-app/types 0.0.25
 

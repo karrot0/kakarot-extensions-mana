@@ -1,4 +1,5 @@
 import type {
+  HttpClient,
   PageLink,
   PageLinkResolver,
   PageSection,
@@ -11,22 +12,23 @@ import { buildClient, type ClientOptions } from "./client.ts";
 import { withQuery, type QueryParams } from "./forms/query.ts";
 import { listResults, sectionById, toPageSections, type SectionSpec } from "./forms/sections.ts";
 
-/**
- * The plumbing every source shares: a lazily built network client, JSON
- * requests, and the home-page sections, which also back "view more" listings.
- */
 export abstract class BaseSource implements PageLinkResolver {
-  private client: NetworkClient | undefined;
+  private client: HttpClient | undefined;
+  private imageClient: HttpClient | undefined;
 
   protected abstract clientOptions(): ClientOptions;
   protected abstract sections(): SectionSpec[];
 
-  protected get http(): NetworkClient {
+  protected get http(): HttpClient {
     this.client ??= buildClient(this.clientOptions());
     return this.client;
   }
 
-  /** The origin `getJson` paths are resolved against. Override when it is configurable. */
+  protected get imageHttp(): HttpClient {
+    this.imageClient ??= buildClient({ ...this.clientOptions(), requests: 0 });
+    return this.imageClient;
+  }
+
   protected async apiBase(): Promise<string> {
     return this.clientOptions().baseUrl;
   }
@@ -35,7 +37,8 @@ export abstract class BaseSource implements PageLinkResolver {
     const base = await this.apiBase();
     const response = await this.http.get(withQuery(`${base}${path}`, params));
     try {
-      return JSON.parse(response.data) as T;
+      response.requireOk();
+      return await response.json<T>();
     } catch {
       throw new Error(`${base} did not return JSON for ${path} (HTTP ${response.status})`);
     }
@@ -52,7 +55,6 @@ export abstract class BaseSource implements PageLinkResolver {
     return { items: results };
   }
 
-  /** Results for a "view more" request, or undefined when it is a regular search. */
   protected listResults(request: SearchRequest): Promise<PagedSearchResult> | undefined {
     return listResults(this.sections(), request);
   }

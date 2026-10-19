@@ -124,6 +124,10 @@ If a source still calls `getSearchFilters`, sets `Content.isNSFW`, or sets
 `SourceConfig.disableTagNavigation`, it is written against a removed API and its filters
 are dead. `references/api.md` has the migration recipe.
 
+A source that still references `NetworkClient`, `NetworkRequest`, `response.data` or
+`willRequestImage` predates `@mana-app/types@0.1.0`. `references/api.md` ("Networking")
+has the `HttpClient` equivalents; `CloudflareError` must now be imported.
+
 Two removals from `@mana-app/types@0.0.25` are worth checking by hand, because `typecheck`
 catches the first and stays silent on the second:
 
