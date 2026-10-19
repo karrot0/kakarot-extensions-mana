@@ -99,7 +99,7 @@ function changelogSection(extensions) {
   const blocks = extensions
     .map(
       (ext, i) => `
-<details class="group rounded-xl border border-ink-800 bg-ink-900 overflow-hidden"${i === 0 ? " open" : ""}>
+<details class="group rounded-xl border border-ink-800 bg-ink-900/55 backdrop-blur-lg overflow-hidden"${i === 0 ? " open" : ""}>
   <summary class="cursor-pointer select-none list-none flex items-center justify-between gap-3 px-4 py-3 hover:bg-red-950/30 transition-colors">
     <div class="flex items-center gap-2">
       <span class="text-sm font-semibold text-ink-100">${escapeHtml(ext.name)}</span>
@@ -246,7 +246,7 @@ function sourceCard(s) {
     : BOOK_SVG;
 
   return `
-<div class="group relative flex flex-col bg-ink-900 border border-ink-800 rounded-xl overflow-hidden hover:border-red-800 hover:shadow-lg hover:shadow-red-950/50 transition-all duration-200">
+<div class="group relative flex flex-col bg-ink-900/55 backdrop-blur-lg border border-ink-800 rounded-xl overflow-hidden hover:border-red-800 hover:shadow-lg hover:shadow-red-950/50 transition-all duration-200">
   <div class="flex items-start gap-3.5 p-4 pb-3">
     <div class="w-12 h-12 rounded-lg bg-ink-800 border border-ink-700/50 flex items-center justify-center shrink-0 overflow-hidden">
       ${thumb}
@@ -654,7 +654,7 @@ const html = `<!DOCTYPE html>
   <style>
     body { font-family: "Inter", ui-sans-serif, system-ui, sans-serif; background-color: #0a0a0a; }
 
-    .bg { position: fixed; inset: 0; z-index: 1; overflow: hidden; pointer-events: none; }
+    .bg { position: fixed; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; }
     /* Each cat is about a third of the viewport wide (96 columns at 0.6em each). The script
        below moves them around the screen, so their position is set with transform. */
     .ascii { position: absolute; left: 0; top: 0; will-change: transform;
@@ -715,7 +715,7 @@ const html = `<!DOCTYPE html>
   <main class="max-w-5xl mx-auto px-4 sm:px-6 py-10 space-y-8">
 
     <!-- install banner -->
-    <div class="rounded-xl border border-ink-800 bg-ink-900 p-4">
+    <div class="rounded-xl border border-ink-800 bg-ink-900/55 backdrop-blur-lg p-4">
       <div class="flex items-start gap-3">
         <div class="mt-0.5 w-8 h-8 rounded-lg bg-red-600/15 border border-red-800/60 flex items-center justify-center shrink-0">
           <svg class="w-4 h-4 text-red-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
