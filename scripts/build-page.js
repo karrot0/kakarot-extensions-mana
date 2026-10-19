@@ -746,7 +746,7 @@ const html = `<!DOCTYPE html>
               </svg>
               <span>Copy</span>
             </button>
-            <a href="${addRepoLink.replace(/&/g, "&amp;")}"
+            <a href="open.html" title="Share this link to let others open the repository in Mana"
               class="shrink-0 inline-flex items-center gap-1.5 text-xs font-medium px-3 py-2 rounded-lg bg-ink-900 hover:bg-red-950/40 border border-ink-800 hover:border-red-700 text-ink-300 hover:text-white transition-colors">
               <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>
@@ -930,3 +930,118 @@ if (fs.existsSync(changelogSrc)) {
 }
 
 process.stdout.write("[mana-dev] \uD83C\uDF10 Generated dist/index.html\n");
+
+// \u2500\u2500 open.html: https bridge for mana:// links \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+// Discord and most chat apps only linkify http(s), so shared "Open in Mana" links point here.
+// The page forwards to mana://add-repo, or to mana://install-source with ?source=<id>.
+// Crawlers don't run scripts, so the embed tags describe the repository as a whole.
+
+/** @param {string} str */
+const escapeAttr = (str) => escapeHtml(str).replace(/"/g, "&quot;");
+/** Embeds a value in an inline script without letting it close the tag. @param {unknown} value */
+const scriptJson = (value) => JSON.stringify(value).replace(/</g, "\\u003c");
+
+const bridgeUrl = `${sourcesUrl}/open.html`;
+const bridgeImage = brandIcon ? `${sourcesUrl}/${brandIcon}` : "";
+const bridgeTitle = `Add ${repoDisplayName} to Mana`;
+const bridgeDescription = `${count} extension${count !== 1 ? "s" : ""}: ${sources
+  .map(/** @param {any} s */ (s) => s.name)
+  .join(", ")}. Tap to open Mana and add the repository.`;
+const sourceNames = Object.fromEntries(
+  sources.map(/** @param {any} s */ (s) => [s.id, s.name]),
+);
+
+const bridgeHtml = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>${escapeHtml(bridgeTitle)}</title>
+  <meta name="description" content="${escapeAttr(bridgeDescription)}" />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="${escapeAttr(repoDisplayName)}" />
+  <meta property="og:title" content="${escapeAttr(bridgeTitle)}" />
+  <meta property="og:description" content="${escapeAttr(bridgeDescription)}" />
+  <meta property="og:url" content="${escapeAttr(bridgeUrl)}" />
+  ${bridgeImage ? `<meta property="og:image" content="${escapeAttr(bridgeImage)}" />` : ""}
+  <meta name="twitter:card" content="summary" />
+  <!-- Discord uses this as the embed's accent color. -->
+  <meta name="theme-color" content="#dc2626" />
+  ${brandIcon ? `<link rel="icon" href="${brandIcon}" />` : ""}
+  <!-- Without scripts, open the repository; the script at the end of the page handles ?source=. -->
+  <noscript><meta http-equiv="refresh" content="0;url=${escapeAttr(addRepoLink)}" /></noscript>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; display: grid; place-items: center; padding: 16px;
+           font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+           color: #f4f4f5; background: linear-gradient(135deg, #0a0a0a 0%, #160707 100%); }
+    .card { width: 100%; max-width: 380px; padding: 28px 24px; text-align: center;
+            border: 1px solid #261414; border-radius: 16px; background: rgba(22, 7, 7, .7); }
+    .icon { width: 64px; height: 64px; border-radius: 14px; object-fit: cover;
+            box-shadow: 0 0 0 1px rgba(220, 38, 38, .7); }
+    h1 { margin: 16px 0 6px; font-size: 18px; font-weight: 600; }
+    p { margin: 0; font-size: 13px; line-height: 1.5; color: #a1a1aa; }
+    .btn { display: block; margin: 20px 0 16px; padding: 11px 16px; border-radius: 10px;
+           background: #dc2626; color: #fff; font-size: 14px; font-weight: 600; text-decoration: none; }
+    .btn:hover { background: #ef4444; }
+    code { display: block; margin-top: 8px; padding: 8px 10px; border-radius: 8px; overflow-wrap: anywhere;
+           font: 12px ui-monospace, Consolas, monospace; color: #d4d4d8; background: #0a0a0a; border: 1px solid #261414; }
+    .back { display: inline-block; margin-top: 18px; font-size: 12px; color: #71717a; }
+    .back:hover { color: #f87171; }
+    .spinner { width: 22px; height: 22px; margin: 18px auto 0; border-radius: 50%;
+               border: 2px solid #3a2222; border-top-color: #dc2626; animation: spin .8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    /* The manual way in only shows once the redirect has had time to hand off to Mana. */
+    #fallback { display: none; }
+    .failed #fallback { display: block; }
+    .failed .spinner { display: none; }
+  </style>
+</head>
+<body>
+  <main class="card">
+    ${brandIcon ? `<img class="icon" src="${brandIcon}" alt="" />` : ""}
+    <h1 id="title">${escapeHtml(bridgeTitle)}</h1>
+    <p id="status">Opening Mana\u2026</p>
+    <div class="spinner" aria-hidden="true"></div>
+    <div id="fallback">
+      <a id="open" class="btn" href="${escapeAttr(addRepoLink)}">Open in Mana</a>
+      <p>Still nothing? Update Mana to the latest version, or add this repository URL by hand:</p>
+      <code>${escapeHtml(sourcesUrl)}</code>
+      <a class="back" href="./">View all extensions</a>
+    </div>
+  </main>
+  <!-- Runs once the page has rendered: navigating to mana:// from <head> stops Chromium parsing the
+       rest, which would leave a blank page with no fallback when Mana isn't installed. -->
+  <script>
+    (function () {
+      var repo = ${scriptJson(sourcesUrl)};
+      var name = ${scriptJson(repoDisplayName)};
+      var sources = ${scriptJson(sourceNames)};
+      var id = new URLSearchParams(location.search).get("source");
+      var source = id && Object.prototype.hasOwnProperty.call(sources, id) ? sources[id] : null;
+      var link = source
+        ? "mana://install-source?repo=" + encodeURIComponent(repo) + "&id=" + encodeURIComponent(id)
+        : "mana://add-repo?url=" + encodeURIComponent(repo) + "&name=" + encodeURIComponent(name);
+
+      if (source) {
+        document.title = "Install " + source + " in Mana";
+        document.getElementById("title").textContent = document.title;
+      }
+      document.getElementById("open").href = link;
+      location.replace(link);
+
+      // Mana coming to the front hides this page; if that never happens, the redirect was blocked.
+      var timer = setTimeout(function () {
+        document.body.classList.add("failed");
+        document.getElementById("status").textContent = "Mana didn't open.";
+      }, 2500);
+      document.addEventListener("visibilitychange", function () {
+        if (document.hidden) clearTimeout(timer);
+      });
+    })();
+  </script>
+</body>
+</html>`;
+
+fs.writeFileSync(path.join(distDir, "open.html"), bridgeHtml, "utf-8");
+process.stdout.write("[mana-dev] \uD83C\uDF10 Generated dist/open.html\n");
