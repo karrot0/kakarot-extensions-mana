@@ -37,6 +37,7 @@ export abstract class BaseSource implements PageLinkResolver {
     const base = await this.apiBase();
     const response = await this.http.get(withQuery(`${base}${path}`, params));
     try {
+      response.requireOk();
       return await response.json<T>();
     } catch {
       throw new Error(`${base} did not return JSON for ${path} (HTTP ${response.status})`);
