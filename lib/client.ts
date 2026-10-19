@@ -21,9 +21,15 @@ const CHALLENGE_PATTERNS: readonly RegExp[] = [
   /\.open\(\s*["']POST["']\s*,\s*["']\/_v["']\)/,
 ];
 
+const CHALLENGE_SCAN_CHARS = 16_384;
+
+export function isChallengeUrl(url: string): boolean {
+  return /^https?:\/\/[^/?#]+\/_c(?:[?#]|$)/i.test(url);
+}
+
 export function isChallengePage(html: string): boolean {
   if (!html) return false;
-  const head = html.slice(0, 4096);
+  const head = html.slice(0, CHALLENGE_SCAN_CHARS);
   if (CHALLENGE_PATTERNS.some((pattern) => pattern.test(head))) return true;
   return head.includes("pow_nonce") && head.includes("pow_hash");
 }
@@ -99,6 +105,7 @@ export function buildClient(options: ClientOptions): HttpClient {
     if (response.status === 403 || response.status === 503) {
       throw new CloudflareError(resolutionUrl);
     }
+    if (isChallengeUrl(response.url)) throw new CloudflareError(resolutionUrl);
     const body = await response.text();
     if (isChallengePage(body)) throw new CloudflareError(resolutionUrl);
     if (json && response.status >= 400) {
