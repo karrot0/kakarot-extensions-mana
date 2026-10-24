@@ -32,6 +32,8 @@
 |   <img src="assets/OceComic.png" width="28" height="28" alt="">    | OceComic      | 1.3.0   | English  | Mixed  |
 |   <img src="assets/ZipComic.png" width="28" height="28" alt="">    | ZipComic      | 1.2.0   | English  | Mixed  |
 |   <img src="assets/Toonkotsu.png" width="28" height="28" alt="">   | Toonkotsu     | 1.1.0   | English  | Mixed  |
+| <img src="assets/RawOtaku.png" width="28" height="28" alt=""> | RawOtaku      | 1.1.0   | Japanese  | Mixed  |
+| <img src="assets/RawKuma.png" width="28" height="28" alt=""> | RawKuma       | 1.0.0   | Japanese  | Mixed  |
 
 See [CHANGELOG.md](CHANGELOG.md) for what changed.
 
