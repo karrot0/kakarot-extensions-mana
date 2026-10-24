@@ -4,6 +4,19 @@ Notable changes to the extensions in this repository, grouped by extension —
 each one versions independently (see `info.version` in its `main.ts`). Dates
 are UTC. Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## RawKuma (current: v1.0.0)
+
+### 2026-10-23
+- Initial implementation.
+
+## RawOtaku (current: v1.1.0)
+
+### 2026-10-23
+- Covers now load: the `mgoimg.view47.com` cover CDN sits behind a Cloudflare managed challenge that native image requests cannot pass, so covers are re-routed through the `wsrv.nl` image proxy instead of hitting the CDN directly.
+
+### 2026-10-23
+- Initial implementation.
+
 ## Batcave (current: v1.8.0)
 
 ### 2026-10-17 — @mana-app/types 0.1.0

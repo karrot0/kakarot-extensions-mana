@@ -21,7 +21,7 @@
       "path": "Batcave",
       "environment": "source",
       "intents": 102763528,
-      "hash": "0e4eddb80e4eddb80e4eddb80e4eddb80e4eddb80e4eddb80e4eddb80e4eddb8"
+      "hash": "036b9fac036b9fac036b9fac036b9fac036b9fac036b9fac036b9fac036b9fac"
     },
     {
       "id": "kakarotcomics",
@@ -42,7 +42,7 @@
       "path": "KakarotComics",
       "environment": "source",
       "intents": 10492937,
-      "hash": "703650a2703650a2703650a2703650a2703650a2703650a2703650a2703650a2"
+      "hash": "7b198f047b198f047b198f047b198f047b198f047b198f047b198f047b198f04"
     },
     {
       "id": "ocecomic",
@@ -63,7 +63,49 @@
       "path": "OceComic",
       "environment": "source",
       "intents": 2104328,
-      "hash": "58f59e3658f59e3658f59e3658f59e3658f59e3658f59e3658f59e3658f59e36"
+      "hash": "4e1263104e1263104e1263104e1263104e1263104e1263104e1263104e126310"
+    },
+    {
+      "id": "rawkuma",
+      "name": "RawKuma",
+      "version": "1.0.0",
+      "description": "Pulls raw manga from rawkuma.net",
+      "website": "https://rawkuma.net",
+      "rating": 1,
+      "supportedLanguages": [
+        "ja_JP"
+      ],
+      "thumbnail": "RawKuma.png",
+      "developers": [
+        {
+          "name": "Karrot"
+        }
+      ],
+      "path": "RawKuma",
+      "environment": "source",
+      "intents": 2104328,
+      "hash": "621a617b621a617b621a617b621a617b621a617b621a617b621a617b621a617b"
+    },
+    {
+      "id": "rawotaku",
+      "name": "RawOtaku",
+      "version": "1.1.0",
+      "description": "Pulls raw manga from rawotaku.com",
+      "website": "https://rawotaku.com",
+      "rating": 1,
+      "supportedLanguages": [
+        "ja_JP"
+      ],
+      "thumbnail": "RawOtaku.png",
+      "developers": [
+        {
+          "name": "Karrot"
+        }
+      ],
+      "path": "RawOtaku",
+      "environment": "source",
+      "intents": 2104328,
+      "hash": "6fca5f306fca5f306fca5f306fca5f306fca5f306fca5f306fca5f306fca5f30"
     },
     {
       "id": "zipcomic",
@@ -84,7 +126,7 @@
       "path": "ZipComic",
       "environment": "source",
       "intents": 2098184,
-      "hash": "56c80e6f56c80e6f56c80e6f56c80e6f56c80e6f56c80e6f56c80e6f56c80e6f"
+      "hash": "4be4d0674be4d0674be4d0674be4d0674be4d0674be4d0674be4d0674be4d067"
     }
   ]
 }

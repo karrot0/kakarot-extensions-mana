@@ -4,11 +4,11 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Add Kakarot Extensions to Mana</title>
-  <meta name="description" content="4 extensions: Batcave, KakarotComics, OceComic, ZipComic. Tap to open Mana and add the repository." />
+  <meta name="description" content="6 extensions: Batcave, KakarotComics, OceComic, RawKuma, RawOtaku, ZipComic. Tap to open Mana and add the repository." />
   <meta property="og:type" content="website" />
   <meta property="og:site_name" content="Kakarot Extensions" />
   <meta property="og:title" content="Add Kakarot Extensions to Mana" />
-  <meta property="og:description" content="4 extensions: Batcave, KakarotComics, OceComic, ZipComic. Tap to open Mana and add the repository." />
+  <meta property="og:description" content="6 extensions: Batcave, KakarotComics, OceComic, RawKuma, RawOtaku, ZipComic. Tap to open Mana and add the repository." />
   <meta property="og:url" content="https://karrot0.github.io/kakarot-extensions-mana/main/open.html" />
   <meta property="og:image" content="https://karrot0.github.io/kakarot-extensions-mana/main/assets/KakarotComics.jpg" />
   <meta name="twitter:card" content="summary" />
@@ -63,7 +63,7 @@
     (function () {
       var repo = "https://karrot0.github.io/kakarot-extensions-mana/main";
       var name = "Kakarot Extensions";
-      var sources = {"batcave":"Batcave","kakarotcomics":"KakarotComics","ocecomic":"OceComic","zipcomic":"ZipComic"};
+      var sources = {"batcave":"Batcave","kakarotcomics":"KakarotComics","ocecomic":"OceComic","rawkuma":"RawKuma","rawotaku":"RawOtaku","zipcomic":"ZipComic"};
       var id = new URLSearchParams(location.search).get("source");
       var source = id && Object.prototype.hasOwnProperty.call(sources, id) ? sources[id] : null;
       var link = source
