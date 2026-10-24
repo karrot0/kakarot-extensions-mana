@@ -34,6 +34,7 @@
 |   <img src="assets/Toonkotsu.png" width="28" height="28" alt="">   | Toonkotsu     | 1.1.0   | English  | Mixed  |
 | <img src="assets/RawOtaku.png" width="28" height="28" alt=""> | RawOtaku      | 1.1.0   | Japanese  | Mixed  |
 | <img src="assets/RawKuma.png" width="28" height="28" alt=""> | RawKuma       | 1.0.0   | Japanese  | Mixed  |
+| <img src="assets/Baozimh.png" width="28" height="28" alt=""> | Baozimh       | 1.0.0   | Chinese  | Mixed  |
 
 See [CHANGELOG.md](CHANGELOG.md) for what changed.
 

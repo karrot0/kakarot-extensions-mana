@@ -4,6 +4,11 @@ Notable changes to the extensions in this repository, grouped by extension —
 each one versions independently (see `info.version` in its `main.ts`). Dates
 are UTC. Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## Baozimh (current: v1.0.0)
+
+### 2026-10-24
+- Initial implementation.
+
 ## RawKuma (current: v1.0.0)
 
 ### 2026-10-23
