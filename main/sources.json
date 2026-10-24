@@ -3,6 +3,27 @@
   "thumbnail": "https://raw.githubusercontent.com/karrot0/kakarot-extensions-mana/refs/heads/gh-pages/main/assets/KakarotComics.jpg",
   "sources": [
     {
+      "id": "baozimh",
+      "name": "Baozimh",
+      "version": "1.0.0",
+      "description": "Pulls manhua from baozimh.org (包子漫画)",
+      "website": "https://baozimh.org",
+      "rating": 1,
+      "supportedLanguages": [
+        "zh-CN"
+      ],
+      "thumbnail": "Baozimh.png",
+      "developers": [
+        {
+          "name": "Karrot"
+        }
+      ],
+      "path": "Baozimh",
+      "environment": "source",
+      "intents": 102763528,
+      "hash": "047e1fcb047e1fcb047e1fcb047e1fcb047e1fcb047e1fcb047e1fcb047e1fcb"
+    },
+    {
       "id": "batcave",
       "name": "Batcave",
       "version": "1.8.0",
@@ -21,7 +42,7 @@
       "path": "Batcave",
       "environment": "source",
       "intents": 102763528,
-      "hash": "036b9fac036b9fac036b9fac036b9fac036b9fac036b9fac036b9fac036b9fac"
+      "hash": "3be2cb423be2cb423be2cb423be2cb423be2cb423be2cb423be2cb423be2cb42"
     },
     {
       "id": "kakarotcomics",
@@ -42,7 +63,7 @@
       "path": "KakarotComics",
       "environment": "source",
       "intents": 10492937,
-      "hash": "7b198f047b198f047b198f047b198f047b198f047b198f047b198f047b198f04"
+      "hash": "4598064545980645459806454598064545980645459806454598064545980645"
     },
     {
       "id": "ocecomic",
@@ -63,7 +84,7 @@
       "path": "OceComic",
       "environment": "source",
       "intents": 2104328,
-      "hash": "4e1263104e1263104e1263104e1263104e1263104e1263104e1263104e126310"
+      "hash": "0ec3f7e60ec3f7e60ec3f7e60ec3f7e60ec3f7e60ec3f7e60ec3f7e60ec3f7e6"
     },
     {
       "id": "rawkuma",
@@ -84,7 +105,7 @@
       "path": "RawKuma",
       "environment": "source",
       "intents": 2104328,
-      "hash": "621a617b621a617b621a617b621a617b621a617b621a617b621a617b621a617b"
+      "hash": "5e9733375e9733375e9733375e9733375e9733375e9733375e9733375e973337"
     },
     {
       "id": "rawotaku",
@@ -105,7 +126,7 @@
       "path": "RawOtaku",
       "environment": "source",
       "intents": 2104328,
-      "hash": "6fca5f306fca5f306fca5f306fca5f306fca5f306fca5f306fca5f306fca5f30"
+      "hash": "50e7358850e7358850e7358850e7358850e7358850e7358850e7358850e73588"
     },
     {
       "id": "zipcomic",
@@ -126,7 +147,7 @@
       "path": "ZipComic",
       "environment": "source",
       "intents": 2098184,
-      "hash": "4be4d0674be4d0674be4d0674be4d0674be4d0674be4d0674be4d0674be4d067"
+      "hash": "0c96651a0c96651a0c96651a0c96651a0c96651a0c96651a0c96651a0c96651a"
     }
   ]
 }
